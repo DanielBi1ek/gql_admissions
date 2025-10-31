@@ -9,6 +9,10 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from .baseDBModel import BaseModel
 from .eventDBModel import EventModel
 from .eventuserDBModel import EventUserModel
+from .admissionDBModel import AdmissionModel, PaymentModel, EnrollmentModel
+
+
+
 
 async def startEngine(connectionstring, makeDrop=False, makeUp=True):
     """Provede nezbytne ukony a vrati asynchronni SessionMaker"""
@@ -40,7 +44,7 @@ def ComposeConnectionString():
     Lze predelat na napr. konfiguracni file.
     """
     user = os.environ.get("POSTGRES_USER", "postgres")
-    password = os.environ.get("POSTGRES_PASSWORD", "example")
+    password = os.environ.get("POSTGRES_PASSWORD", "password")
     database = os.environ.get("POSTGRES_DB", "data")
     hostWithPort = os.environ.get("POSTGRES_HOST", "localhost:5432")
 

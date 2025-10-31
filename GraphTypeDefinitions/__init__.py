@@ -14,6 +14,9 @@ class Query:
     from .eventGQLModel import event_by_id
     event_by_id = event_by_id
 
+    from .admissionGQLModel import admission_by_id
+    admission_by_id = admission_by_id
+
 @strawberry.type(description="""Type for mutation root""")
 class Mutation:
     from .eventGQLModel import event_insert
@@ -21,6 +24,12 @@ class Mutation:
 
     from .eventGQLModel import event_update
     event_update = event_update
+
+    from .admissionGQLModel import admission_insert
+    admission_insert = admission_insert
+    from .admissionGQLModel import admission_update
+    admission_update = admission_update
+
 
 schema = strawberry.federation.Schema(
     query=Query,

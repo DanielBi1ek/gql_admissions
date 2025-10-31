@@ -90,5 +90,55 @@
             "user_id": "89d1f34a-ae0f-11ed-9bd8-0242ac110002", 
             "event_id": "45b2df80-ae0f-11ed-9bd8-0242ac110002"
         }
-    ]    
+    ],
+    "admissions": [
+        {
+            "id": "a1d1e684-ae0f-11ed-9bd8-0242ac110002",
+            "user_id": "89d1e724-ae0f-11ed-9bd8-0242ac110002",
+            "program_id": "99b2df80-ae0f-11ed-9bd8-0242ac110002",
+            "status": "accepted",
+            "created_at": "2025-10-20 12:00:00"
+        },
+        {
+            "id": "a1d1f2d2-ae0f-11ed-9bd8-0242ac110002",
+            "user_id": "89d1f34a-ae0f-11ed-9bd8-0242ac110002",
+            "program_id": "99b2df80-ae0f-11ed-9bd8-0242ac110002",
+            "status": "pending",
+            "created_at": "2025-10-25 14:30:00"
+        }
+    ],
+
+    "payments": [
+        {
+            "id": "b2c1a001-ae0f-11ed-9bd8-0242ac110002",
+            "admission_id": "a1d1e684-ae0f-11ed-9bd8-0242ac110002",
+            "amount": 250.50,
+            "payment_date": "2025-10-22 09:15:00"
+        },
+        {
+            "id": "b2c1a002-ae0f-11ed-9bd8-0242ac110002",
+            "admission_id": "a1d1f2d2-ae0f-11ed-9bd8-0242ac110002",
+            "amount": 500.00,
+            "payment_date": "2025-10-28 16:00:00"
+        }
+    ],
+
+    "enrollments": [
+        {
+            "id": "c3d1a001-ae0f-11ed-9bd8-0242ac110002",
+            "user_id": "89d1e724-ae0f-11ed-9bd8-0242ac110002",
+            "program_id": "99b2df80-ae0f-11ed-9bd8-0242ac110002",
+            "start_date": "2025-10-30 00:00:00",
+            "end_date": "2026-06-30 00:00:00"
+        },
+        {
+            "id": "c3d1a002-ae0f-11ed-9bd8-0242ac110002",
+            "user_id": "89d1f34a-ae0f-11ed-9bd8-0242ac110002",
+            "program_id": "99b2df80-ae0f-11ed-9bd8-0242ac110002",
+            "start_date": "2025-11-01 00:00:00",
+            "end_date": "2026-07-01 00:00:00"
+        }
+    ]
 }
+
+

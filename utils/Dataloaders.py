@@ -3,7 +3,13 @@ import datetime
 from sqlalchemy import select
 from functools import cache
 
-from DBDefinitions import EventModel, EventUserModel
+from DBDefinitions import (
+    EventModel,
+    EventUserModel,
+    AdmissionModel,
+    PaymentModel,
+    EnrollmentModel
+)
 
 def update(destination, source=None, extraValues={}):
     """Updates destination's attributes with source's attributes.
@@ -24,6 +30,7 @@ def update(destination, source=None, extraValues={}):
 
 def createLoader(asyncSessionMaker, DBModel):
     baseStatement = select(DBModel)
+
     class Loader:
         async def load(self, id):
             async with asyncSessionMaker() as session:
@@ -32,7 +39,7 @@ def createLoader(asyncSessionMaker, DBModel):
                 rows = rows.scalars()
                 row = next(rows, None)
                 return row
-        
+
         async def filter_by(self, **kwargs):
             async with asyncSessionMaker() as session:
                 statement = baseStatement.filter_by(**kwargs)
@@ -47,7 +54,7 @@ def createLoader(asyncSessionMaker, DBModel):
                 session.add(newdbrow)
                 await session.commit()
             return newdbrow
-            
+
         async def update(self, entity, extraValues={}):
             async with asyncSessionMaker() as session:
                 statement = baseStatement.filter_by(id=entity.id)
@@ -57,22 +64,22 @@ def createLoader(asyncSessionMaker, DBModel):
 
                 result = None
                 if rowToUpdate is not None:
-                    dochecks = hasattr(rowToUpdate, 'lastchange')             
-                    checkpassed = True  
-                    if (dochecks):
-                        if (entity.lastchange != rowToUpdate.lastchange):
+                    dochecks = hasattr(rowToUpdate, 'lastchange')
+                    checkpassed = True
+                    if dochecks:
+                        if entity.lastchange != rowToUpdate.lastchange:
                             result = None
-                            checkpassed = False                        
+                            checkpassed = False
                         else:
                             entity.lastchange = datetime.datetime.now()
                     if checkpassed:
                         rowToUpdate = update(rowToUpdate, entity, extraValues=extraValues)
                         await session.commit()
-                        result = rowToUpdate               
+                        result = rowToUpdate
             return result
 
-
     return Loader()
+
 
 def createLoaders(asyncSessionMaker):
     class Loaders:
@@ -85,7 +92,26 @@ def createLoaders(asyncSessionMaker):
         @cache
         def eventusers(self):
             return createLoader(asyncSessionMaker, EventUserModel)
-        
+
+        # 🧩 New DataLoaders for the admissions system
+        @property
+        @cache
+        def admissions(self):
+            return createLoader(asyncSessionMaker, AdmissionModel)
+
+        @property
+        @cache
+        def payments(self):
+            return createLoader(asyncSessionMaker, PaymentModel)
+
+        @property
+        @cache
+        def enrollments(self):
+            return createLoader(asyncSessionMaker, EnrollmentModel)
+
+
+
+
     return Loaders()
 
 
@@ -93,6 +119,7 @@ def createLoadersContext(asyncSessionMaker):
     return {
         "loaders": createLoaders(asyncSessionMaker)
     }
+
 
 def getLoadersFromInfo(info):
     context = info.context
@@ -131,9 +158,9 @@ demouser = {
     ]
 }
 
+
 def getUserFromInfo(info):
     context = info.context
-    #print(list(context.keys()))
     result = context.get("user", None)
     if result is None:
         authorization = context["request"].headers.get("Authorization", None)
@@ -143,5 +170,5 @@ def getUserFromInfo(info):
                 if token == "2d9dc5ca-a4a2-11ed-b9df-0242ac120003":
                     result = demouser
                     context["user"] = result
-    logging.debug("getUserFromInfo", result)
+    logging.debug("getUserFromInfo %s", result)
     return result

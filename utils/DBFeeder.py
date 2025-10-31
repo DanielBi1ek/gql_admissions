@@ -1,9 +1,10 @@
 import logging
 from functools import cache
 from DBDefinitions import (
-    EventModel, EventUserModel
+    EventModel, EventUserModel, AdmissionModel, PaymentModel, EnrollmentModel
     )
 from sqlalchemy.future import select
+
 
 
 import os
@@ -13,24 +14,26 @@ import datetime
 import uuid
 
 def get_demodata():
-
     def datetime_parser(json_dict):
         for (key, value) in json_dict.items():
-            if key in ["startdate", "enddate", "lastchange", "created"]:
+            # match all date-like keys
+            if any(sub in key for sub in ["date", "created", "lastchange"]):
                 dateValueWOtzinfo = None
                 if value is not None:
                     try:
-                        dateValue = datetime.datetime.fromisoformat(value)
+                        # handle both "YYYY-MM-DDTHH:MM:SS" and "YYYY-MM-DD HH:MM:SS"
+                        dateValue = datetime.datetime.fromisoformat(value.replace("T", " "))
                         dateValueWOtzinfo = dateValue.replace(tzinfo=None)
-                    except:
-                        logging.error(f'jsonconvert Error "{key}": "{value}"')
+                    except Exception as e:
+                        logging.error(f'jsonconvert Error "{key}": "{value}" ({e})')
                         dateValueWOtzinfo = None
-                
                 json_dict[key] = dateValueWOtzinfo
-            if "id" in key:
-                json_dict[key] = uuid.UUID(value)
-        return json_dict
 
+            # convert any UUID-like key
+            elif "id" in key and value is not None:
+                json_dict[key] = uuid.UUID(value)
+
+        return json_dict
 
     with open("./systemdata.json", "r", encoding='utf-8') as f:
         jsonData = json.load(f, object_hook=datetime_parser)
@@ -45,7 +48,12 @@ async def initDB(asyncSessionMaker):
     if not(default == os.environ.get("DEMO", defaultNoDemo)):
         dbModels = dbModels + [
             EventModel,
-            EventUserModel
+            EventUserModel,
+            AdmissionModel,
+            PaymentModel,
+            EnrollmentModel
+
+
         ]
 
     jsonData = get_demodata()
