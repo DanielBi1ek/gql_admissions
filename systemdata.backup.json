@@ -13291,14 +13291,31 @@
         "event_invitations_evolution": [
             {
                 "id": "35e5b9fe-3ee9-4d1b-83da-18b64af95619",
-                "created": "2025-09-04 09:54:01.106603",
-                "lastchange": "2025-09-04 09:54:01.106603",
+                "created": "2025-11-07 00:31:21.850497",
+                "lastchange": "2025-11-07 00:31:21.850497",
                 "createdby_id": null,
                 "changedby_id": null,
                 "rbacobject_id": null,
                 "event_id": "d3f68d57-90f8-43a8-a29f-327eb18231bf",
                 "user_id": "ccb397ad-0de7-46e7-bff0-42452f11dd5e",
                 "state_id": null,
+                "_chunk": 0
+            }
+        ]
+    },
+    {
+        "admissions_evolution": [
+            {
+                "id": "9f3d6e1c-1b2a-4b4a-9f3f-1e2d3c4b5a6f",
+                "created": "2025-06-02 10:00:00",
+                "lastchange": "2025-06-02 10:00:00",
+                "createdby_id": null,
+                "changedby_id": null,
+                "rbacobject_id": null,
+                "applicant_name": "John Doe",
+                "applicant_email": "john.doe@example.com",
+                "applied_date": "2025-06-01 10:00:00",
+                "status": "pending",
                 "_chunk": 0
             }
         ]

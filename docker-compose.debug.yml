@@ -23,7 +23,7 @@ services:
       # - POSTGRES_HOST=host.docker.internal:5432
       - POSTGRES_HOST=postgres_credentials:5432
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=example
+      - POSTGRES_PASSWORD=password
       - POSTGRES_DB=data
       - GQL_PROXY=http://apollo:3000/api/gql/
       - SALT=fe1c71b2-74c0-41e5-978f-eecbffac7418

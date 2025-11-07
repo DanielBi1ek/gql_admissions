@@ -10337,6 +10337,51 @@
             "user_id": "ccb397ad-0de7-46e7-bff0-42452f11dd5e",
             "state_id": null
         }
-    ]
+    ],
+  "admissions_evolution": [
+    {
+      "id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+      "applicant_name": "Alice Example",
+      "applicant_email": "alice@example.org",
+      "applied_date": "2025-09-01T08:00:00.123456",
+      "status": "pending",
+      "created": "2025-09-01T08:00:00.123456",
+      "lastchange": "2025-09-01T08:00:00.123456",
+      "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+      "updatedby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2"
+    }
+  ],
+
+  "enrollments_evolution": [
+    {
+      "id": "c8f2f1a4-3b9d-4a5f-8e3c-1f2a3b4c5d6e",
+      "admission_id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+      "study_program_id": "a1b2c3d4-5e6f-4711-8a9b-0c1d2e3f4a5b",
+      "status_id": null,
+      "created": "2025-09-01T08:00:00.123456",
+      "lastchange": "2025-09-01T08:00:00.123456",
+      "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+      "updatedby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2"
+    }
+  ],
+
+  "payments_evolution": [
+    {
+      "id": "d9e8f7a6-b5c4-4d3e-9f8a-7b6c5d4e3f2a",
+      "enrollment_id": "c8f2f1a4-3b9d-4a5f-8e3c-1f2a3b4c5d6e",
+      "amount": 100.0,
+      "currency": "EUR",
+      "method": "card",
+      "status_id": null,
+      "created": "2025-09-02T10:30:00.654321",
+      "lastchange": "2025-09-02T10:30:00.654321",
+      "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+      "updatedby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2"
+    }
+  ]
 
 }
+
+
+
+

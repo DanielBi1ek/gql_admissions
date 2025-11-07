@@ -83,14 +83,14 @@ class EventModel(BaseModel):
 
     masterevent = relationship(
         "EventModel",
-        viewonly=True, 
+        viewonly=True,
         remote_side="EventModel.id",
         uselist=False,
         back_populates="subevents",
     ) # https://docs.sqlalchemy.org/en/20/orm/self_referential.html
 
     subevents = relationship(
-        "EventModel", 
+        "EventModel",
         back_populates="masterevent",
         uselist=True,
         init=True,
