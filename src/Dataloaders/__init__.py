@@ -2,7 +2,7 @@ from typing import Optional
 from src.DBDefinitions import BaseModel, EventModel, EventInvitationModel, AdmissionModel
 from src.DBDefinitions.EnrollmentModel import EnrollmentModel
 from src.DBDefinitions.PaymentModel import PaymentModel
-from src.DBDefinitions.StudyProgramModel import StudyProgramModel
+
 from uoishelpers.dataloaders.LoaderMapBase import LoaderMapBase
 from uoishelpers.dataloaders.IDLoader import IDLoader
 
@@ -15,7 +15,7 @@ class LoaderMap(LoaderMapBase[BaseModel]):
     AdmissionModel: Optional[IDLoader]
     EnrollmentModel: Optional[IDLoader]
     PaymentModel: Optional[IDLoader]
-    StudyProgramModel: Optional[IDLoader]
+
 
 
     def __init__(self, session):
@@ -26,7 +26,7 @@ class LoaderMap(LoaderMapBase[BaseModel]):
         self.AdmissionModel = self.get(AdmissionModel)
         self.EnrollmentModel = self.get(EnrollmentModel)
         self.PaymentModel = self.get(PaymentModel)
-        self.StudyProgramModel = self.get(StudyProgramModel)
+
 
 
 def createLoadersContext(session):

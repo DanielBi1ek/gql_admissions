@@ -12,7 +12,6 @@ from .EventInvitationModel import EventInvitationModel
 from .AdmissionModel import AdmissionModel
 from .EnrollmentModel import EnrollmentModel
 from .PaymentModel import PaymentModel
-from .StudyProgramModel import StudyProgramModel
 # from .StateModel import StateModel  # StateModel intentionally not imported — we keep models simple/no enforced FK to 'states'
 
 

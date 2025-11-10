@@ -9,7 +9,6 @@ from src.DBDefinitions import (
     AdmissionModel,
     EnrollmentModel,
     PaymentModel,
-    StudyProgramModel,
 )
 
 get_demodata = lambda: readJsonFile(jsonFileName="./systemdata.json")
@@ -27,7 +26,6 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
             AdmissionModel,
             EnrollmentModel,
             PaymentModel,
-            StudyProgramModel,
         ]
 
     jsonData = readJsonFile(filename)
@@ -131,7 +129,7 @@ async def backupDB(asyncSessionMaker, filename="./systemdata.backup.json"):
         AdmissionModel,
         EnrollmentModel,
         PaymentModel,
-        StudyProgramModel,
+
     ]
     data = []
     async with asyncSessionMaker() as session:
