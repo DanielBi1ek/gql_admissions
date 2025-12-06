@@ -54,7 +54,7 @@ def ComposeConnectionString():
     Lze predelat na napr. konfiguracni file.
     """
     user = os.environ.get("POSTGRES_USER", "postgres")
-    password = os.environ.get("POSTGRES_PASSWORD", "password")
+    password = os.environ.get("POSTGRES_PASSWORD", "example")
     database = os.environ.get("POSTGRES_DB", "data")
     hostWithPort = os.environ.get("POSTGRES_HOST", "localhost:5432")
 

@@ -9,7 +9,11 @@ from src.DBDefinitions import (
     AdmissionModel,
     EnrollmentModel,
     PaymentModel,
+    # ensure we can create placeholder users
+    # UserModel is defined in BaseModel for metadata; import it for runtime insertion
 )
+from src.DBDefinitions.BaseModel import IDType
+from src.DBDefinitions.BaseModel import UserModel, StateModel
 
 get_demodata = lambda: readJsonFile(jsonFileName="./systemdata.json")
 
@@ -20,7 +24,10 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
     isDemo = os.environ.get("DEMODATA", None) in ["True", "true", True]
     if isDemo:
         print("Demo mode", flush=True)
+        # Ensure users and states are created first (they are referenced by other models in seed)
         dbModels = [
+            UserModel,
+            StateModel,
             EventModel,
             EventInvitationModel,
             AdmissionModel,
@@ -29,64 +36,6 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
         ]
 
     jsonData = readJsonFile(filename)
-
-    # merge optional additions file (keeps original systemdata.json intact)
-    additionsPath = os.path.join(os.path.dirname(filename), "systemdata.additions.json")
-    if os.path.exists(additionsPath):
-        try:
-            additions = readJsonFile(additionsPath)
-            # additions is expected to be a dict with table arrays
-            if isinstance(additions, dict) and isinstance(jsonData, dict):
-                for key, value in additions.items():
-                    if not isinstance(value, list):
-                        # not a table array, just copy
-                        jsonData[key] = value
-                        continue
-
-                    if key not in jsonData or not isinstance(jsonData[key], list):
-                        # no existing rows, add the whole array (but dedupe within additions)
-                        seen = set()
-                        new_rows = []
-                        for r in value:
-                            if not isinstance(r, dict):
-                                new_rows.append(r)
-                                continue
-                            rid = r.get("id")
-                            if rid is None:
-                                # keep rows without id
-                                new_rows.append(r)
-                                continue
-                            if rid in seen:
-                                continue
-                            seen.add(rid)
-                            new_rows.append(r)
-                        jsonData[key] = new_rows
-                        continue
-
-                    # both exist and both are lists -> merge but skip duplicates by id
-                    existing_rows = jsonData[key]
-                    existing_ids = set()
-                    for er in existing_rows:
-                        if isinstance(er, dict) and er.get("id") is not None:
-                            existing_ids.add(er.get("id"))
-
-                    # also dedupe within the additions values
-                    added_ids = set()
-                    for r in value:
-                        if not isinstance(r, dict):
-                            existing_rows.append(r)
-                            continue
-                        rid = r.get("id")
-                        if rid is None:
-                            existing_rows.append(r)
-                            continue
-                        if rid in existing_ids or rid in added_ids:
-                            # skip duplicates
-                            continue
-                        added_ids.add(rid)
-                        existing_rows.append(r)
-        except Exception as e:
-            print(f"Failed to load additions file {additionsPath}: {e}")
 
     # --- normalize date-like fields in the JSON so SQLAlchemy inserts correct types ---
     import datetime as _dt
@@ -111,6 +60,80 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
                 row["created"] = _parse_iso(row.get("created"))
             if "lastchange" in row:
                 row["lastchange"] = _parse_iso(row.get("lastchange"))
+
+    # Detect referenced user IDs across JSON and create placeholder users for them
+    referenced_user_keys = {"createdby_id", "changedby_id", "updatedby_id", "user_id", "createdby", "updatedby"}
+    referenced_user_ids = set()
+    if isinstance(jsonData, dict):
+        for tablename, rows in jsonData.items():
+            if not isinstance(rows, list):
+                continue
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                for key in referenced_user_keys:
+                    v = row.get(key)
+                    if v is None:
+                        continue
+                    try:
+                        import uuid as _uuid
+                        uid = _uuid.UUID(str(v))
+                        referenced_user_ids.add(uid)
+                    except Exception:
+                        continue
+
+    if referenced_user_ids:
+        print(f"DBFeeder: detected {len(referenced_user_ids)} referenced user ids")
+        # If jsonData doesn't already contain users, inject minimal user rows
+        if isinstance(jsonData, dict) and "users" not in jsonData:
+            jsonData["users"] = []
+            for uid in referenced_user_ids:
+                jsonData["users"].append({
+                    "id": str(uid),
+                    "display_name": f"seed user {str(uid)}"
+                })
+
+    # --- build ordered dbModels list so that UserModel and StateModel are inserted first ---
+    model_map = {
+        "users": UserModel,
+        "states": StateModel,
+        "events_evolution": EventModel,
+        "event_invitations_evolution": EventInvitationModel,
+        "admissions_evolution": AdmissionModel,
+        "enrollments_evolution": EnrollmentModel,
+        "payments_evolution": PaymentModel,
+    }
+
+    ordered_models = []
+    # always ensure users and states are first
+    for key in ["users", "states"]:
+        if key in model_map:
+            ordered_models.append(model_map[key])
+    # then add any models present in jsonData in a stable order
+    for key in ["events_evolution", "event_invitations_evolution", "admissions_evolution", "enrollments_evolution", "payments_evolution"]:
+        if key in jsonData and key in model_map:
+            ordered_models.append(model_map[key])
+
+    # If DEMODATA was explicitly requested earlier, that list may be used; otherwise use ordered_models
+    if isDemo:
+        dbModels = dbModels  # keep explicit demo list (already set above)
+    else:
+        dbModels = ordered_models
+
+    if referenced_user_ids:
+        # Insert placeholder users before importing other models to satisfy FK constraints
+        async with asyncSessionMaker() as session:
+            users_to_create = []
+            for uid in referenced_user_ids:
+                # We will try to avoid duplicates by checking existing ids
+                # Note: This simple check is done per-session and may be fine for initialization
+                existing = await session.get(UserModel, uid)
+                if existing is None:
+                    users_to_create.append(UserModel(id=uid, display_name=f"seed user {str(uid)}"))
+            if users_to_create:
+                session.add_all(users_to_create)
+                await session.commit()
+                print(f"DBFeeder: inserted {len(users_to_create)} placeholder users into DB")
 
     await ImportModels(asyncSessionMaker, dbModels, jsonData)
 
