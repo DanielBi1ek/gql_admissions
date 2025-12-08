@@ -18,18 +18,19 @@ from src.DBFeeder import initDB
 # region logging setup
 
 logging.basicConfig(
-    level=logging.INFO, 
-    format='%(asctime)s.%(msecs)03d\t%(levelname)s:\t%(message)s', 
+    level=logging.INFO,
+    format='%(asctime)s.%(msecs)03d\t%(levelname)s:\t%(message)s',
     datefmt='%Y-%m-%dT%I:%M:%S')
 SYSLOGHOST = os.getenv("SYSLOGHOST", None)
 if SYSLOGHOST is not None:
     [address, strport, *_] = SYSLOGHOST.split(':')
-    assert len(_) == 0, f"SYSLOGHOST {SYSLOGHOST} has unexpected structure, try `localhost:514` or similar (514 is UDP port)"
+    assert len(
+        _) == 0, f"SYSLOGHOST {SYSLOGHOST} has unexpected structure, try `localhost:514` or similar (514 is UDP port)"
     port = int(strport)
     my_logger = logging.getLogger()
     my_logger.setLevel(logging.INFO)
     handler = logging.handlers.SysLogHandler(address=(address, port), socktype=socket.SOCK_DGRAM)
-    #handler = logging.handlers.SocketHandler('10.10.11.11', 611)
+    # handler = logging.handlers.SocketHandler('10.10.11.11', 611)
     my_logger.addHandler(handler)
 
 # endregion
@@ -48,6 +49,7 @@ if SYSLOGHOST is not None:
 
 connectionString = ComposeConnectionString()
 
+
 def singleCall(asyncFunc):
     """Dekorator, ktery dovoli, aby dekorovana funkce byla volana (vycislena) jen jednou. Navratova hodnota je zapamatovana a pri dalsich volanich vracena.
     Dekorovana funkce je asynchronni.
@@ -61,6 +63,7 @@ def singleCall(asyncFunc):
 
     return result
 
+
 @singleCall
 async def RunOnceAndReturnSessionMaker():
     """Provadi inicializaci asynchronniho db engine, inicializaci databaze a vraci asynchronni SessionMaker.
@@ -72,8 +75,9 @@ async def RunOnceAndReturnSessionMaker():
 
     result = await startEngine(
         connectionstring=connectionString, makeDrop=makeDrop, makeUp=True
-    )   
+    )
     assert result is not None, "Unable to start engine"
+
     ###########################################################################################################################
     #
     # zde definujte do funkce asyncio.gather
@@ -90,15 +94,16 @@ async def RunOnceAndReturnSessionMaker():
     #
     #
     ###########################################################################################################################
-    
+
     return result
+
 
 # endregion
 
 # region FastAPI setup
 async def get_context(request: Request):
     asyncSessionMaker = await RunOnceAndReturnSessionMaker()
-        
+
     from src.Dataloaders import createLoadersContext
     context = createLoadersContext(asyncSessionMaker)
 
@@ -106,10 +111,14 @@ async def get_context(request: Request):
     result["request"] = request
     return result
 
+
 innerlifespan = None
+
+
 @asynccontextmanager
 async def dummy(app: FastAPI):
-    yield 
+    yield
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -123,8 +132,9 @@ async def lifespan(app: FastAPI):
         finally:
             pass
         await backupDB(initizalizedEngine)
-    
+
     # print("App shutdown, nothing to do")
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -135,43 +145,52 @@ graphql_app = GraphQLRouter(
 
 from uoishelpers.schema import SessionCommitExtensionFactory
 from src.Dataloaders import createLoadersContext
+
 schema.extensions.append(
-    SessionCommitExtensionFactory(session_maker_factory=RunOnceAndReturnSessionMaker, loaders_factory=createLoadersContext)
+    SessionCommitExtensionFactory(session_maker_factory=RunOnceAndReturnSessionMaker,
+                                  loaders_factory=createLoadersContext)
 )
 
-
 app.include_router(graphql_app, prefix="/gql")
+
 
 @app.get("/voyager", response_class=FileResponse)
 async def graphiql():
     realpath = os.path.realpath("./src/Htmls/voyager.html")
     return realpath
 
+
 @app.get("/doc", response_class=FileResponse)
 async def graphiql():
     realpath = os.path.realpath("./src/Htmls/liveschema.html")
     return realpath
+
 
 @app.get("/ui", response_class=FileResponse)
 async def graphiql():
     realpath = os.path.realpath("./src/Htmls/livedata.html")
     return realpath
 
+
 @app.get("/test", response_class=FileResponse)
 async def graphiql():
     realpath = os.path.realpath("./src/Htmls/tests.html")
     return realpath
 
+
 import prometheus_client
+
+
 @app.get("/metrics")
 async def metrics():
     return Response(
-        content=prometheus_client.generate_latest(), 
+        content=prometheus_client.generate_latest(),
         media_type=prometheus_client.CONTENT_TYPE_LATEST
-        )
+    )
 
 
 logging.info("All initialization is done")
+
 
 # @app.get('/hello')
 # def hello():
@@ -189,6 +208,7 @@ def envAssertDefined(name, default=None):
     result = os.getenv(name, None)
     assert result is not None, f"{name} environment variable must be explicitly defined"
     return result
+
 
 DEMO = envAssertDefined("DEMO", None)
 GQLUG_ENDPOINT_URL = envAssertDefined("GQLUG_ENDPOINT_URL", None)
@@ -219,7 +239,7 @@ else:
     logging.info("#                                                  #")
     logging.info("# RUNNING DEPLOYMENT                               #")
     logging.info("#                                                  #")
-    logging.info("####################################################")    
+    logging.info("####################################################")
 
 logging.info(f"DEMO = {DEMO}")
 logging.info(f"SYSLOGHOST = {SYSLOGHOST}")

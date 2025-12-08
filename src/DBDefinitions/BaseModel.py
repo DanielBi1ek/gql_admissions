@@ -1,3 +1,4 @@
+
 import uuid
 import sqlalchemy
 import datetime
@@ -13,8 +14,8 @@ def UUIDFKey(ForeignKeyArg=None, **kwargs):
         args = (ForeignKeyArg,)
     newkwargs = {
         **kwargs,
-        "index": True, 
-        "primary_key": False, 
+        "index": True,
+        "primary_key": False,
         "default": None,
         "nullable": True,
         "comment": "foreign key"
@@ -24,9 +25,9 @@ def UUIDFKey(ForeignKeyArg=None, **kwargs):
 def UUIDColumn(**kwargs):
     newkwargs = {
         **kwargs,
-        "index": True, 
-        "primary_key": True, 
-        "default_factory": uuid.uuid4, 
+        "index": True,
+        "primary_key": True,
+        "default_factory": uuid.uuid4,
         "comment": "primary key"
     }
     return mapped_column(**newkwargs)
@@ -55,7 +56,5 @@ class UserModel(BaseModel):
     __tablename__ = "users"
     display_name: Mapped[str] = mapped_column(default=None, nullable=True, comment="user display name")
 
-class StateModel(BaseModel):
-    __tablename__ = "states"
-    name: Mapped[str] = mapped_column(default=None, nullable=True, comment="state name")
-    description: Mapped[str] = mapped_column(default=None, nullable=True, comment="state description")
+
+

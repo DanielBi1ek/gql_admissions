@@ -6,14 +6,17 @@ from uoishelpers.dataloaders import readJsonFile
 from src.DBDefinitions import (
     EventModel,
     EventInvitationModel,
+    StateModel,
     AdmissionModel,
     EnrollmentModel,
     PaymentModel,
+    StudyProgramModel,
+
     # ensure we can create placeholder users
     # UserModel is defined in BaseModel for metadata; import it for runtime insertion
 )
 from src.DBDefinitions.BaseModel import IDType
-from src.DBDefinitions.BaseModel import UserModel, StateModel
+from src.DBDefinitions.BaseModel import UserModel
 
 get_demodata = lambda: readJsonFile(jsonFileName="./systemdata.json")
 
@@ -26,13 +29,16 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
         print("Demo mode", flush=True)
         # Ensure users and states are created first (they are referenced by other models in seed)
         dbModels = [
-            UserModel,
             StateModel,
+            UserModel,
             EventModel,
             EventInvitationModel,
+            StudyProgramModel,
             AdmissionModel,
             EnrollmentModel,
             PaymentModel,
+
+
         ]
 
     jsonData = readJsonFile(filename)
@@ -96,12 +102,14 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
     # --- build ordered dbModels list so that UserModel and StateModel are inserted first ---
     model_map = {
         "users": UserModel,
+        "study_programs": StudyProgramModel,
         "states": StateModel,
         "events_evolution": EventModel,
         "event_invitations_evolution": EventInvitationModel,
         "admissions_evolution": AdmissionModel,
         "enrollments_evolution": EnrollmentModel,
         "payments_evolution": PaymentModel,
+
     }
 
     ordered_models = []
@@ -152,6 +160,8 @@ async def backupDB(asyncSessionMaker, filename="./systemdata.backup.json"):
         AdmissionModel,
         EnrollmentModel,
         PaymentModel,
+        StudyProgramModel,
+        StateModel,
 
     ]
     data = []

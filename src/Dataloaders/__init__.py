@@ -1,5 +1,5 @@
 from typing import Optional
-from src.DBDefinitions import BaseModel, EventModel, EventInvitationModel, AdmissionModel
+from src.DBDefinitions import BaseModel, EventModel, EventInvitationModel, AdmissionModel, StudyProgramModel, StateModel
 from src.DBDefinitions.EnrollmentModel import EnrollmentModel
 from src.DBDefinitions.PaymentModel import PaymentModel
 
@@ -7,14 +7,20 @@ from uoishelpers.dataloaders.LoaderMapBase import LoaderMapBase
 from uoishelpers.dataloaders.IDLoader import IDLoader
 
 
+
 class LoaderMap(LoaderMapBase[BaseModel]):
     BaseModel = BaseModel
 
     EventModel: Optional[IDLoader]  # only type hint, no assignment here
     EventInvitationModel: Optional[IDLoader]
+    StateModel: Optional[IDLoader]
+    StudyProgramModel: Optional[IDLoader]
     AdmissionModel: Optional[IDLoader]
     EnrollmentModel: Optional[IDLoader]
     PaymentModel: Optional[IDLoader]
+
+
+
 
 
 
@@ -26,6 +32,8 @@ class LoaderMap(LoaderMapBase[BaseModel]):
         self.AdmissionModel = self.get(AdmissionModel)
         self.EnrollmentModel = self.get(EnrollmentModel)
         self.PaymentModel = self.get(PaymentModel)
+        self.StudyProgramModel = self.get(StudyProgramModel)
+        self.StateModel = self.get(StateModel)
 
 
 

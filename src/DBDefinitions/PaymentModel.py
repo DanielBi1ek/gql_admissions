@@ -1,15 +1,47 @@
-from sqlalchemy.orm import Mapped, mapped_column
 
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
-from .BaseModel import BaseModel, IDType, UUIDFKey
 
+from .BaseModel import BaseModel, IDType, UUIDFKey
 
 class PaymentModel(BaseModel):
     __tablename__ = "payments_evolution"
 
-    # simple non-relational payment model — keep ids as plain UUID columns
-    enrollment_id: Mapped[IDType] = UUIDFKey(ForeignKey("enrollments_evolution.id"), comment="enrollment reference")
-    amount: Mapped[float] = mapped_column(default=0.0, nullable=True, comment="payment amount")
-    currency: Mapped[str] = mapped_column(default="EUR", nullable=True, comment="currency")
-    method: Mapped[str] = mapped_column(default=None, nullable=True, comment="payment method")
-    status_id: Mapped[IDType] = mapped_column(default=None, nullable=True, comment="payment state")
+    # Foreign keys
+    enrollment_id: Mapped[IDType] = UUIDFKey(
+        ForeignKey("enrollments_evolution.id"),
+        comment="enrollment reference"
+    )
+
+    # Payment fields
+    amount: Mapped[float] = mapped_column(
+        default=0.0,
+        nullable=True,
+        comment="payment amount"
+    )
+    currency: Mapped[str] = mapped_column(
+        default="EUR",
+        nullable=True,
+        comment="currency"
+    )
+    method: Mapped[str] = mapped_column(
+        default=None,
+        nullable=True,
+        comment="payment method"
+    )
+    status_id: Mapped[IDType] = UUIDFKey(
+        ForeignKey("states.id"),
+        comment="payment state"
+    )
+    payment_date: Mapped[str] = mapped_column(
+        default=None,
+        nullable=True,
+        comment="date of payment"
+    )
+
+    # Relationships
+    enrollment = relationship(
+        "EnrollmentModel",
+        back_populates="payments",
+        uselist=False
+    )
