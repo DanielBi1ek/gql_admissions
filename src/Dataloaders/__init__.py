@@ -1,5 +1,5 @@
 from typing import Optional
-from src.DBDefinitions import BaseModel, EventModel, EventInvitationModel, AdmissionModel, StudyProgramModel, StateModel
+from src.DBDefinitions import BaseModel, EventModel, EventInvitationModel, AdmissionModel, StudyProgramModel
 from src.DBDefinitions.EnrollmentModel import EnrollmentModel
 from src.DBDefinitions.PaymentModel import PaymentModel
 
@@ -13,7 +13,7 @@ class LoaderMap(LoaderMapBase[BaseModel]):
 
     EventModel: Optional[IDLoader]  # only type hint, no assignment here
     EventInvitationModel: Optional[IDLoader]
-    StateModel: Optional[IDLoader]
+    #StateModel: Optional[IDLoader]
     StudyProgramModel: Optional[IDLoader]
     AdmissionModel: Optional[IDLoader]
     EnrollmentModel: Optional[IDLoader]
@@ -29,11 +29,12 @@ class LoaderMap(LoaderMapBase[BaseModel]):
 
         self.EventModel = self.get(EventModel)
         self.EventInvitationModel = self.get(EventInvitationModel)
+        self.StudyProgramModel = self.get(StudyProgramModel)
         self.AdmissionModel = self.get(AdmissionModel)
         self.EnrollmentModel = self.get(EnrollmentModel)
         self.PaymentModel = self.get(PaymentModel)
-        self.StudyProgramModel = self.get(StudyProgramModel)
-        self.StateModel = self.get(StateModel)
+
+        #self.StateModel = self.get(StateModel)
 
 
 

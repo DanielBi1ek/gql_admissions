@@ -1,4 +1,3 @@
-
 import uuid
 import sqlalchemy
 import datetime
@@ -14,11 +13,11 @@ def UUIDFKey(ForeignKeyArg=None, **kwargs):
         args = (ForeignKeyArg,)
     newkwargs = {
         **kwargs,
-        "index": True,
-        "primary_key": False,
+        "index": True, 
+        "primary_key": False, 
         "default": None,
         "nullable": True,
-        "comment": "foreign key"
+        "comment": kwargs.get("comment", "foreign key")
     }
     return mapped_column(*args, **newkwargs)
 
@@ -35,7 +34,7 @@ def UUIDColumn(**kwargs):
 ###########################################################################################################################
 #
 # zde definujte sve SQLAlchemy modely
-# je-li treba, muzete definovat modely obsahujici jen id polozku, na ktere se budete odkazovat
+# je-li treba, muzete definovat modely obsahujici jen id polozku, na ktere se budou odkazovat
 #
 
 IDType = uuid.UUID
@@ -43,18 +42,26 @@ IDType = uuid.UUID
 class BaseModel(MappedAsDataclass, DeclarativeBase):
     id: Mapped[IDType] = UUIDColumn(index=True, primary_key=True, default_factory=uuid.uuid4)
 
-    created: Mapped[datetime.datetime] = mapped_column(default=None, nullable=True, server_default=sqlalchemy.sql.func.now(), comment="date time of creation")
-    lastchange: Mapped[datetime.datetime] = mapped_column(default=None, nullable=True, server_default=sqlalchemy.sql.func.now(), comment="date time stamp")
+    created: Mapped[datetime.datetime] = mapped_column(
+        default=None,
+        nullable=True,
+        server_default=sqlalchemy.sql.func.now(),
+        comment="date time of creation"
+    )
+    lastchange: Mapped[datetime.datetime] = mapped_column(
+        default=None,
+        nullable=True,
+        server_default=sqlalchemy.sql.func.now(),
+        comment="date time stamp"
+    )
 
-    createdby_id: Mapped[IDType] = UUIDFKey(ForeignKey("users.id"), comment="id of user who created this entity")
-    changedby_id: Mapped[IDType] = UUIDFKey(ForeignKey("users.id"), comment="id of user who changed this entity")
-    rbacobject_id: Mapped[IDType] = UUIDFKey(comment="id rbacobject")
-###
-
-# Minimal models to satisfy FK references during metadata.create_all
-class UserModel(BaseModel):
-    __tablename__ = "users"
-    display_name: Mapped[str] = mapped_column(default=None, nullable=True, comment="user display name")
-
-
-
+    # REMOVE ForeignKey constraints - users table is in gql_ug service
+    createdby_id: Mapped[IDType] = UUIDFKey(
+        comment="id of user who created this entity (no FK)"
+    )
+    changedby_id: Mapped[IDType] = UUIDFKey(
+        comment="id of user who changed this entity (no FK)"
+    )
+    rbacobject_id: Mapped[IDType] = UUIDFKey(
+        comment="id rbacobject (no FK)"
+    )

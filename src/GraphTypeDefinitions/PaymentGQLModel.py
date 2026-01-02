@@ -18,7 +18,7 @@ class PaymentInputFilter:
     amount: float
     currency: str
     method: str
-    status_id: IDType
+    #status_id: IDType
     payment_date: datetime.datetime
 
 
@@ -53,11 +53,6 @@ class PaymentGQLModel(BaseGQLModel):
         permission_classes=[OnlyForAuthentized]
     )
 
-    status_id: typing.Optional[IDType] = strawberry.field(
-        default=None,
-        description="payment status",
-        permission_classes=[OnlyForAuthentized]
-    )
     payment_date: typing.Optional[datetime.datetime] = strawberry.field(
         default=None,
         description="date of payment",
@@ -98,7 +93,7 @@ class PaymentInsertGQLModel:
     amount: float = strawberry.field(description="Payment amount")
     currency: typing.Optional[str] = strawberry.field(default="EUR", description="Currency code")
     method: typing.Optional[str] = strawberry.field(default=None, description="Payment method")
-    status_id: IDType = strawberry.field(description="Payment status")
+    #status_id: IDType = strawberry.field(description="Payment status")
     payment_date: typing.Optional[datetime.datetime] = strawberry.field(default=None, description="Date of payment")
 
 
@@ -109,7 +104,7 @@ class PaymentUpdateGQLModel:
     amount: typing.Optional[float] = None
     currency: typing.Optional[str] = None
     method: typing.Optional[str] = None
-    status_id: typing.Optional[IDType] = None
+    #status_id: typing.Optional[IDType] = None
     payment_date: typing.Optional[datetime.datetime] = None
 
 
@@ -138,7 +133,7 @@ class PaymentMutation:
         print(f"DEBUG: amount: {payment.amount}")
         print(f"DEBUG: currency: {payment.currency}")
         print(f"DEBUG: method: {payment.method}")
-        print(f"DEBUG: status_id: {payment.status_id}")
+        #print(f"DEBUG: status_id: {payment.status_id}")
         print("=" * 80)
 
         try:
@@ -150,7 +145,7 @@ class PaymentMutation:
                 "amount": payment.amount,
                 "currency": payment.currency,
                 "method": payment.method,
-                "status_id": payment.status_id,
+               # "status_id": payment.status_id,
                 "rbacobject_id": None,
                 "createdby_id": uuid.UUID("66d8a57c-9ff3-40c3-a019-07808b5150a2"),
                 "changedby_id": None,
@@ -208,8 +203,8 @@ class PaymentMutation:
                 db_row.currency = payment.currency
             if payment.method is not None:
                 db_row.method = payment.method
-            if payment.status_id is not None:
-                db_row.status_id = payment.status_id
+            #if payment.status_id is not None:
+             #   db_row.status_id = payment.status_id
 
             import datetime
             db_row.lastchange = datetime.datetime.now()

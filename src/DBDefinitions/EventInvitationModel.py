@@ -1,36 +1,42 @@
 from typing import Optional
-from sqlalchemy import (
-    ForeignKey,
-)
-from sqlalchemy.orm import Mapped, mapped_column
-
-from sqlalchemy.orm import relationship
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from .BaseModel import BaseModel, UUIDFKey, IDType
-###########################################################################################################################
-#
-# zde definujte sve SQLAlchemy modely
-# je-li treba, muzete definovat modely obsahujici jen id polozku, na ktere se budete odkazovat
-#
-###########################################################################################################################
+
 
 class EventInvitationModel(BaseModel):
     __tablename__ = "event_invitations_evolution"
 
     id: Mapped[IDType] = mapped_column(primary_key=True, default=None, nullable=True)
 
-    event_id: Mapped[Optional[IDType]] = mapped_column(ForeignKey("events_evolution.id"), default=None, nullable=True, comment="Event assigned to the invitation")
-    user_id: Mapped[Optional[IDType]] = UUIDFKey(ForeignKey("users.id"), default=None, nullable=True, comment="User assigned to the invitation")
-    state_id: Mapped[Optional[IDType]] = UUIDFKey(ForeignKey("states.id"), default=None, nullable=True, comment="State assigned to the invitation")
+    event_id: Mapped[Optional[IDType]] = mapped_column(
+        ForeignKey("events_evolution.id"),
+        default=None,
+        nullable=True,
+        comment="Event assigned to the invitation"
+    )
 
-    # Relationships: viewonly indicates that these relationships are loaded via foreign keys.
+    # REMOVE ForeignKey constraints - these reference external services
+    user_id: Mapped[Optional[IDType]] = UUIDFKey(
+        default=None,
+        nullable=True,
+        comment="User assigned to the invitation (no FK)"
+    )
+
+    state_id: Mapped[Optional[IDType]] = UUIDFKey(
+        default=None,
+        nullable=True,
+        comment="State assigned to the invitation (no FK)"
+    )
+
+    # Relationships
     event = relationship(
         "EventModel",
         primaryjoin="EventInvitationModel.event_id==EventModel.id",
         uselist=False,
         viewonly=True
     )
-
 
 #                   +-------------+
 #                   |  organizer  |
@@ -53,4 +59,3 @@ class EventInvitationModel(BaseModel):
 #   ('d7c38ef9-c7d0-4ff9-a72e-fd1e0b70f387', 'attended',  'Účastnil se',   'Uživatel se účastnil události',  false, true),
 #   ('b0b2df1d-4e67-47c3-9c68-4d25a0e0a01a', 'excused',   'Omluven',       'Uživatel se omluvil z účasti',   false, true),
 #   ('3265a488-bbfa-4c59-946c-7a7b059ee4f0', 'organizer', 'Organizátor',   'Uživatel je organizátorem akce', false, false);
-

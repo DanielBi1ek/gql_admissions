@@ -15,6 +15,7 @@ from sqlalchemy.orm import relationship, column_property
 
 from .BaseModel import BaseModel, UUIDColumn, UUIDFKey, IDType
 
+
 ###########################################################################################################################
 #
 # zde definujte sve SQLAlchemy modely
@@ -42,7 +43,7 @@ class EventModel(BaseModel):
     description: Mapped[str] = mapped_column(default=None, nullable=True)
     startdate: Mapped[datetime.datetime] = mapped_column(default=None, nullable=True)
     enddate: Mapped[datetime.datetime] = mapped_column(default=None, nullable=True)
-    
+
     place: Mapped[str] = mapped_column(default=None, nullable=True)
     facility_id: Mapped[IDType] = UUIDFKey(nullable=True)
 
@@ -67,10 +68,10 @@ class EventModel(BaseModel):
         """Defines the SQL expression for the 'valid' property."""
         now = datetime.datetime.utcnow()
         return sqlalchemy.and_(
-            sqlalchemy.or_(cls.startdate <= now, cls.startdate.is_(None)),  # Valid if startdate is in the past or missing
-            sqlalchemy.or_(cls.enddate >= now, cls.enddate.is_(None))       # Valid if enddate is in the future or missing
+            sqlalchemy.or_(cls.startdate <= now, cls.startdate.is_(None)),
+            # Valid if startdate is in the past or missing
+            sqlalchemy.or_(cls.enddate >= now, cls.enddate.is_(None))  # Valid if enddate is in the future or missing
         )
-
 
     # the real column in the DB
     masterevent_id: Mapped[IDType] = mapped_column(
@@ -80,14 +81,13 @@ class EventModel(BaseModel):
         index=True,
     )
 
-
     masterevent = relationship(
         "EventModel",
         viewonly=True,
         remote_side="EventModel.id",
         uselist=False,
         back_populates="subevents",
-    ) # https://docs.sqlalchemy.org/en/20/orm/self_referential.html
+    )  # https://docs.sqlalchemy.org/en/20/orm/self_referential.html
 
     subevents = relationship(
         "EventModel",
@@ -95,7 +95,7 @@ class EventModel(BaseModel):
         uselist=True,
         init=True,
         cascade="save-update"
-    ) # https://docs.sqlalchemy.org/en/20/orm/self_referential.html
+    )  # https://docs.sqlalchemy.org/en/20/orm/self_referential.html
     # https://docs.sqlalchemy.org/en/20/_modules/examples/materialized_paths/materialized_paths.html
 
     user_invitations = relationship(

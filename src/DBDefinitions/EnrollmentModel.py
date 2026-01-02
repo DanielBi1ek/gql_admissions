@@ -1,4 +1,3 @@
-
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
 
@@ -8,7 +7,7 @@ from .BaseModel import BaseModel, IDType, UUIDFKey
 class EnrollmentModel(BaseModel):
     __tablename__ = "enrollments_evolution"
 
-    # Foreign keys
+    # Foreign keys to tables in THIS database
     admission_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("admissions_evolution.id"),
         comment="foreign key to admission"
@@ -17,10 +16,9 @@ class EnrollmentModel(BaseModel):
         ForeignKey("study_programs.id"),
         comment="foreign key to study program"
     )
-    status_id: Mapped[IDType] = UUIDFKey(
-        ForeignKey("states.id"),
-        comment="foreign key to enrollment status"
-    )
+
+    # Status references external service - NO FK constraint
+
 
     # Fields
     payment: Mapped[float] = mapped_column(

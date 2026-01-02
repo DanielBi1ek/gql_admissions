@@ -1,13 +1,13 @@
-
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
 
 from .BaseModel import BaseModel, IDType, UUIDFKey
 
+
 class PaymentModel(BaseModel):
     __tablename__ = "payments_evolution"
 
-    # Foreign keys
+    # Foreign keys to tables in THIS database
     enrollment_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("enrollments_evolution.id"),
         comment="enrollment reference"
@@ -29,15 +29,12 @@ class PaymentModel(BaseModel):
         nullable=True,
         comment="payment method"
     )
-    status_id: Mapped[IDType] = UUIDFKey(
-        ForeignKey("states.id"),
-        comment="payment state"
-    )
     payment_date: Mapped[str] = mapped_column(
         default=None,
         nullable=True,
         comment="date of payment"
     )
+
 
     # Relationships
     enrollment = relationship(

@@ -13,9 +13,6 @@ from .AdmissionModel import AdmissionModel
 from .EnrollmentModel import EnrollmentModel
 from .PaymentModel import PaymentModel
 from .StudyProgramModel import StudyProgramModel
-from .StateModel import StateModel
-# from .StateModel import StateModel  # StateModel intentionally not imported — we keep models simple/no enforced FK to 'states'
-
 
 async def startEngine(connectionstring, makeDrop=False, makeUp=True):
     """Provede nezbytne ukony a vrati asynchronni SessionMaker"""
@@ -23,21 +20,11 @@ async def startEngine(connectionstring, makeDrop=False, makeUp=True):
 
     async with asyncEngine.begin() as conn:
         if makeDrop:
-            # Drop entire public schema with CASCADE to remove dependent objects that would
-            # block dropping individual tables (useful for dev/demo environments).
-            def _drop_schema(sync_conn):
-                try:
-                    sync_conn.execute(sqlalchemy.text("DROP SCHEMA public CASCADE"))
-                    sync_conn.execute(sqlalchemy.text("CREATE SCHEMA public"))
-                except Exception:
-                    # fallback to metadata.drop_all if schema operations are not allowed
-                    BaseModel.metadata.drop_all(sync_conn)
-
-            await conn.run_sync(_drop_schema)
-            print("public schema dropped and recreated (CASCADE)")
+            await conn.run_sync(BaseModel.metadata.drop_all)
+            print("BaseModel.metadata.drop_all finished")  # dropne vsechny tabulky
         if makeUp:
             try:
-                await conn.run_sync(BaseModel.metadata.create_all)
+                await conn.run_sync(BaseModel.metadata.create_all) # vytvori vsechny tabulky
                 print("BaseModel.metadata.create_all finished")
             except sqlalchemy.exc.NoReferencedTableError as e:
                 print(e)

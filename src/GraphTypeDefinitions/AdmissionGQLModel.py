@@ -1,10 +1,13 @@
 import typing
 import datetime
 import strawberry
+import os
+import json
+import uuid
 
 from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, VectorResolver
 from uoishelpers.gqlpermissions import OnlyForAuthentized
-
+from uoishelpers.resolvers import getUserFromInfo
 from .BaseGQLModel import BaseGQLModel, IDType
 
 # forward reference to EnrollmentGQLModel and EnrollmentInputFilter
@@ -17,7 +20,7 @@ class AdmissionInputFilter:
     id: IDType
     applicant_name: str
     applicant_email: str
-    status_id: IDType
+    # status_id: IDType
 
 
 @strawberry.federation.type(keys=["id"], description="Admission to the university (simple)")
@@ -33,8 +36,7 @@ class AdmissionGQLModel(BaseGQLModel):
                                                              permission_classes=[OnlyForAuthentized])
     applied_date: typing.Optional[datetime.datetime] = strawberry.field(default=None, description="date of application",
                                                                         permission_classes=[OnlyForAuthentized])
-    status_id: typing.Optional[IDType] = strawberry.field(default=None, description="admission status_id",
-                                                    permission_classes=[OnlyForAuthentized])
+    # status_id: typing.Optional[IDType] = strawberry.field(default=None, description="admission status_id",permission_classes=[OnlyForAuthentized])
 
     # related enrollments
     enrollment_records: typing.List["EnrollmentGQLModel"] = strawberry.field(
@@ -68,7 +70,7 @@ from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
 class AdmissionInsertGQLModel:
     applicant_name: typing.Optional[str] = None
     applicant_email: typing.Optional[str] = None
-    status_id: typing.Optional[IDType] = "pending"
+    # status_id: typing.Optional[IDType] = "pending"
 
 
 @strawberry.input(description="Input model for updating an admission")
@@ -77,7 +79,7 @@ class AdmissionUpdateGQLModel:
     lastchange: datetime.datetime
     applicant_name: typing.Optional[str] = None
     applicant_email: typing.Optional[str] = None
-    status_id: typing.Optional[IDType] = None
+    # status_id: typing.Optional[IDType] = None
 
 
 @strawberry.input(description="Input model for deleting an admission")
@@ -97,55 +99,23 @@ class AdmissionMutation:
             info: strawberry.Info,
             admission: AdmissionInsertGQLModel
     ) -> typing.Union[AdmissionGQLModel, InsertError[AdmissionGQLModel]]:
-        import uuid
+        from uoishelpers.resolvers import Insert
+
+        # Get authenticated user
+        user = getUserFromInfo(info=info)
+        createdby_id = user["id"]
+
+        # Set the createdby_id on the input
+        admission.createdby_id = createdby_id
+        admission.rbacobject_id = None
 
         print("=" * 80)
         print("DEBUG: admission_insert CALLED!!!")
+        print(f"DEBUG: User ID: {createdby_id}")
         print(f"DEBUG: applicant_name: {admission.applicant_name}")
-        print(f"DEBUG: applicant_email: {admission.applicant_email}")
-        print(f"DEBUG: status_id: {admission.status_id}")
         print("=" * 80)
 
-        # Get loader and create the admission directly
-        loader = getLoadersFromInfo(info).AdmissionModel
-
-        try:
-            # Create the admission data
-            admission_data = {
-                "id": uuid.uuid4(),
-                "applicant_name": admission.applicant_name,
-                "applicant_email": admission.applicant_email,
-                "status_id": admission.status_id,
-                "rbacobject_id": None,
-                "createdby_id": uuid.UUID("66d8a57c-9ff3-40c3-a019-07808b5150a2"),
-                "changedby_id": None,
-            }
-
-            print(f"DEBUG: Creating admission with data: {admission_data}")
-
-            # Insert into database
-            from ..DBDefinitions.AdmissionModel import AdmissionModel
-            db_row = AdmissionModel(**admission_data)
-
-            session = loader.session
-            session.add(db_row)
-            await session.commit()
-            await session.refresh(db_row)
-
-            print(f"DEBUG: Insert successful! ID: {db_row.id}")
-
-            # Return the GQL model
-            return AdmissionGQLModel.from_dataclass(db_row)
-
-        except Exception as e:
-            print(f"DEBUG: Exception during insert: {type(e).__name__}: {str(e)}")
-            import traceback
-            traceback.print_exc()
-
-            return InsertError[AdmissionGQLModel](
-                msg=str(e),
-                _input=admission
-            )
+        return await Insert[AdmissionGQLModel].DoItSafeWay(info=info, entity=admission)
 
     @strawberry.mutation(
         description="Update an admission record",
@@ -158,48 +128,43 @@ class AdmissionMutation:
             admission: AdmissionUpdateGQLModel,
             db_row: typing.Any
     ) -> typing.Union[AdmissionGQLModel, UpdateError[AdmissionGQLModel]]:
-        print("=" * 80)
-        print("DEBUG: admission_update CALLED!!!")
-        print(f"DEBUG: id: {admission.id}")
-        print(f"DEBUG: db_row before update: {db_row}")
-        print("=" * 80)
+        from uoishelpers.resolvers import Update
 
-        try:
-            # Get the loader
-            loader = getLoadersFromInfo(info).AdmissionModel
-            session = loader.session
+        # Get authenticated user
+        user = getUserFromInfo(info=info)
+        user_id = user["id"]
+        print(*"=" * 80)
+        print("DEBUG: admission_update PERMISSION CHECK!!!")
+        print(user_id)
+        print(db_row.createdby_id)
 
-            # Update the fields if they're provided
-            if admission.applicant_name is not None:
-                db_row.applicant_name = admission.applicant_name
-            if admission.applicant_email is not None:
-                db_row.applicant_email = admission.applicant_email
-            if admission.status_id is not None:
-                db_row.status_id = admission.status_id
-
-            # Update lastchange
-            import datetime
-            db_row.lastchange = datetime.datetime.now()
-
-            # Commit the changes
-            session.add(db_row)
-            await session.commit()
-            await session.refresh(db_row)
-
-            print(f"DEBUG: Update successful! New status: {db_row.status_id}")
-
-            # Return the updated model
-            return AdmissionGQLModel.from_dataclass(db_row)
-
-        except Exception as e:
-            print(f"DEBUG: Exception during update: {type(e).__name__}: {str(e)}")
-            import traceback
-            traceback.print_exc()
-
+        # Permission check: only creator can update
+        if str(db_row.createdby_id) != user_id:
             return UpdateError[AdmissionGQLModel](
-                msg=str(e),
+                _entity=db_row,
+                msg="You are not allowed to update this admission",
+                code="ae30e32b-94ec-4d59-9c1e-7eca3b75701e",
+                location="admission_update",
                 _input=admission
             )
+
+        # Only update fields that are not None
+        # Keep existing values for None fields
+        if admission.applicant_name is None:
+            admission.applicant_name = db_row.applicant_name
+        if admission.applicant_email is None:
+            admission.applicant_email = db_row.applicant_email
+
+        # Set the changedby_id
+        admission.changedby_id = user_id
+
+        print("=" * 80)
+        print("DEBUG: admission_update CALLED!!!")
+        print(f"DEBUG: User ID: {user_id}")
+        print(f"DEBUG: Admission ID: {admission.id}")
+        print("=" * 80)
+
+        return await Update[AdmissionGQLModel].DoItSafeWay(info=info, entity=admission)
 
     @strawberry.mutation(
         description="Delete an admission record",
@@ -212,31 +177,18 @@ class AdmissionMutation:
             admission: AdmissionDeleteGQLModel,
             db_row: typing.Any
     ) -> typing.Optional[DeleteError[AdmissionGQLModel]]:
+        from uoishelpers.resolvers import Delete
+
+        # Get authenticated user (for logging)
+        user = getUserFromInfo(info=info)
+        user_id = user["id"]
+
+
+
         print("=" * 80)
         print("DEBUG: admission_delete CALLED!!!")
-        print(f"DEBUG: id: {admission.id}")
+        print(f"DEBUG: User ID: {user_id}")
+        print(f"DEBUG: Admission ID: {admission.id}")
         print("=" * 80)
 
-        try:
-            # Get the loader
-            loader = getLoadersFromInfo(info).AdmissionModel
-            session = loader.session
-
-            # Delete the record
-            await session.delete(db_row)
-            await session.commit()
-
-            print(f"DEBUG: Delete successful!")
-
-            # Return None on success
-            return None
-
-        except Exception as e:
-            print(f"DEBUG: Exception during delete: {type(e).__name__}: {str(e)}")
-            import traceback
-            traceback.print_exc()
-
-            return DeleteError[AdmissionGQLModel](
-                msg=str(e),
-                _input=admission
-            )
+        return await Delete[AdmissionGQLModel].DoItSafeWay(info=info, entity=admission)

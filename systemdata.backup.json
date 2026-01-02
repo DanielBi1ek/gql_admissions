@@ -13291,67 +13291,14 @@
         "event_invitations_evolution": [
             {
                 "id": "35e5b9fe-3ee9-4d1b-83da-18b64af95619",
-                "created": "2025-12-08 01:24:38.368745",
-                "lastchange": "2025-12-08 01:24:38.368745",
+                "created": "2025-12-08 21:38:34.805175",
+                "lastchange": "2025-12-08 21:38:34.805175",
                 "createdby_id": null,
                 "changedby_id": null,
                 "rbacobject_id": null,
                 "event_id": "d3f68d57-90f8-43a8-a29f-327eb18231bf",
                 "user_id": "ccb397ad-0de7-46e7-bff0-42452f11dd5e",
                 "state_id": null,
-                "_chunk": 0
-            }
-        ]
-    },
-    {
-        "admissions_evolution": [
-            {
-                "id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
-                "created": "2025-09-01 08:00:00.123456",
-                "lastchange": "2025-09-01 08:00:00.123456",
-                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "applicant_name": "Alice Example",
-                "applicant_email": "alice@example.org",
-                "status_id": "e8a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c",
-                "applied_date": "2025-09-01 08:00:00.123456",
-                "_chunk": 0
-            }
-        ]
-    },
-    {
-        "enrollments_evolution": [
-            {
-                "id": "c8f2f1a4-3b9d-4a5f-8e3c-1f2a3b4c5d6e",
-                "created": "2025-09-01 08:00:00.123456",
-                "lastchange": "2025-09-01 08:00:00.123456",
-                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "admission_id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
-                "study_program_id": "a1b2c3d4-5e6f-4711-8a9b-0c1d2e3f4a5b",
-                "status_id": null,
-                "payment": 0.0,
-                "_chunk": 0
-            }
-        ]
-    },
-    {
-        "payments_evolution": [
-            {
-                "id": "d9e8f7a6-b5c4-4d3e-9f8a-7b6c5d4e3f2a",
-                "created": "2025-09-02 10:30:00.654321",
-                "lastchange": "2025-09-02 10:30:00.654321",
-                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "enrollment_id": "c8f2f1a4-3b9d-4a5f-8e3c-1f2a3b4c5d6e",
-                "amount": 100.0,
-                "currency": "EUR",
-                "method": "card",
-                "status_id": null,
-                "payment_date": "2025-09-02T10:30:00.654321",
                 "_chunk": 0
             }
         ]
@@ -13393,135 +13340,111 @@
         ]
     },
     {
-        "states": [
+        "admissions_evolution": [
             {
-                "id": "e8a1b2c3-d4e5-4f6a-8b9c-0d1e2f3a4b5c",
-                "created": "2025-01-01 08:00:00",
-                "lastchange": "2025-01-01 08:00:00",
+                "id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+                "created": "2025-09-01 08:00:00.123456",
+                "lastchange": "2025-09-01 08:00:00.123456",
                 "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
                 "changedby_id": null,
                 "rbacobject_id": null,
-                "name": "pending",
-                "description": "Admission/Payment is pending review",
-                "category": "enrollment_status",
-                "is_active": true,
+                "applicant_name": "Alice Example",
+                "applicant_email": "alice@example.org",
+                "applied_date": "2025-12-08 21:38:34.831352",
                 "_chunk": 0
             },
             {
-                "id": "f9b2c3d4-e5f6-4a7b-9c0d-1e2f3a4b5c6d",
-                "created": "2025-01-01 08:00:00",
-                "lastchange": "2025-01-01 08:00:00",
-                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+                "id": "0a66012d-444c-41db-b553-adab4745b6ff",
+                "created": "2025-12-08 21:39:58.285799",
+                "lastchange": "2025-12-08 21:39:58.285799",
+                "createdby_id": "2d9dc5ca-a4a2-11ed-b9df-0242ac120003",
                 "changedby_id": null,
                 "rbacobject_id": null,
-                "name": "approved",
-                "description": "Admission/Enrollment has been approved",
-                "category": "enrollment_status",
-                "is_active": true,
+                "applicant_name": "",
+                "applicant_email": "fdafadsfsa",
+                "applied_date": "2025-12-08 21:39:58.285799",
                 "_chunk": 0
             },
             {
-                "id": "a0c3d4e5-f6a7-4b8c-0d1e-2f3a4b5c6d7e",
-                "created": "2025-01-01 08:00:00",
-                "lastchange": "2025-01-01 08:00:00",
-                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+                "id": "3efdc84f-7e8a-4e7f-8b68-0e4a29fc3c65",
+                "created": "2025-12-26 08:14:36.111125",
+                "lastchange": "2025-12-26 08:14:36.111125",
+                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
                 "changedby_id": null,
                 "rbacobject_id": null,
-                "name": "rejected",
-                "description": "Admission/Enrollment has been rejected",
-                "category": "enrollment_status",
-                "is_active": true,
+                "applicant_name": "robert Alkaci",
+                "applicant_email": "robert.alkaci@unob.cz",
+                "applied_date": "2025-12-26 08:14:36.111125",
                 "_chunk": 0
             },
             {
-                "id": "b1d4e5f6-a7b8-4c9d-1e2f-3a4b5c6d7e8f",
-                "created": "2025-01-01 08:00:00",
-                "lastchange": "2025-01-01 08:00:00",
-                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+                "id": "d2286577-47a6-4684-ad0d-d5230fccad3c",
+                "created": "2025-12-26 08:15:43.290799",
+                "lastchange": "2025-12-26 08:15:43.290799",
+                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
                 "changedby_id": null,
                 "rbacobject_id": null,
-                "name": "enrolled",
-                "description": "Student is actively enrolled",
-                "category": "enrollment_status",
-                "is_active": true,
+                "applicant_name": "alkaci robert",
+                "applicant_email": "alkaci@unob.cz",
+                "applied_date": "2025-12-26 08:15:43.290799",
                 "_chunk": 0
             },
             {
-                "id": "c2e5f6a7-b8c9-4d0e-2f3a-4b5c6d7e8f9a",
-                "created": "2025-01-01 08:00:00",
-                "lastchange": "2025-01-01 08:00:00",
-                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+                "id": "38060f77-eb2e-4b0c-86cf-f2d4d8ce57fe",
+                "created": "2025-12-29 13:03:40.713201",
+                "lastchange": "2025-12-29 13:03:40.713201",
+                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
                 "changedby_id": null,
-                "rbacobject_id": null,
-                "name": "withdrawn",
-                "description": "Student has withdrawn from enrollment",
-                "category": "enrollment_status",
-                "is_active": true,
+                "rbacobject_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+                "applicant_name": "Test User",
+                "applicant_email": "testovaci.user@user.com",
+                "applied_date": "2025-12-29 13:03:40.713201",
                 "_chunk": 0
             },
             {
-                "id": "d3f6a7b8-c9d0-4e1f-3a4b-5c6d7e8f9a0b",
-                "created": "2025-01-01 08:00:00",
-                "lastchange": "2025-01-01 08:00:00",
-                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+                "id": "6cb53ff3-502e-4783-addf-b25e9fbb92d9",
+                "created": "2025-12-29 13:20:46.310876",
+                "lastchange": "2025-12-29 13:20:46.310876",
+                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
                 "changedby_id": null,
-                "rbacobject_id": null,
-                "name": "paid",
-                "description": "Payment completed successfully",
-                "category": "enrollment_status",
-                "is_active": true,
+                "rbacobject_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+                "applicant_name": "Jitka Zemanova",
+                "applicant_email": "jitka.zemanova@gmail.com",
+                "applied_date": "2025-12-29 13:20:46.310876",
                 "_chunk": 0
-            },
+            }
+        ]
+    },
+    {
+        "enrollments_evolution": [
             {
-                "id": "e4a7b8c9-d0e1-4f2a-4b5c-6d7e8f9a0b1c",
-                "created": "2025-01-01 08:00:00",
-                "lastchange": "2025-01-01 08:00:00",
+                "id": "c8f2f1a4-3b9d-4a5f-8e3c-1f2a3b4c5d6e",
+                "created": "2025-09-01 08:00:00.123456",
+                "lastchange": "2025-09-01 08:00:00.123456",
                 "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
                 "changedby_id": null,
                 "rbacobject_id": null,
-                "name": "failed",
-                "description": "Payment failed",
-                "category": "enrollment_status",
-                "is_active": true,
+                "admission_id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+                "study_program_id": "a1b2c3d4-5e6f-4711-8a9b-0c1d2e3f4a5b",
+                "payment": 0.0,
                 "_chunk": 0
-            },
+            }
+        ]
+    },
+    {
+        "payments_evolution": [
             {
-                "id": "f5b8c9d0-e1f2-4a3b-5c6d-7e8f9a0b1c2d",
-                "created": "2025-01-01 08:00:00",
-                "lastchange": "2025-01-01 08:00:00",
+                "id": "d9e8f7a6-b5c4-4d3e-9f8a-7b6c5d4e3f2a",
+                "created": "2025-09-02 10:30:00.654321",
+                "lastchange": "2025-09-02 10:30:00.654321",
                 "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
                 "changedby_id": null,
                 "rbacobject_id": null,
-                "name": "refunded",
-                "description": "Payment has been refunded",
-                "category": "enrollment_status",
-                "is_active": true,
-                "_chunk": 0
-            },
-            {
-                "id": "a6c9d0e1-f2a3-4b4c-6d7e-8f9a0b1c2d3e",
-                "created": "2025-01-01 08:00:00",
-                "lastchange": "2025-01-01 08:00:00",
-                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "name": "on_hold",
-                "description": "Status is on hold pending further action",
-                "category": "enrollment_status",
-                "is_active": true,
-                "_chunk": 0
-            },
-            {
-                "id": "b7d0e1f2-a3b4-4c5d-7e8f-9a0b1c2d3e4f",
-                "created": "2025-01-01 08:00:00",
-                "lastchange": "2025-01-01 08:00:00",
-                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "name": "cancelled",
-                "description": "Application/enrollment has been cancelled",
-                "category": "enrollment_status",
-                "is_active": true,
+                "enrollment_id": "c8f2f1a4-3b9d-4a5f-8e3c-1f2a3b4c5d6e",
+                "amount": 100.0,
+                "currency": "EUR",
+                "method": "card",
+                "payment_date": "2025-09-02T10:30:00.654321",
                 "_chunk": 0
             }
         ]
