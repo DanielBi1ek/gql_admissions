@@ -1,5 +1,13 @@
 from typing import Optional
-from src.DBDefinitions import BaseModel, EventModel, EventInvitationModel, AdmissionModel, StudyProgramModel, PaymentInfoModel
+from src.DBDefinitions import (
+    BaseModel,
+    EventModel,
+    EventInvitationModel,
+    AdmissionProcessModel,
+    AdmissionApplicationModel,
+    StudyProgramModel,
+    PaymentInfoModel,
+)
 from src.DBDefinitions.EnrollmentModel import EnrollmentModel
 from src.DBDefinitions.PaymentModel import PaymentModel
 
@@ -16,7 +24,8 @@ class LoaderMap(LoaderMapBase[BaseModel]):
     #StateModel: Optional[IDLoader]
     StudyProgramModel: Optional[IDLoader]
     PaymentInfoModel: Optional[IDLoader]
-    AdmissionModel: Optional[IDLoader]
+    AdmissionProcessModel: Optional[IDLoader]
+    AdmissionApplicationModel: Optional[IDLoader]
     EnrollmentModel: Optional[IDLoader]
     PaymentModel: Optional[IDLoader]
 
@@ -32,7 +41,8 @@ class LoaderMap(LoaderMapBase[BaseModel]):
         self.EventInvitationModel = self.get(EventInvitationModel)
         self.StudyProgramModel = self.get(StudyProgramModel)
         self.PaymentInfoModel = self.get(PaymentInfoModel)
-        self.AdmissionModel = self.get(AdmissionModel)
+        self.AdmissionProcessModel = self.get(AdmissionProcessModel)
+        self.AdmissionApplicationModel = self.get(AdmissionApplicationModel)
         self.EnrollmentModel = self.get(EnrollmentModel)
         self.PaymentModel = self.get(PaymentModel)
 

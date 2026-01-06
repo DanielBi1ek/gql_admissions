@@ -8,7 +8,8 @@ from src.DBDefinitions import (
     EventModel,
     EventInvitationModel,
     StudyProgramModel,
-    AdmissionModel,
+    AdmissionProcessModel,
+    AdmissionApplicationModel,
     EnrollmentModel,
     PaymentInfoModel,
     PaymentModel,
@@ -31,7 +32,8 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
             EventInvitationModel,
             StudyProgramModel,
             PaymentInfoModel,
-            AdmissionModel,
+            AdmissionProcessModel,
+            AdmissionApplicationModel,
             EnrollmentModel,
             PaymentModel,
 
@@ -49,35 +51,47 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
                 return v
         return v
 
-    if isinstance(jsonData, dict) and "admissions_evolution" in jsonData:
-        for row in jsonData.get("admissions_evolution", []):
+    if isinstance(jsonData, dict) and "admission_processes" in jsonData:
+        for row in jsonData.get("admission_processes", []):
             if not isinstance(row, dict):
                 continue
             for key in [
-                "applied_date",
                 "application_start_date",
-                "application_last_date",
-                "end_date",
-                "condition_date",
-                "payment_date",
-                "condition_extended_date",
-                "request_condition_extend_date",
-                "request_extra_conditions_date",
-                "request_extra_date_date",
+                "application_end_date",
                 "exam_start_date",
-                "exam_last_date",
-                "student_entry_date",
+                "exam_end_date",
+                "decision_deadline",
+                "payment_deadline",
+                "enrollment_date",
+                "condition_deadline",
+                "condition_extended_deadline",
                 "created",
                 "lastchange",
             ]:
                 if key in row:
                     row[key] = _parse_iso(row.get(key))
 
-    if isinstance(jsonData, dict) and "payments_evolution" in jsonData:
-        for row in jsonData.get("payments_evolution", []):
+    if isinstance(jsonData, dict) and "admission_applications" in jsonData:
+        for row in jsonData.get("admission_applications", []):
             if not isinstance(row, dict):
                 continue
-            for key in ["payment_date", "created", "lastchange"]:
+            for key in ["applied_date", "created", "lastchange"]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
+    if isinstance(jsonData, dict) and "payments" in jsonData:
+        for row in jsonData.get("payments", []):
+            if not isinstance(row, dict):
+                continue
+            for key in ["paid_at", "created", "lastchange"]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
+    if isinstance(jsonData, dict) and "enrollments" in jsonData:
+        for row in jsonData.get("enrollments", []):
+            if not isinstance(row, dict):
+                continue
+            for key in ["enrolled_at", "created", "lastchange"]:
                 if key in row:
                     row[key] = _parse_iso(row.get(key))
     await ImportModels(asyncSessionMaker, dbModels, jsonData)
@@ -96,7 +110,8 @@ async def backupDB(asyncSessionMaker, filename="./systemdata.backup.json"):
         EventInvitationModel,
         StudyProgramModel,
         PaymentInfoModel,
-        AdmissionModel,
+        AdmissionProcessModel,
+        AdmissionApplicationModel,
         EnrollmentModel,
         PaymentModel,
 

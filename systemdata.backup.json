@@ -13291,8 +13291,8 @@
         "event_invitations_evolution": [
             {
                 "id": "35e5b9fe-3ee9-4d1b-83da-18b64af95619",
-                "created": "2025-12-08 21:38:34.805175",
-                "lastchange": "2025-12-08 21:38:34.805175",
+                "created": "2026-01-06 18:11:11.895369",
+                "lastchange": "2026-01-06 18:11:11.895369",
                 "createdby_id": null,
                 "changedby_id": null,
                 "rbacobject_id": null,
@@ -13340,6 +13340,25 @@
         ]
     },
     {
+        "admission_payment_infos": [
+            {
+                "id": "11111111-2222-3333-4444-555555555555",
+                "created": "2025-01-01 08:00:00",
+                "lastchange": "2025-01-01 08:00:00",
+                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+                "changedby_id": null,
+                "rbacobject_id": null,
+                "account_number": "123456789/0100",
+                "specific_symbol": "2025001",
+                "constant_symbol": "0558",
+                "iban": "CZ6501000000000123456789",
+                "swift": "KOMBCZPP",
+                "amount": 100.0,
+                "_chunk": 0
+            }
+        ]
+    },
+    {
         "admissions_evolution": [
             {
                 "id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
@@ -13350,67 +13369,24 @@
                 "rbacobject_id": null,
                 "applicant_name": "Alice Example",
                 "applicant_email": "alice@example.org",
-                "applied_date": "2025-12-08 21:38:34.831352",
-                "_chunk": 0
-            },
-            {
-                "id": "0a66012d-444c-41db-b553-adab4745b6ff",
-                "created": "2025-12-08 21:39:58.285799",
-                "lastchange": "2025-12-08 21:39:58.285799",
-                "createdby_id": "2d9dc5ca-a4a2-11ed-b9df-0242ac120003",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "applicant_name": "",
-                "applicant_email": "fdafadsfsa",
-                "applied_date": "2025-12-08 21:39:58.285799",
-                "_chunk": 0
-            },
-            {
-                "id": "3efdc84f-7e8a-4e7f-8b68-0e4a29fc3c65",
-                "created": "2025-12-26 08:14:36.111125",
-                "lastchange": "2025-12-26 08:14:36.111125",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "applicant_name": "robert Alkaci",
-                "applicant_email": "robert.alkaci@unob.cz",
-                "applied_date": "2025-12-26 08:14:36.111125",
-                "_chunk": 0
-            },
-            {
-                "id": "d2286577-47a6-4684-ad0d-d5230fccad3c",
-                "created": "2025-12-26 08:15:43.290799",
-                "lastchange": "2025-12-26 08:15:43.290799",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "applicant_name": "alkaci robert",
-                "applicant_email": "alkaci@unob.cz",
-                "applied_date": "2025-12-26 08:15:43.290799",
-                "_chunk": 0
-            },
-            {
-                "id": "38060f77-eb2e-4b0c-86cf-f2d4d8ce57fe",
-                "created": "2025-12-29 13:03:40.713201",
-                "lastchange": "2025-12-29 13:03:40.713201",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": null,
-                "rbacobject_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "applicant_name": "Test User",
-                "applicant_email": "testovaci.user@user.com",
-                "applied_date": "2025-12-29 13:03:40.713201",
-                "_chunk": 0
-            },
-            {
-                "id": "6cb53ff3-502e-4783-addf-b25e9fbb92d9",
-                "created": "2025-12-29 13:20:46.310876",
-                "lastchange": "2025-12-29 13:20:46.310876",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": null,
-                "rbacobject_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "applicant_name": "Jitka Zemanova",
-                "applicant_email": "jitka.zemanova@gmail.com",
-                "applied_date": "2025-12-29 13:20:46.310876",
+                "applied_date": "2025-09-01 08:00:00.123456",
+                "status_id": null,
+                "name": "Admission 2025/2026",
+                "name_en": "Admission 2025/2026",
+                "program_id": "a1b2c3d4-5e6f-4711-8a9b-0c1d2e3f4a5b",
+                "payment_info_id": "11111111-2222-3333-4444-555555555555",
+                "application_start_date": "2025-02-01 00:00:00",
+                "application_last_date": "2025-05-31 23:59:59",
+                "end_date": "2025-07-15 23:59:59",
+                "condition_date": "2025-07-31 23:59:59",
+                "payment_date": "2025-06-30 23:59:59",
+                "condition_extended_date": null,
+                "request_condition_extend_date": "2025-07-10 23:59:59",
+                "request_extra_conditions_date": "2025-07-05 23:59:59",
+                "request_extra_date_date": "2025-06-15 23:59:59",
+                "exam_start_date": "2025-06-20 08:00:00",
+                "exam_last_date": "2025-06-30 18:00:00",
+                "student_entry_date": "2025-09-01 08:00:00",
                 "_chunk": 0
             }
         ]
@@ -13426,6 +13402,7 @@
                 "rbacobject_id": null,
                 "admission_id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
                 "study_program_id": "a1b2c3d4-5e6f-4711-8a9b-0c1d2e3f4a5b",
+                "status_id": null,
                 "payment": 0.0,
                 "_chunk": 0
             }
@@ -13441,10 +13418,15 @@
                 "changedby_id": null,
                 "rbacobject_id": null,
                 "enrollment_id": "c8f2f1a4-3b9d-4a5f-8e3c-1f2a3b4c5d6e",
+                "payment_info_id": "11111111-2222-3333-4444-555555555555",
+                "student_id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+                "status_id": null,
+                "bank_unique_data": "BANK-2025-0001",
+                "variable_symbol": "2025001",
                 "amount": 100.0,
                 "currency": "EUR",
                 "method": "card",
-                "payment_date": "2025-09-02T10:30:00.654321",
+                "payment_date": "2025-09-02 10:30:00.654321",
                 "_chunk": 0
             }
         ]

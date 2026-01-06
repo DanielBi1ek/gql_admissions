@@ -7,19 +7,19 @@ from .BaseModel import BaseModel, IDType, UUIDFKey
 
 
 class PaymentModel(BaseModel):
-    __tablename__ = "payments_evolution"
+    __tablename__ = "payments"
 
     # Foreign keys to tables in THIS database
-    enrollment_id: Mapped[IDType] = UUIDFKey(
-        ForeignKey("enrollments_evolution.id"),
-        comment="enrollment reference"
+    application_id: Mapped[IDType] = UUIDFKey(
+        ForeignKey("admission_applications.id"),
+        comment="application reference"
     )
     payment_info_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("admission_payment_infos.id"),
         comment="payment conditions reference"
     )
-    student_id: Mapped[IDType] = UUIDFKey(
-        comment="identified application/student reference (no FK)"
+    payer_id: Mapped[IDType] = UUIDFKey(
+        comment="payer user reference (no FK)"
     )
     status_id: Mapped[IDType] = UUIDFKey(
         comment="payment status reference (no FK)"
@@ -51,7 +51,7 @@ class PaymentModel(BaseModel):
         nullable=True,
         comment="payment method"
     )
-    payment_date: Mapped[datetime.datetime] = mapped_column(
+    paid_at: Mapped[datetime.datetime] = mapped_column(
         default=None,
         nullable=True,
         comment="date of payment"
@@ -59,8 +59,8 @@ class PaymentModel(BaseModel):
 
 
     # Relationships
-    enrollment = relationship(
-        "EnrollmentModel",
+    application = relationship(
+        "AdmissionApplicationModel",
         back_populates="payments",
         uselist=False
     )

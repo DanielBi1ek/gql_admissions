@@ -8,35 +8,35 @@ from uoishelpers.gqlpermissions import OnlyForAuthentized
 from .BaseGQLModel import BaseGQLModel, IDType
 
 # Forward references
-EnrollmentGQLModel = typing.Annotated["EnrollmentGQLModel", strawberry.lazy(".EnrollmentGQLModel")]
+AdmissionApplicationGQLModel = typing.Annotated["AdmissionApplicationGQLModel", strawberry.lazy(".AdmissionApplicationGQLModel")]
 PaymentInfoGQLModel = typing.Annotated["PaymentInfoGQLModel", strawberry.lazy(".PaymentInfoGQLModel")]
 
 
 @createInputs2
 class PaymentInputFilter:
     id: IDType
-    enrollment_id: IDType
+    application_id: IDType
     payment_info_id: IDType
-    student_id: IDType
+    payer_id: IDType
     status_id: IDType
     bank_unique_data: str
     variable_symbol: str
     amount: float
     currency: str
     method: str
-    payment_date: datetime.datetime
+    paid_at: datetime.datetime
 
 
-@strawberry.federation.type(keys=["id"], description="Payment for enrollment")
+@strawberry.federation.type(keys=["id"], description="Payment record for an admission application")
 class PaymentGQLModel(BaseGQLModel):
 
     @classmethod
     def getLoader(cls, info: strawberry.types.Info):
         return getLoadersFromInfo(info).PaymentModel
 
-    enrollment_id: typing.Optional[IDType] = strawberry.field(
+    application_id: typing.Optional[IDType] = strawberry.field(
         default=None,
-        description="enrollment reference",
+        description="application reference",
         permission_classes=[OnlyForAuthentized]
     )
     payment_info_id: typing.Optional[IDType] = strawberry.field(
@@ -44,9 +44,9 @@ class PaymentGQLModel(BaseGQLModel):
         description="payment conditions reference",
         permission_classes=[OnlyForAuthentized]
     )
-    student_id: typing.Optional[IDType] = strawberry.field(
+    payer_id: typing.Optional[IDType] = strawberry.field(
         default=None,
-        description="identified application/student reference",
+        description="payer user reference",
         permission_classes=[OnlyForAuthentized]
     )
     status_id: typing.Optional[IDType] = strawberry.field(
@@ -83,17 +83,16 @@ class PaymentGQLModel(BaseGQLModel):
         permission_classes=[OnlyForAuthentized]
     )
 
-    payment_date: typing.Optional[datetime.datetime] = strawberry.field(
+    paid_at: typing.Optional[datetime.datetime] = strawberry.field(
         default=None,
         description="date of payment",
         permission_classes=[OnlyForAuthentized]
     )
 
-    # Relationships
-    enrollment: typing.Optional["EnrollmentGQLModel"] = strawberry.field(
-        description="related enrollment",
+    application: typing.Optional["AdmissionApplicationGQLModel"] = strawberry.field(
+        description="related admission application",
         permission_classes=[OnlyForAuthentized],
-        resolver=ScalarResolver["EnrollmentGQLModel"](fkey_field_name="enrollment_id")
+        resolver=ScalarResolver["AdmissionApplicationGQLModel"](fkey_field_name="application_id")
     )
     payment_info: typing.Optional["PaymentInfoGQLModel"] = strawberry.field(
         description="payment conditions reference",
@@ -117,23 +116,22 @@ class PaymentQuery:
     )
 
 
-# Mutations
 from uoishelpers.resolvers import InsertError, UpdateError, DeleteError
 from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
 
 
 @strawberry.input(description="Input model for creating a payment")
 class PaymentInsertGQLModel:
-    enrollment_id: IDType = strawberry.field(description="Enrollment reference")
+    application_id: IDType = strawberry.field(description="Application reference")
     payment_info_id: typing.Optional[IDType] = strawberry.field(default=None, description="Payment info reference")
-    student_id: typing.Optional[IDType] = strawberry.field(default=None, description="Application/student reference")
+    payer_id: typing.Optional[IDType] = strawberry.field(default=None, description="Payer reference")
     status_id: typing.Optional[IDType] = strawberry.field(default=None, description="Payment status")
     bank_unique_data: typing.Optional[str] = strawberry.field(default=None, description="Bank unique identifier")
     variable_symbol: typing.Optional[str] = strawberry.field(default=None, description="Variable symbol")
     amount: float = strawberry.field(description="Payment amount")
     currency: typing.Optional[str] = strawberry.field(default="EUR", description="Currency code")
     method: typing.Optional[str] = strawberry.field(default=None, description="Payment method")
-    payment_date: typing.Optional[datetime.datetime] = strawberry.field(default=None, description="Date of payment")
+    paid_at: typing.Optional[datetime.datetime] = strawberry.field(default=None, description="Date of payment")
 
 
 @strawberry.input(description="Input model for updating a payment")
@@ -141,14 +139,14 @@ class PaymentUpdateGQLModel:
     id: IDType = strawberry.field(description="Payment id")
     lastchange: datetime.datetime = strawberry.field(description="Last change timestamp")
     payment_info_id: typing.Optional[IDType] = None
-    student_id: typing.Optional[IDType] = None
+    payer_id: typing.Optional[IDType] = None
     status_id: typing.Optional[IDType] = None
     bank_unique_data: typing.Optional[str] = None
     variable_symbol: typing.Optional[str] = None
     amount: typing.Optional[float] = None
     currency: typing.Optional[str] = None
     method: typing.Optional[str] = None
-    payment_date: typing.Optional[datetime.datetime] = None
+    paid_at: typing.Optional[datetime.datetime] = None
 
 
 @strawberry.input(description="Input model for deleting a payment")
@@ -170,27 +168,14 @@ class PaymentMutation:
     ) -> typing.Union[PaymentGQLModel, InsertError[PaymentGQLModel]]:
         import uuid
 
-        print("=" * 80)
-        print("DEBUG: payment_insert CALLED!!!")
-        print(f"DEBUG: enrollment_id: {payment.enrollment_id}")
-        print(f"DEBUG: payment_info_id: {payment.payment_info_id}")
-        print(f"DEBUG: student_id: {payment.student_id}")
-        print(f"DEBUG: status_id: {payment.status_id}")
-        print(f"DEBUG: bank_unique_data: {payment.bank_unique_data}")
-        print(f"DEBUG: variable_symbol: {payment.variable_symbol}")
-        print(f"DEBUG: amount: {payment.amount}")
-        print(f"DEBUG: currency: {payment.currency}")
-        print(f"DEBUG: method: {payment.method}")
-        print("=" * 80)
-
         try:
             loader = getLoadersFromInfo(info).PaymentModel
 
             payment_data = {
                 "id": uuid.uuid4(),
-                "enrollment_id": payment.enrollment_id,
+                "application_id": payment.application_id,
                 "payment_info_id": payment.payment_info_id,
-                "student_id": payment.student_id,
+                "payer_id": payment.payer_id,
                 "status_id": payment.status_id,
                 "bank_unique_data": payment.bank_unique_data,
                 "variable_symbol": payment.variable_symbol,
@@ -200,10 +185,8 @@ class PaymentMutation:
                 "rbacobject_id": None,
                 "createdby_id": uuid.UUID("66d8a57c-9ff3-40c3-a019-07808b5150a2"),
                 "changedby_id": None,
-                "payment_date": payment.payment_date,
+                "paid_at": payment.paid_at,
             }
-
-            print(f"DEBUG: Creating payment with data: {payment_data}")
 
             from ..DBDefinitions.PaymentModel import PaymentModel
             db_row = PaymentModel(**payment_data)
@@ -213,18 +196,11 @@ class PaymentMutation:
             await session.commit()
             await session.refresh(db_row)
 
-            print(f"DEBUG: Insert successful! ID: {db_row.id}")
-
             return PaymentGQLModel.from_dataclass(db_row)
 
         except Exception as e:
-            print(f"DEBUG: Exception during insert: {type(e).__name__}: {str(e)}")
-            print(f"DEBUG: Full exception details:")
-            import traceback
-            traceback.print_exc()
-
             return InsertError[PaymentGQLModel](
-                msg=f"{type(e).__name__}: {str(e)}",
+                msg=str(e),
                 _input=payment
             )
 
@@ -239,50 +215,38 @@ class PaymentMutation:
             payment: PaymentUpdateGQLModel,
             db_row: typing.Any
     ) -> typing.Union[PaymentGQLModel, UpdateError[PaymentGQLModel]]:
-        print("=" * 80)
-        print("DEBUG: payment_update CALLED!!!")
-        print(f"DEBUG: id: {payment.id}")
-        print("=" * 80)
-
         try:
             loader = getLoadersFromInfo(info).PaymentModel
             session = loader.session
 
+            if payment.status_id is not None:
+                db_row.status_id = payment.status_id
+            if payment.payment_info_id is not None:
+                db_row.payment_info_id = payment.payment_info_id
+            if payment.payer_id is not None:
+                db_row.payer_id = payment.payer_id
+            if payment.bank_unique_data is not None:
+                db_row.bank_unique_data = payment.bank_unique_data
+            if payment.variable_symbol is not None:
+                db_row.variable_symbol = payment.variable_symbol
             if payment.amount is not None:
                 db_row.amount = payment.amount
             if payment.currency is not None:
                 db_row.currency = payment.currency
             if payment.method is not None:
                 db_row.method = payment.method
-            if payment.status_id is not None:
-                db_row.status_id = payment.status_id
-            if payment.payment_info_id is not None:
-                db_row.payment_info_id = payment.payment_info_id
-            if payment.student_id is not None:
-                db_row.student_id = payment.student_id
-            if payment.bank_unique_data is not None:
-                db_row.bank_unique_data = payment.bank_unique_data
-            if payment.variable_symbol is not None:
-                db_row.variable_symbol = payment.variable_symbol
-            if payment.payment_date is not None:
-                db_row.payment_date = payment.payment_date
+            if payment.paid_at is not None:
+                db_row.paid_at = payment.paid_at
 
-            import datetime
             db_row.lastchange = datetime.datetime.now()
 
             session.add(db_row)
             await session.commit()
             await session.refresh(db_row)
 
-            print(f"DEBUG: Update successful!")
-
             return PaymentGQLModel.from_dataclass(db_row)
 
         except Exception as e:
-            print(f"DEBUG: Exception during update: {type(e).__name__}: {str(e)}")
-            import traceback
-            traceback.print_exc()
-
             return UpdateError[PaymentGQLModel](
                 msg=str(e),
                 _input=payment
@@ -299,11 +263,6 @@ class PaymentMutation:
             payment: PaymentDeleteGQLModel,
             db_row: typing.Any
     ) -> typing.Optional[DeleteError[PaymentGQLModel]]:
-        print("=" * 80)
-        print("DEBUG: payment_delete CALLED!!!")
-        print(f"DEBUG: id: {payment.id}")
-        print("=" * 80)
-
         try:
             loader = getLoadersFromInfo(info).PaymentModel
             session = loader.session
@@ -311,15 +270,9 @@ class PaymentMutation:
             await session.delete(db_row)
             await session.commit()
 
-            print(f"DEBUG: Delete successful!")
-
             return None
 
         except Exception as e:
-            print(f"DEBUG: Exception during delete: {type(e).__name__}: {str(e)}")
-            import traceback
-            traceback.print_exc()
-
             return DeleteError[PaymentGQLModel](
                 msg=str(e),
                 _input=payment

@@ -1,4 +1,4 @@
-# AdmissionModel.py
+# StateModel.py
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 import datetime
 import sqlalchemy
@@ -26,4 +26,3 @@ class StateModel(BaseModel):
         nullable=True,
         comment="is the state active"
     )
-

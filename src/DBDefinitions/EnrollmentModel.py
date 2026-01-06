@@ -1,3 +1,5 @@
+import datetime
+
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import ForeignKey
 
@@ -5,12 +7,12 @@ from .BaseModel import BaseModel, IDType, UUIDFKey
 
 
 class EnrollmentModel(BaseModel):
-    __tablename__ = "enrollments_evolution"
+    __tablename__ = "enrollments"
 
     # Foreign keys to tables in THIS database
-    admission_id: Mapped[IDType] = UUIDFKey(
-        ForeignKey("admissions_evolution.id"),
-        comment="foreign key to admission"
+    application_id: Mapped[IDType] = UUIDFKey(
+        ForeignKey("admission_applications.id"),
+        comment="foreign key to admission application"
     )
     study_program_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("study_programs.id"),
@@ -23,16 +25,16 @@ class EnrollmentModel(BaseModel):
 
 
     # Fields
-    payment: Mapped[float] = mapped_column(
-        default=0.0,
+    enrolled_at: Mapped[datetime.datetime] = mapped_column(
+        default=None,
         nullable=True,
-        comment="enrollment payment amount"
+        comment="enrollment date"
     )
 
     # Relationships
-    admission = relationship(
-        "AdmissionModel",
-        back_populates="enrollment_records",
+    application = relationship(
+        "AdmissionApplicationModel",
+        back_populates="enrollments",
         uselist=False
     )
     study_program = relationship(
@@ -40,11 +42,4 @@ class EnrollmentModel(BaseModel):
         viewonly=True,
         uselist=False,
         lazy="joined"
-    )
-
-    payments = relationship(
-        "PaymentModel",
-        back_populates="enrollment",
-        uselist=True,
-        cascade="save-update"
     )

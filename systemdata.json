@@ -10386,29 +10386,38 @@
             "rbacobject_id": null
         }
     ],
-    "admissions_evolution": [
+    "admission_processes": [
         {
-            "id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
-            "applicant_name": "Alice Example",
-            "applicant_email": "alice@example.org",
-            "applied_date": "2025-09-01T08:00:00.123456",
-            "status_id": null,
+            "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
             "name": "Admission 2025/2026",
             "name_en": "Admission 2025/2026",
             "program_id": "a1b2c3d4-5e6f-4711-8a9b-0c1d2e3f4a5b",
             "payment_info_id": "11111111-2222-3333-4444-555555555555",
             "application_start_date": "2025-02-01T00:00:00.000000",
-            "application_last_date": "2025-05-31T23:59:59.000000",
-            "end_date": "2025-07-15T23:59:59.000000",
-            "condition_date": "2025-07-31T23:59:59.000000",
-            "payment_date": "2025-06-30T23:59:59.000000",
-            "condition_extended_date": null,
-            "request_condition_extend_date": "2025-07-10T23:59:59.000000",
-            "request_extra_conditions_date": "2025-07-05T23:59:59.000000",
-            "request_extra_date_date": "2025-06-15T23:59:59.000000",
+            "application_end_date": "2025-05-31T23:59:59.000000",
             "exam_start_date": "2025-06-20T08:00:00.000000",
-            "exam_last_date": "2025-06-30T18:00:00.000000",
-            "student_entry_date": "2025-09-01T08:00:00.000000",
+            "exam_end_date": "2025-06-30T18:00:00.000000",
+            "decision_deadline": "2025-07-15T23:59:59.000000",
+            "payment_deadline": "2025-06-30T23:59:59.000000",
+            "enrollment_date": "2025-09-01T08:00:00.000000",
+            "condition_deadline": "2025-07-31T23:59:59.000000",
+            "condition_extended_deadline": null,
+            "created": "2025-01-01T08:00:00.000000",
+            "lastchange": "2025-01-01T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": null
+        }
+    ],
+    "admission_applications": [
+        {
+            "id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+            "process_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "applicant_name": "Alice Example",
+            "applicant_email": "alice@example.org",
+            "applied_date": "2025-09-01T08:00:00.123456",
+            "status_id": null,
             "created": "2025-09-01T08:00:00.123456",
             "lastchange": "2025-09-01T08:00:00.123456",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
@@ -10416,13 +10425,13 @@
             "rbacobject_id": null
         }
     ],
-    "enrollments_evolution": [
+    "enrollments": [
         {
             "id": "c8f2f1a4-3b9d-4a5f-8e3c-1f2a3b4c5d6e",
-            "admission_id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+            "application_id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
             "study_program_id": "a1b2c3d4-5e6f-4711-8a9b-0c1d2e3f4a5b",
             "status_id": null,
-            "payment": 0.0,
+            "enrolled_at": "2025-09-01T08:00:00.123456",
             "created": "2025-09-01T08:00:00.123456",
             "lastchange": "2025-09-01T08:00:00.123456",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
@@ -10430,19 +10439,19 @@
             "rbacobject_id": null
         }
     ],
-    "payments_evolution": [
+    "payments": [
         {
             "id": "d9e8f7a6-b5c4-4d3e-9f8a-7b6c5d4e3f2a",
-            "enrollment_id": "c8f2f1a4-3b9d-4a5f-8e3c-1f2a3b4c5d6e",
+            "application_id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
             "payment_info_id": "11111111-2222-3333-4444-555555555555",
-            "student_id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+            "payer_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "status_id": null,
             "bank_unique_data": "BANK-2025-0001",
             "variable_symbol": "2025001",
             "amount": 100.0,
             "currency": "EUR",
             "method": "card",
-            "payment_date": "2025-09-02T10:30:00.654321",
+            "paid_at": "2025-09-02T10:30:00.654321",
             "created": "2025-09-02T10:30:00.654321",
             "lastchange": "2025-09-02T10:30:00.654321",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
