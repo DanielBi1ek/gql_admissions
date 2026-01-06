@@ -18,7 +18,7 @@ class EnrollmentInputFilter:
     id: IDType
     admission_id: IDType
     study_program_id: IDType
-    #status_id: IDType
+    status_id: IDType
     payment: float
 
 
@@ -40,8 +40,11 @@ class EnrollmentGQLModel(BaseGQLModel):
         description="study program reference",
         permission_classes=[OnlyForAuthentized]
     )
-
-
+    status_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="enrollment status id",
+        permission_classes=[OnlyForAuthentized]
+    )
 
     payment: typing.Optional[float] = strawberry.field(
         default=None,
@@ -87,7 +90,7 @@ from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
 class EnrollmentInsertGQLModel:
     admission_id: IDType = strawberry.field(description="Admission reference")
     study_program_id: IDType = strawberry.field(description="Study program reference")
-    #status_id: IDType = strawberry.field(description="Enrollment status")
+    status_id: typing.Optional[IDType] = strawberry.field(default=None, description="Enrollment status")
     payment: typing.Optional[float] = strawberry.field(default=0.0, description="Payment amount")
 
 
@@ -96,7 +99,7 @@ class EnrollmentUpdateGQLModel:
     id: IDType = strawberry.field(description="Enrollment id")
     lastchange: datetime.datetime = strawberry.field(description="Last change timestamp")
     study_program_id: typing.Optional[IDType] = None
-   # status_id: typing.Optional[IDType] = None
+    status_id: typing.Optional[IDType] = None
     payment: typing.Optional[float] = None
 
 
@@ -123,7 +126,7 @@ class EnrollmentMutation:
         print("DEBUG: enrollment_insert CALLED!!!")
         print(f"DEBUG: admission_id: {enrollment.admission_id}")
         print(f"DEBUG: study_program_id: {enrollment.study_program_id}")
-        #print(f"DEBUG: status_id: {enrollment.status_id}")
+        print(f"DEBUG: status_id: {enrollment.status_id}")
         print(f"DEBUG: payment: {enrollment.payment}")
         print("=" * 80)
 
@@ -134,7 +137,7 @@ class EnrollmentMutation:
                 "id": uuid.uuid4(),
                 "admission_id": enrollment.admission_id,
                 "study_program_id": enrollment.study_program_id,
-                #"status_id": enrollment.status_id,
+                "status_id": enrollment.status_id,
                 "payment": enrollment.payment,
                 "rbacobject_id": None,
                 "createdby_id": uuid.UUID("66d8a57c-9ff3-40c3-a019-07808b5150a2"),
@@ -187,8 +190,8 @@ class EnrollmentMutation:
 
             if enrollment.study_program_id is not None:
                 db_row.study_program_id = enrollment.study_program_id
-            #if enrollment.status_id is not None:
-             #   db_row.status_id = enrollment.status_id
+            if enrollment.status_id is not None:
+                db_row.status_id = enrollment.status_id
             if enrollment.payment is not None:
                 db_row.payment = enrollment.payment
 

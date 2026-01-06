@@ -10,6 +10,7 @@ from src.DBDefinitions import (
     StudyProgramModel,
     AdmissionModel,
     EnrollmentModel,
+    PaymentInfoModel,
     PaymentModel,
 
 
@@ -29,6 +30,7 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
             EventModel,
             EventInvitationModel,
             StudyProgramModel,
+            PaymentInfoModel,
             AdmissionModel,
             EnrollmentModel,
             PaymentModel,
@@ -37,6 +39,47 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
         ]
 
     jsonData = readJsonFile(filename)
+    import datetime as _dt
+
+    def _parse_iso(v):
+        if isinstance(v, str):
+            try:
+                return _dt.datetime.fromisoformat(v)
+            except Exception:
+                return v
+        return v
+
+    if isinstance(jsonData, dict) and "admissions_evolution" in jsonData:
+        for row in jsonData.get("admissions_evolution", []):
+            if not isinstance(row, dict):
+                continue
+            for key in [
+                "applied_date",
+                "application_start_date",
+                "application_last_date",
+                "end_date",
+                "condition_date",
+                "payment_date",
+                "condition_extended_date",
+                "request_condition_extend_date",
+                "request_extra_conditions_date",
+                "request_extra_date_date",
+                "exam_start_date",
+                "exam_last_date",
+                "student_entry_date",
+                "created",
+                "lastchange",
+            ]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
+    if isinstance(jsonData, dict) and "payments_evolution" in jsonData:
+        for row in jsonData.get("payments_evolution", []):
+            if not isinstance(row, dict):
+                continue
+            for key in ["payment_date", "created", "lastchange"]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
     await ImportModels(asyncSessionMaker, dbModels, jsonData)
 
     print("Data initialized", flush=True)
@@ -52,6 +95,7 @@ async def backupDB(asyncSessionMaker, filename="./systemdata.backup.json"):
         EventModel,
         EventInvitationModel,
         StudyProgramModel,
+        PaymentInfoModel,
         AdmissionModel,
         EnrollmentModel,
         PaymentModel,

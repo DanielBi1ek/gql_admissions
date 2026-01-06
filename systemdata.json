@@ -10338,7 +10338,7 @@
             "state_id": null
         }
     ],
-        "study_programs": [
+    "study_programs": [
         {
             "id": "a1b2c3d4-5e6f-4711-8a9b-0c1d2e3f4a5b",
             "name": "Computer Science",
@@ -10370,11 +10370,45 @@
             "rbacobject_id": null
         }
     ],
+    "admission_payment_infos": [
+        {
+            "id": "11111111-2222-3333-4444-555555555555",
+            "account_number": "123456789/0100",
+            "specific_symbol": "2025001",
+            "constant_symbol": "0558",
+            "iban": "CZ6501000000000123456789",
+            "swift": "KOMBCZPP",
+            "amount": 100.0,
+            "created": "2025-01-01T08:00:00.000000",
+            "lastchange": "2025-01-01T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": null
+        }
+    ],
     "admissions_evolution": [
         {
             "id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
             "applicant_name": "Alice Example",
             "applicant_email": "alice@example.org",
+            "applied_date": "2025-09-01T08:00:00.123456",
+            "status_id": null,
+            "name": "Admission 2025/2026",
+            "name_en": "Admission 2025/2026",
+            "program_id": "a1b2c3d4-5e6f-4711-8a9b-0c1d2e3f4a5b",
+            "payment_info_id": "11111111-2222-3333-4444-555555555555",
+            "application_start_date": "2025-02-01T00:00:00.000000",
+            "application_last_date": "2025-05-31T23:59:59.000000",
+            "end_date": "2025-07-15T23:59:59.000000",
+            "condition_date": "2025-07-31T23:59:59.000000",
+            "payment_date": "2025-06-30T23:59:59.000000",
+            "condition_extended_date": null,
+            "request_condition_extend_date": "2025-07-10T23:59:59.000000",
+            "request_extra_conditions_date": "2025-07-05T23:59:59.000000",
+            "request_extra_date_date": "2025-06-15T23:59:59.000000",
+            "exam_start_date": "2025-06-20T08:00:00.000000",
+            "exam_last_date": "2025-06-30T18:00:00.000000",
+            "student_entry_date": "2025-09-01T08:00:00.000000",
             "created": "2025-09-01T08:00:00.123456",
             "lastchange": "2025-09-01T08:00:00.123456",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
@@ -10387,6 +10421,7 @@
             "id": "c8f2f1a4-3b9d-4a5f-8e3c-1f2a3b4c5d6e",
             "admission_id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
             "study_program_id": "a1b2c3d4-5e6f-4711-8a9b-0c1d2e3f4a5b",
+            "status_id": null,
             "payment": 0.0,
             "created": "2025-09-01T08:00:00.123456",
             "lastchange": "2025-09-01T08:00:00.123456",
@@ -10399,6 +10434,11 @@
         {
             "id": "d9e8f7a6-b5c4-4d3e-9f8a-7b6c5d4e3f2a",
             "enrollment_id": "c8f2f1a4-3b9d-4a5f-8e3c-1f2a3b4c5d6e",
+            "payment_info_id": "11111111-2222-3333-4444-555555555555",
+            "student_id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+            "status_id": null,
+            "bank_unique_data": "BANK-2025-0001",
+            "variable_symbol": "2025001",
             "amount": 100.0,
             "currency": "EUR",
             "method": "card",

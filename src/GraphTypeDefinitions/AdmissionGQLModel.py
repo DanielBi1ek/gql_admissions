@@ -5,7 +5,7 @@ import os
 import json
 import uuid
 
-from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, VectorResolver
+from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, VectorResolver, ScalarResolver
 from uoishelpers.gqlpermissions import OnlyForAuthentized
 from uoishelpers.resolvers import getUserFromInfo
 from .BaseGQLModel import BaseGQLModel, IDType
@@ -13,6 +13,7 @@ from .BaseGQLModel import BaseGQLModel, IDType
 # forward reference to EnrollmentGQLModel and EnrollmentInputFilter
 EnrollmentGQLModel = typing.Annotated["EnrollmentGQLModel", strawberry.lazy(".EnrollmentGQLModel")]
 EnrollmentInputFilter = typing.Annotated["EnrollmentInputFilter", strawberry.lazy(".EnrollmentGQLModel")]
+PaymentInfoGQLModel = typing.Annotated["PaymentInfoGQLModel", strawberry.lazy(".PaymentInfoGQLModel")]
 
 
 @createInputs2
@@ -20,7 +21,24 @@ class AdmissionInputFilter:
     id: IDType
     applicant_name: str
     applicant_email: str
-    # status_id: IDType
+    status_id: IDType
+    name: str
+    name_en: str
+    program_id: IDType
+    payment_info_id: IDType
+    applied_date: datetime.datetime
+    application_start_date: datetime.datetime
+    application_last_date: datetime.datetime
+    end_date: datetime.datetime
+    condition_date: datetime.datetime
+    payment_date: datetime.datetime
+    condition_extended_date: datetime.datetime
+    request_condition_extend_date: datetime.datetime
+    request_extra_conditions_date: datetime.datetime
+    request_extra_date_date: datetime.datetime
+    exam_start_date: datetime.datetime
+    exam_last_date: datetime.datetime
+    student_entry_date: datetime.datetime
 
 
 @strawberry.federation.type(keys=["id"], description="Admission to the university (simple)")
@@ -36,13 +54,102 @@ class AdmissionGQLModel(BaseGQLModel):
                                                              permission_classes=[OnlyForAuthentized])
     applied_date: typing.Optional[datetime.datetime] = strawberry.field(default=None, description="date of application",
                                                                         permission_classes=[OnlyForAuthentized])
-    # status_id: typing.Optional[IDType] = strawberry.field(default=None, description="admission status_id",permission_classes=[OnlyForAuthentized])
+    status_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="admission status id",
+        permission_classes=[OnlyForAuthentized]
+    )
+    name: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="admission name",
+        permission_classes=[OnlyForAuthentized]
+    )
+    name_en: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="admission name in English",
+        permission_classes=[OnlyForAuthentized]
+    )
+    program_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="study program reference",
+        permission_classes=[OnlyForAuthentized]
+    )
+    payment_info_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="payment info reference",
+        permission_classes=[OnlyForAuthentized]
+    )
+    application_start_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="start date for applications",
+        permission_classes=[OnlyForAuthentized]
+    )
+    application_last_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="last date for applications",
+        permission_classes=[OnlyForAuthentized]
+    )
+    end_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="end date of admission process",
+        permission_classes=[OnlyForAuthentized]
+    )
+    condition_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="deadline for conditions",
+        permission_classes=[OnlyForAuthentized]
+    )
+    payment_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="deadline for payment",
+        permission_classes=[OnlyForAuthentized]
+    )
+    condition_extended_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="extended conditions deadline",
+        permission_classes=[OnlyForAuthentized]
+    )
+    request_condition_extend_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="deadline to request condition extension",
+        permission_classes=[OnlyForAuthentized]
+    )
+    request_extra_conditions_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="deadline to request extra conditions",
+        permission_classes=[OnlyForAuthentized]
+    )
+    request_extra_date_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="deadline to request extra exam date",
+        permission_classes=[OnlyForAuthentized]
+    )
+    exam_start_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="first possible exam date",
+        permission_classes=[OnlyForAuthentized]
+    )
+    exam_last_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="last possible exam date",
+        permission_classes=[OnlyForAuthentized]
+    )
+    student_entry_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="student entry date",
+        permission_classes=[OnlyForAuthentized]
+    )
 
     # related enrollments
     enrollment_records: typing.List["EnrollmentGQLModel"] = strawberry.field(
         description="enrollments created from this admission",
         permission_classes=[OnlyForAuthentized],
         resolver=VectorResolver["EnrollmentGQLModel"](fkey_field_name="admission_id", whereType=EnrollmentInputFilter)
+    )
+    payment_info: typing.Optional["PaymentInfoGQLModel"] = strawberry.field(
+        description="payment conditions for the admission",
+        permission_classes=[OnlyForAuthentized],
+        resolver=ScalarResolver["PaymentInfoGQLModel"](fkey_field_name="payment_info_id")
     )
 
 
@@ -70,7 +177,24 @@ from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
 class AdmissionInsertGQLModel:
     applicant_name: typing.Optional[str] = None
     applicant_email: typing.Optional[str] = None
-    # status_id: typing.Optional[IDType] = "pending"
+    applied_date: typing.Optional[datetime.datetime] = None
+    status_id: typing.Optional[IDType] = None
+    name: typing.Optional[str] = None
+    name_en: typing.Optional[str] = None
+    program_id: typing.Optional[IDType] = None
+    payment_info_id: typing.Optional[IDType] = None
+    application_start_date: typing.Optional[datetime.datetime] = None
+    application_last_date: typing.Optional[datetime.datetime] = None
+    end_date: typing.Optional[datetime.datetime] = None
+    condition_date: typing.Optional[datetime.datetime] = None
+    payment_date: typing.Optional[datetime.datetime] = None
+    condition_extended_date: typing.Optional[datetime.datetime] = None
+    request_condition_extend_date: typing.Optional[datetime.datetime] = None
+    request_extra_conditions_date: typing.Optional[datetime.datetime] = None
+    request_extra_date_date: typing.Optional[datetime.datetime] = None
+    exam_start_date: typing.Optional[datetime.datetime] = None
+    exam_last_date: typing.Optional[datetime.datetime] = None
+    student_entry_date: typing.Optional[datetime.datetime] = None
 
 
 @strawberry.input(description="Input model for updating an admission")
@@ -79,7 +203,24 @@ class AdmissionUpdateGQLModel:
     lastchange: datetime.datetime
     applicant_name: typing.Optional[str] = None
     applicant_email: typing.Optional[str] = None
-    # status_id: typing.Optional[IDType] = None
+    applied_date: typing.Optional[datetime.datetime] = None
+    status_id: typing.Optional[IDType] = None
+    name: typing.Optional[str] = None
+    name_en: typing.Optional[str] = None
+    program_id: typing.Optional[IDType] = None
+    payment_info_id: typing.Optional[IDType] = None
+    application_start_date: typing.Optional[datetime.datetime] = None
+    application_last_date: typing.Optional[datetime.datetime] = None
+    end_date: typing.Optional[datetime.datetime] = None
+    condition_date: typing.Optional[datetime.datetime] = None
+    payment_date: typing.Optional[datetime.datetime] = None
+    condition_extended_date: typing.Optional[datetime.datetime] = None
+    request_condition_extend_date: typing.Optional[datetime.datetime] = None
+    request_extra_conditions_date: typing.Optional[datetime.datetime] = None
+    request_extra_date_date: typing.Optional[datetime.datetime] = None
+    exam_start_date: typing.Optional[datetime.datetime] = None
+    exam_last_date: typing.Optional[datetime.datetime] = None
+    student_entry_date: typing.Optional[datetime.datetime] = None
 
 
 @strawberry.input(description="Input model for deleting an admission")
@@ -154,6 +295,42 @@ class AdmissionMutation:
             admission.applicant_name = db_row.applicant_name
         if admission.applicant_email is None:
             admission.applicant_email = db_row.applicant_email
+        if admission.applied_date is None:
+            admission.applied_date = db_row.applied_date
+        if admission.status_id is None:
+            admission.status_id = db_row.status_id
+        if admission.name is None:
+            admission.name = db_row.name
+        if admission.name_en is None:
+            admission.name_en = db_row.name_en
+        if admission.program_id is None:
+            admission.program_id = db_row.program_id
+        if admission.payment_info_id is None:
+            admission.payment_info_id = db_row.payment_info_id
+        if admission.application_start_date is None:
+            admission.application_start_date = db_row.application_start_date
+        if admission.application_last_date is None:
+            admission.application_last_date = db_row.application_last_date
+        if admission.end_date is None:
+            admission.end_date = db_row.end_date
+        if admission.condition_date is None:
+            admission.condition_date = db_row.condition_date
+        if admission.payment_date is None:
+            admission.payment_date = db_row.payment_date
+        if admission.condition_extended_date is None:
+            admission.condition_extended_date = db_row.condition_extended_date
+        if admission.request_condition_extend_date is None:
+            admission.request_condition_extend_date = db_row.request_condition_extend_date
+        if admission.request_extra_conditions_date is None:
+            admission.request_extra_conditions_date = db_row.request_extra_conditions_date
+        if admission.request_extra_date_date is None:
+            admission.request_extra_date_date = db_row.request_extra_date_date
+        if admission.exam_start_date is None:
+            admission.exam_start_date = db_row.exam_start_date
+        if admission.exam_last_date is None:
+            admission.exam_last_date = db_row.exam_last_date
+        if admission.student_entry_date is None:
+            admission.student_entry_date = db_row.student_entry_date
 
         # Set the changedby_id
         admission.changedby_id = user_id

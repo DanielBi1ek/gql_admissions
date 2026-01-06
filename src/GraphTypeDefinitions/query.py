@@ -5,9 +5,10 @@ from .EnrollmentGQLModel import EnrollmentQuery
 from .EventGQLModel import EventQuery
 from .EventInvitationGQLModel import EventInvitationQuery
 from .PaymentGQLModel import PaymentQuery
+from .PaymentInfoGQLModel import PaymentInfoQuery
 
 
 
 @strawberry.type(description="""Type for query root (admissions only)""")
-class Query(AdmissionQuery, EnrollmentQuery, EventQuery, EventInvitationQuery, PaymentQuery):
+class Query(AdmissionQuery, EnrollmentQuery, EventQuery, EventInvitationQuery, PaymentQuery, PaymentInfoQuery):
     pass
