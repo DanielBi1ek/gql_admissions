@@ -1,91 +1,41 @@
-import pytest
 import logging
 
 from .client import createGQLClient
 
-def test_client_read():
+
+def test_client_admission_process_by_id():
     client = createGQLClient()
     json = {
-        'query': """query($id: UUID!){ result: eventById(id: $id) {id} }""",
-        'variables': {
-            'id': '45b2df80-ae0f-11ed-9bd8-0242ac110002'
-        }
+        "query": """query($id: UUID!){ result: admissionProcessById(id: $id) { id name } }""",
+        "variables": {
+            "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+        },
     }
     headers = {"Authorization": "Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003"}
     response = client.post("/gql", headers=headers, json=json)
     assert response.status_code == 200
     response = response.json()
     logging.info(response)
-    assert response.get("error", None) is None
+    assert response.get("errors", None) is None
     data = response.get("data", None)
     assert data is not None
-    #assert False
+    assert data["result"]["id"] == "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
 
 
-def test_client_hello_world():
+def test_client_admission_application_by_id():
     client = createGQLClient()
     json = {
-        'query': """{ hello }""",
-        'variables': {
-            'id': '45b2df80-ae0f-11ed-9bd8-0242ac110002'
-        }
+        "query": """query($id: UUID!){ result: admissionApplicationById(id: $id) { id applicantName } }""",
+        "variables": {
+            "id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+        },
     }
     headers = {"Authorization": "Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003"}
     response = client.post("/gql", headers=headers, json=json)
     assert response.status_code == 200
     response = response.json()
     logging.info(response)
-    assert response.get("error", None) is None
+    assert response.get("errors", None) is None
     data = response.get("data", None)
     assert data is not None
-
-def test_client_auth_ok():
-    client = createGQLClient()
-    json = {
-        'query': """query($id: UUID!){ result: eventById(id: $id) { id sensitiveMsg }}""",
-        'variables': {
-            'id': '45b2df80-ae0f-11ed-9bd8-0242ac110002'
-        }
-    }
-    headers = {"Authorization": "Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003"}
-    response = client.post("/gql", headers=headers, json=json)
-    assert response.status_code == 200
-    response = response.json()
-    logging.info(response)
-    assert response.get("error", None) is None
-    data = response.get("data", None)
-    assert data is not None
-    result = data.get("result", None)
-    assert result is not None
-    sensitiveMsg = result.get("sensitiveMsg", None)
-    assert sensitiveMsg is not None
-    assert sensitiveMsg == "sensitive information"
-    #assert False
-
-def test_client_auth_notok():
-    client = createGQLClient()
-    json = {
-        'query': """query($id: UUID!){ result: eventById(id: $id) { id sensitiveMsg }}""",
-        'variables': {
-            'id': '45b2df80-ae0f-11ed-9bd8-0242ac110002'
-        }
-    }
-    headers = {}
-    logging.info("test_client_auth_notok.response")
-    try:
-        response = client.post("/gql", headers=headers, json=json)
-    except:
-        pass
-    
-    logging.info("test_client_auth_notok.response")
-    assert response.status_code == 200
-    response = response.json()
-    logging.info(response)
-    assert response.get("error", None) is None
-    data = response.get("data", None)
-    assert data is not None
-    result = data.get("result", None)
-    assert result is not None
-    sensitiveMsg = result.get("sensitiveMsg", None)
-    assert sensitiveMsg is None
-    #assert False
+    assert data["result"]["id"] == "70520d39-a157-4874-b3c8-96a9a6d6795b"
