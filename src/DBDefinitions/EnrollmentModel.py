@@ -17,7 +17,9 @@ class EnrollmentModel(BaseModel):
         comment="foreign key to study program"
     )
 
-    # Status references external service - NO FK constraint
+    status_id: Mapped[IDType] = UUIDFKey(
+        comment="enrollment status reference (no FK)"
+    )
 
 
     # Fields
@@ -32,6 +34,12 @@ class EnrollmentModel(BaseModel):
         "AdmissionModel",
         back_populates="enrollment_records",
         uselist=False
+    )
+    study_program = relationship(
+        "StudyProgramModel",
+        viewonly=True,
+        uselist=False,
+        lazy="joined"
     )
 
     payments = relationship(

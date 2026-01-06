@@ -9,16 +9,21 @@ from .BaseGQLModel import BaseGQLModel, IDType
 
 # Forward references
 EnrollmentGQLModel = typing.Annotated["EnrollmentGQLModel", strawberry.lazy(".EnrollmentGQLModel")]
+PaymentInfoGQLModel = typing.Annotated["PaymentInfoGQLModel", strawberry.lazy(".PaymentInfoGQLModel")]
 
 
 @createInputs2
 class PaymentInputFilter:
     id: IDType
     enrollment_id: IDType
+    payment_info_id: IDType
+    student_id: IDType
+    status_id: IDType
+    bank_unique_data: str
+    variable_symbol: str
     amount: float
     currency: str
     method: str
-    #status_id: IDType
     payment_date: datetime.datetime
 
 
@@ -32,6 +37,31 @@ class PaymentGQLModel(BaseGQLModel):
     enrollment_id: typing.Optional[IDType] = strawberry.field(
         default=None,
         description="enrollment reference",
+        permission_classes=[OnlyForAuthentized]
+    )
+    payment_info_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="payment conditions reference",
+        permission_classes=[OnlyForAuthentized]
+    )
+    student_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="identified application/student reference",
+        permission_classes=[OnlyForAuthentized]
+    )
+    status_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="payment status id",
+        permission_classes=[OnlyForAuthentized]
+    )
+    bank_unique_data: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="unique bank payment identifier",
+        permission_classes=[OnlyForAuthentized]
+    )
+    variable_symbol: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="variable symbol provided by payer",
         permission_classes=[OnlyForAuthentized]
     )
 
@@ -65,6 +95,11 @@ class PaymentGQLModel(BaseGQLModel):
         permission_classes=[OnlyForAuthentized],
         resolver=ScalarResolver["EnrollmentGQLModel"](fkey_field_name="enrollment_id")
     )
+    payment_info: typing.Optional["PaymentInfoGQLModel"] = strawberry.field(
+        description="payment conditions reference",
+        permission_classes=[OnlyForAuthentized],
+        resolver=ScalarResolver["PaymentInfoGQLModel"](fkey_field_name="payment_info_id")
+    )
 
 
 @strawberry.type(description="Payment queries")
@@ -90,10 +125,14 @@ from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
 @strawberry.input(description="Input model for creating a payment")
 class PaymentInsertGQLModel:
     enrollment_id: IDType = strawberry.field(description="Enrollment reference")
+    payment_info_id: typing.Optional[IDType] = strawberry.field(default=None, description="Payment info reference")
+    student_id: typing.Optional[IDType] = strawberry.field(default=None, description="Application/student reference")
+    status_id: typing.Optional[IDType] = strawberry.field(default=None, description="Payment status")
+    bank_unique_data: typing.Optional[str] = strawberry.field(default=None, description="Bank unique identifier")
+    variable_symbol: typing.Optional[str] = strawberry.field(default=None, description="Variable symbol")
     amount: float = strawberry.field(description="Payment amount")
     currency: typing.Optional[str] = strawberry.field(default="EUR", description="Currency code")
     method: typing.Optional[str] = strawberry.field(default=None, description="Payment method")
-    #status_id: IDType = strawberry.field(description="Payment status")
     payment_date: typing.Optional[datetime.datetime] = strawberry.field(default=None, description="Date of payment")
 
 
@@ -101,10 +140,14 @@ class PaymentInsertGQLModel:
 class PaymentUpdateGQLModel:
     id: IDType = strawberry.field(description="Payment id")
     lastchange: datetime.datetime = strawberry.field(description="Last change timestamp")
+    payment_info_id: typing.Optional[IDType] = None
+    student_id: typing.Optional[IDType] = None
+    status_id: typing.Optional[IDType] = None
+    bank_unique_data: typing.Optional[str] = None
+    variable_symbol: typing.Optional[str] = None
     amount: typing.Optional[float] = None
     currency: typing.Optional[str] = None
     method: typing.Optional[str] = None
-    #status_id: typing.Optional[IDType] = None
     payment_date: typing.Optional[datetime.datetime] = None
 
 
@@ -130,10 +173,14 @@ class PaymentMutation:
         print("=" * 80)
         print("DEBUG: payment_insert CALLED!!!")
         print(f"DEBUG: enrollment_id: {payment.enrollment_id}")
+        print(f"DEBUG: payment_info_id: {payment.payment_info_id}")
+        print(f"DEBUG: student_id: {payment.student_id}")
+        print(f"DEBUG: status_id: {payment.status_id}")
+        print(f"DEBUG: bank_unique_data: {payment.bank_unique_data}")
+        print(f"DEBUG: variable_symbol: {payment.variable_symbol}")
         print(f"DEBUG: amount: {payment.amount}")
         print(f"DEBUG: currency: {payment.currency}")
         print(f"DEBUG: method: {payment.method}")
-        #print(f"DEBUG: status_id: {payment.status_id}")
         print("=" * 80)
 
         try:
@@ -142,14 +189,18 @@ class PaymentMutation:
             payment_data = {
                 "id": uuid.uuid4(),
                 "enrollment_id": payment.enrollment_id,
+                "payment_info_id": payment.payment_info_id,
+                "student_id": payment.student_id,
+                "status_id": payment.status_id,
+                "bank_unique_data": payment.bank_unique_data,
+                "variable_symbol": payment.variable_symbol,
                 "amount": payment.amount,
                 "currency": payment.currency,
                 "method": payment.method,
-               # "status_id": payment.status_id,
                 "rbacobject_id": None,
                 "createdby_id": uuid.UUID("66d8a57c-9ff3-40c3-a019-07808b5150a2"),
                 "changedby_id": None,
-                "payment_date": None,
+                "payment_date": payment.payment_date,
             }
 
             print(f"DEBUG: Creating payment with data: {payment_data}")
@@ -203,8 +254,18 @@ class PaymentMutation:
                 db_row.currency = payment.currency
             if payment.method is not None:
                 db_row.method = payment.method
-            #if payment.status_id is not None:
-             #   db_row.status_id = payment.status_id
+            if payment.status_id is not None:
+                db_row.status_id = payment.status_id
+            if payment.payment_info_id is not None:
+                db_row.payment_info_id = payment.payment_info_id
+            if payment.student_id is not None:
+                db_row.student_id = payment.student_id
+            if payment.bank_unique_data is not None:
+                db_row.bank_unique_data = payment.bank_unique_data
+            if payment.variable_symbol is not None:
+                db_row.variable_symbol = payment.variable_symbol
+            if payment.payment_date is not None:
+                db_row.payment_date = payment.payment_date
 
             import datetime
             db_row.lastchange = datetime.datetime.now()

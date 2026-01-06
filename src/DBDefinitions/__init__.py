@@ -11,6 +11,7 @@ from .EventDBModel import EventModel
 from .EventInvitationModel import EventInvitationModel
 from .AdmissionModel import AdmissionModel
 from .EnrollmentModel import EnrollmentModel
+from .PaymentInfoModel import PaymentInfoModel
 from .PaymentModel import PaymentModel
 from .StudyProgramModel import StudyProgramModel
 
