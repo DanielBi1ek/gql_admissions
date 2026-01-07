@@ -5,6 +5,7 @@ import strawberry
 from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, VectorResolver, ScalarResolver
 from uoishelpers.gqlpermissions import OnlyForAuthentized
 from uoishelpers.resolvers import getUserFromInfo
+from .rbac_simple import AnyRole
 
 from .BaseGQLModel import BaseGQLModel, IDType
 
@@ -106,7 +107,10 @@ class AdmissionApplicationDeleteGQLModel:
 
 @strawberry.type(description="Admission application mutations")
 class AdmissionApplicationMutation:
-    @strawberry.mutation(description="Insert an admission application", permission_classes=[OnlyForAuthentized])
+    @strawberry.mutation(
+        description="Insert an admission application",
+        permission_classes=[OnlyForAuthentized, AnyRole]
+    )
     async def admission_application_insert(
         self,
         info: strawberry.Info,
@@ -122,7 +126,7 @@ class AdmissionApplicationMutation:
 
     @strawberry.mutation(
         description="Update an admission application",
-        permission_classes=[OnlyForAuthentized],
+        permission_classes=[OnlyForAuthentized, AnyRole],
         extensions=[LoadDataExtension[UpdateError, AdmissionApplicationGQLModel]()]
     )
     async def admission_application_update(
@@ -140,7 +144,7 @@ class AdmissionApplicationMutation:
 
     @strawberry.mutation(
         description="Delete an admission application",
-        permission_classes=[OnlyForAuthentized],
+        permission_classes=[OnlyForAuthentized, AnyRole],
         extensions=[LoadDataExtension[DeleteError, AdmissionApplicationGQLModel]()]
     )
     async def admission_application_delete(
