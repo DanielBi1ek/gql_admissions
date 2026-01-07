@@ -7,14 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from .BaseModel import BaseModel
-from .EventDBModel import EventModel
-from .EventInvitationModel import EventInvitationModel
 from .AdmissionProcessModel import AdmissionProcessModel
 from .AdmissionApplicationModel import AdmissionApplicationModel
-from .EnrollmentModel import EnrollmentModel
-from .PaymentInfoModel import PaymentInfoModel
-from .PaymentModel import PaymentModel
+from .AdmissionPaymentModel import AdmissionPaymentModel
+from .AdmissionPaymentInfoModel import AdmissionPaymentInfoModel
+from .ExamModel import ExamModel
 from .StudyProgramModel import StudyProgramModel
+from .BankStatementPaymentModel import BankStatementPaymentModel
 
 async def startEngine(connectionstring, makeDrop=False, makeUp=True):
     """Provede nezbytne ukony a vrati asynchronni SessionMaker"""

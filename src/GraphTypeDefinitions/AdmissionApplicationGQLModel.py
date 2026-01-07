@@ -2,59 +2,86 @@ import typing
 import datetime
 import strawberry
 
-from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, VectorResolver, ScalarResolver
+from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, ScalarResolver
 from uoishelpers.gqlpermissions import OnlyForAuthentized
 from uoishelpers.resolvers import getUserFromInfo
-from .rbac_simple import AnyRole
 
 from .BaseGQLModel import BaseGQLModel, IDType
 
 AdmissionProcessGQLModel = typing.Annotated["AdmissionProcessGQLModel", strawberry.lazy(".AdmissionProcessGQLModel")]
-EnrollmentGQLModel = typing.Annotated["EnrollmentGQLModel", strawberry.lazy(".EnrollmentGQLModel")]
-EnrollmentInputFilter = typing.Annotated["EnrollmentInputFilter", strawberry.lazy(".EnrollmentGQLModel")]
-PaymentGQLModel = typing.Annotated["PaymentGQLModel", strawberry.lazy(".PaymentGQLModel")]
-PaymentInputFilter = typing.Annotated["PaymentInputFilter", strawberry.lazy(".PaymentGQLModel")]
+AdmissionPaymentGQLModel = typing.Annotated["AdmissionPaymentGQLModel", strawberry.lazy(".AdmissionPaymentGQLModel")]
 
 
 @createInputs2
 class AdmissionApplicationInputFilter:
     id: IDType
-    process_id: IDType
     applicant_user_id: IDType
-    applicant_name: str
-    applicant_email: str
+    street: str
+    house_number: str
+    city: str
+    postal_code: str
     applied_date: datetime.datetime
-    status_id: IDType
+    process_id: IDType
+    payment_id: IDType
 
 
-@strawberry.federation.type(keys=["id"], description="Admission application by a specific applicant")
+@strawberry.federation.type(keys=["id"], description="Admission application submitted by a user")
 class AdmissionApplicationGQLModel(BaseGQLModel):
 
     @classmethod
     def getLoader(cls, info: strawberry.types.Info):
         return getLoadersFromInfo(info).AdmissionApplicationModel
 
-    process_id: typing.Optional[IDType] = strawberry.field(default=None, description="admission process reference", permission_classes=[OnlyForAuthentized])
-    applicant_user_id: typing.Optional[IDType] = strawberry.field(default=None, description="applicant user reference", permission_classes=[OnlyForAuthentized])
-    applicant_name: typing.Optional[str] = strawberry.field(default=None, description="applicant full name", permission_classes=[OnlyForAuthentized])
-    applicant_email: typing.Optional[str] = strawberry.field(default=None, description="applicant email", permission_classes=[OnlyForAuthentized])
-    applied_date: typing.Optional[datetime.datetime] = strawberry.field(default=None, description="application date", permission_classes=[OnlyForAuthentized])
-    status_id: typing.Optional[IDType] = strawberry.field(default=None, description="application status id", permission_classes=[OnlyForAuthentized])
+    applicant_user_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="applicant user reference",
+        permission_classes=[OnlyForAuthentized]
+    )
+    street: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="street",
+        permission_classes=[OnlyForAuthentized]
+    )
+    house_number: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="house number",
+        permission_classes=[OnlyForAuthentized]
+    )
+    city: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="city",
+        permission_classes=[OnlyForAuthentized]
+    )
+    postal_code: typing.Optional[str] = strawberry.field(
+        default=None,
+        description="postal code",
+        permission_classes=[OnlyForAuthentized]
+    )
+    applied_date: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="application date",
+        permission_classes=[OnlyForAuthentized]
+    )
+    process_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="admission process reference",
+        permission_classes=[OnlyForAuthentized]
+    )
+    payment_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="admission payment reference",
+        permission_classes=[OnlyForAuthentized]
+    )
 
     process: typing.Optional["AdmissionProcessGQLModel"] = strawberry.field(
         description="related admission process",
         permission_classes=[OnlyForAuthentized],
         resolver=ScalarResolver["AdmissionProcessGQLModel"](fkey_field_name="process_id")
     )
-    enrollments: typing.List["EnrollmentGQLModel"] = strawberry.field(
-        description="enrollments derived from this application",
+    payment: typing.Optional["AdmissionPaymentGQLModel"] = strawberry.field(
+        description="related admission payment",
         permission_classes=[OnlyForAuthentized],
-        resolver=VectorResolver["EnrollmentGQLModel"](fkey_field_name="application_id", whereType=EnrollmentInputFilter)
-    )
-    payments: typing.List["PaymentGQLModel"] = strawberry.field(
-        description="payments for this application",
-        permission_classes=[OnlyForAuthentized],
-        resolver=VectorResolver["PaymentGQLModel"](fkey_field_name="application_id", whereType=PaymentInputFilter)
+        resolver=ScalarResolver["AdmissionPaymentGQLModel"](fkey_field_name="payment_id")
     )
 
 
@@ -79,24 +106,28 @@ from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
 
 @strawberry.input(description="Input model for creating an admission application")
 class AdmissionApplicationInsertGQLModel:
-    process_id: typing.Optional[IDType] = None
     applicant_user_id: typing.Optional[IDType] = None
-    applicant_name: typing.Optional[str] = None
-    applicant_email: typing.Optional[str] = None
+    street: typing.Optional[str] = None
+    house_number: typing.Optional[str] = None
+    city: typing.Optional[str] = None
+    postal_code: typing.Optional[str] = None
     applied_date: typing.Optional[datetime.datetime] = None
-    status_id: typing.Optional[IDType] = None
+    process_id: typing.Optional[IDType] = None
+    payment_id: typing.Optional[IDType] = None
 
 
 @strawberry.input(description="Input model for updating an admission application")
 class AdmissionApplicationUpdateGQLModel:
     id: IDType
     lastchange: datetime.datetime
-    process_id: typing.Optional[IDType] = None
     applicant_user_id: typing.Optional[IDType] = None
-    applicant_name: typing.Optional[str] = None
-    applicant_email: typing.Optional[str] = None
+    street: typing.Optional[str] = None
+    house_number: typing.Optional[str] = None
+    city: typing.Optional[str] = None
+    postal_code: typing.Optional[str] = None
     applied_date: typing.Optional[datetime.datetime] = None
-    status_id: typing.Optional[IDType] = None
+    process_id: typing.Optional[IDType] = None
+    payment_id: typing.Optional[IDType] = None
 
 
 @strawberry.input(description="Input model for deleting an admission application")
@@ -107,10 +138,7 @@ class AdmissionApplicationDeleteGQLModel:
 
 @strawberry.type(description="Admission application mutations")
 class AdmissionApplicationMutation:
-    @strawberry.mutation(
-        description="Insert an admission application",
-        permission_classes=[OnlyForAuthentized, AnyRole]
-    )
+    @strawberry.mutation(description="Insert an admission application", permission_classes=[OnlyForAuthentized])
     async def admission_application_insert(
         self,
         info: strawberry.Info,
@@ -126,7 +154,7 @@ class AdmissionApplicationMutation:
 
     @strawberry.mutation(
         description="Update an admission application",
-        permission_classes=[OnlyForAuthentized, AnyRole],
+        permission_classes=[OnlyForAuthentized],
         extensions=[LoadDataExtension[UpdateError, AdmissionApplicationGQLModel]()]
     )
     async def admission_application_update(
@@ -144,7 +172,7 @@ class AdmissionApplicationMutation:
 
     @strawberry.mutation(
         description="Delete an admission application",
-        permission_classes=[OnlyForAuthentized, AnyRole],
+        permission_classes=[OnlyForAuthentized],
         extensions=[LoadDataExtension[DeleteError, AdmissionApplicationGQLModel]()]
     )
     async def admission_application_delete(

@@ -5,14 +5,13 @@ from sqlalchemy.orm import sessionmaker
 
 from src.DBDefinitions import (
     BaseModel,
-    EventModel,
-    EventInvitationModel,
-    StudyProgramModel,
     AdmissionProcessModel,
     AdmissionApplicationModel,
-    EnrollmentModel,
-    PaymentInfoModel,
-    PaymentModel,
+    AdmissionPaymentModel,
+    AdmissionPaymentInfoModel,
+    ExamModel,
+    StudyProgramModel,
+    BankStatementPaymentModel,
 )
 from src.DBFeeder import get_demodata
 from src.Dataloaders import createLoadersContext
@@ -36,14 +35,13 @@ async def prepare_demodata(async_session_maker):
     await ImportModels(
         async_session_maker,
         [
-            PaymentInfoModel,
             StudyProgramModel,
+            AdmissionPaymentInfoModel,
+            ExamModel,
+            BankStatementPaymentModel,
+            AdmissionPaymentModel,
             AdmissionProcessModel,
             AdmissionApplicationModel,
-            EnrollmentModel,
-            PaymentModel,
-            EventModel,
-            EventInvitationModel,
         ],
         data,
     )

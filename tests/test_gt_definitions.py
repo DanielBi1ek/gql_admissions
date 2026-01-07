@@ -19,8 +19,7 @@ async def test_admission_process_by_id():
             result: admissionProcessById(id: $id) {
                 id
                 name
-                programId
-                paymentInfoId
+                paymentId
             }
         }
     """
@@ -47,10 +46,7 @@ async def test_admission_application_with_relations():
                 process {
                     id
                 }
-                enrollments {
-                    id
-                }
-                payments {
+                payment {
                     id
                 }
             }
@@ -65,13 +61,13 @@ async def test_admission_application_with_relations():
 
 
 @pytest.mark.asyncio
-async def test_payment_info_page():
+async def test_admission_payment_info_page():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
     query = """
         query {
-            result: paymentInfoPage {
+            result: admissionPaymentInfoPage {
                 id
                 accountNumber
             }
@@ -84,15 +80,16 @@ async def test_payment_info_page():
 
 
 @pytest.mark.asyncio
-async def test_study_program_page():
+async def test_exam_page():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
     query = """
         query {
-            result: studyProgramPage {
+            result: examPage {
                 id
-                code
+                programId
+                paymentInfoId
             }
         }
     """

@@ -25,7 +25,7 @@ def test_client_admission_process_by_id():
 def test_client_admission_application_by_id():
     client = createGQLClient()
     json = {
-        "query": """query($id: UUID!){ result: admissionApplicationById(id: $id) { id applicantName } }""",
+        "query": """query($id: UUID!){ result: admissionApplicationById(id: $id) { id street } }""",
         "variables": {
             "id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
         },

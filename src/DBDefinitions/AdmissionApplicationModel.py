@@ -9,22 +9,28 @@ from .BaseModel import BaseModel, IDType, UUIDFKey
 class AdmissionApplicationModel(BaseModel):
     __tablename__ = "admission_applications"
 
-    process_id: Mapped[IDType] = UUIDFKey(
-        ForeignKey("admission_processes.id"),
-        comment="admission process reference"
-    )
     applicant_user_id: Mapped[IDType] = UUIDFKey(
         comment="applicant user reference (no FK)"
     )
-    applicant_name: Mapped[str] = mapped_column(
+    street: Mapped[str] = mapped_column(
         default=None,
         nullable=True,
-        comment="applicant full name"
+        comment="street"
     )
-    applicant_email: Mapped[str] = mapped_column(
+    house_number: Mapped[str] = mapped_column(
         default=None,
         nullable=True,
-        comment="applicant email"
+        comment="house number"
+    )
+    city: Mapped[str] = mapped_column(
+        default=None,
+        nullable=True,
+        comment="city"
+    )
+    postal_code: Mapped[str] = mapped_column(
+        default=None,
+        nullable=True,
+        comment="postal code"
     )
     applied_date: Mapped[datetime.datetime] = mapped_column(
         default=None,
@@ -32,8 +38,13 @@ class AdmissionApplicationModel(BaseModel):
         server_default=sqlalchemy.sql.func.now(),
         comment="date of application"
     )
-    status_id: Mapped[IDType] = UUIDFKey(
-        comment="application status reference (no FK)"
+    process_id: Mapped[IDType] = UUIDFKey(
+        ForeignKey("admission_processes.id"),
+        comment="admission process reference"
+    )
+    payment_id: Mapped[IDType] = UUIDFKey(
+        ForeignKey("admission_payments.id"),
+        comment="admission payment reference"
     )
 
     process = relationship(
@@ -42,15 +53,9 @@ class AdmissionApplicationModel(BaseModel):
         uselist=False,
         lazy="joined"
     )
-    enrollments = relationship(
-        "EnrollmentModel",
-        back_populates="application",
-        uselist=True,
-        cascade="save-update"
-    )
-    payments = relationship(
-        "PaymentModel",
-        back_populates="application",
-        uselist=True,
-        cascade="save-update"
+    payment = relationship(
+        "AdmissionPaymentModel",
+        viewonly=True,
+        uselist=False,
+        lazy="joined"
     )
