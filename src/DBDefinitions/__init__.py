@@ -14,6 +14,7 @@ from .AdmissionPaymentInfoModel import AdmissionPaymentInfoModel
 from .ExamModel import ExamModel
 from .StudyProgramModel import StudyProgramModel
 from .BankStatementPaymentModel import BankStatementPaymentModel
+from .UserModel import UserModel
 
 async def startEngine(connectionstring, makeDrop=False, makeUp=True):
     """Provede nezbytne ukony a vrati asynchronni SessionMaker"""

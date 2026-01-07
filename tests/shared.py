@@ -12,6 +12,7 @@ from src.DBDefinitions import (
     ExamModel,
     StudyProgramModel,
     BankStatementPaymentModel,
+    UserModel,
 )
 from src.DBFeeder import get_demodata
 from src.Dataloaders import createLoadersContext
@@ -35,6 +36,7 @@ async def prepare_demodata(async_session_maker):
     await ImportModels(
         async_session_maker,
         [
+            UserModel,
             StudyProgramModel,
             AdmissionPaymentInfoModel,
             ExamModel,

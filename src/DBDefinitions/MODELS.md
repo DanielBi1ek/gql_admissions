@@ -10,6 +10,11 @@ The service is federated, so user references are stored without foreign keys.
 - User and RBAC references are UUIDs without FK constraints because they live in other services.
 - `UUIDFKey` and `UUIDColumn` standardize UUID column definitions.
 
+### UserModel (UserModel.py)
+- Table: `users`.
+- Purpose: lightweight local reference for demo users and seeds.
+- Field: `display_name`.
+
 ## Core admissions domain
 
 ### StudyProgramModel (StudyProgramModel.py)

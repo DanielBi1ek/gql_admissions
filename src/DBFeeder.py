@@ -11,6 +11,7 @@ from src.DBDefinitions import (
     ExamModel,
     StudyProgramModel,
     BankStatementPaymentModel,
+    UserModel,
 )
 
 get_demodata = lambda: readJsonFile(jsonFileName="./systemdata.json")
@@ -23,6 +24,7 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
     if isDemo:
         print("Demo mode", flush=True)
         dbModels = [
+            UserModel,
             StudyProgramModel,
             AdmissionPaymentInfoModel,
             ExamModel,
@@ -78,6 +80,7 @@ async def backupDB(asyncSessionMaker, filename="./systemdata.backup.json"):
     import json
 
     dbModels = [
+        UserModel,
         StudyProgramModel,
         AdmissionPaymentInfoModel,
         ExamModel,
