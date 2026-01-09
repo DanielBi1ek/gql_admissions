@@ -4,9 +4,17 @@ import strawberry
 
 from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, ScalarResolver
 from uoishelpers.gqlpermissions import OnlyForAuthentized
-from uoishelpers.resolvers import getUserFromInfo
 
 from .BaseGQLModel import BaseGQLModel, IDType
+from .unified_rbac_extensions import (
+    create_insert_permissions,
+    create_update_permissions,
+    create_delete_permissions,
+    EDITOR_ROLES,
+    ADMIN_ROLES,
+)
+from uoishelpers.resolvers import InsertError, UpdateError, DeleteError
+
 
 AdmissionProcessGQLModel = typing.Annotated["AdmissionProcessGQLModel", strawberry.lazy(".AdmissionProcessGQLModel")]
 AdmissionPaymentGQLModel = typing.Annotated["AdmissionPaymentGQLModel", strawberry.lazy(".AdmissionPaymentGQLModel")]
@@ -100,10 +108,6 @@ class AdmissionApplicationQuery:
     )
 
 
-from uoishelpers.resolvers import InsertError, UpdateError, DeleteError
-from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
-
-
 @strawberry.input(description="Input model for creating an admission application")
 class AdmissionApplicationInsertGQLModel:
     applicant_user_id: typing.Optional[IDType] = None
@@ -120,14 +124,14 @@ class AdmissionApplicationInsertGQLModel:
 class AdmissionApplicationUpdateGQLModel:
     id: IDType
     lastchange: datetime.datetime
-    applicant_user_id: typing.Optional[IDType] = None
-    street: typing.Optional[str] = None
-    house_number: typing.Optional[str] = None
-    city: typing.Optional[str] = None
-    postal_code: typing.Optional[str] = None
-    applied_date: typing.Optional[datetime.datetime] = None
-    process_id: typing.Optional[IDType] = None
-    payment_id: typing.Optional[IDType] = None
+    applicant_user_id: typing.Optional[IDType] = strawberry.UNSET
+    street: typing.Optional[str] = strawberry.UNSET
+    house_number: typing.Optional[str] = strawberry.UNSET
+    city: typing.Optional[str] = strawberry.UNSET
+    postal_code: typing.Optional[str] = strawberry.UNSET
+    applied_date: typing.Optional[datetime.datetime] = strawberry.UNSET
+    process_id: typing.Optional[IDType] = strawberry.UNSET
+    payment_id: typing.Optional[IDType] = strawberry.UNSET
 
 
 @strawberry.input(description="Input model for deleting an admission application")
@@ -138,7 +142,14 @@ class AdmissionApplicationDeleteGQLModel:
 
 @strawberry.type(description="Admission application mutations")
 class AdmissionApplicationMutation:
-    @strawberry.mutation(description="Insert an admission application", permission_classes=[OnlyForAuthentized])
+    @strawberry.field(
+        description="Insert an admission application",
+        extensions=create_insert_permissions(
+            InsertError,
+            AdmissionApplicationGQLModel,
+            required_roles=EDITOR_ROLES
+        )
+    )
     async def admission_application_insert(
         self,
         info: strawberry.Info,
@@ -146,41 +157,55 @@ class AdmissionApplicationMutation:
     ) -> typing.Union[AdmissionApplicationGQLModel, InsertError[AdmissionApplicationGQLModel]]:
         from uoishelpers.resolvers import Insert
 
-        user = getUserFromInfo(info=info)
-        application.createdby_id = user["id"]
-        application.rbacobject_id = None
+        # Debug logging
+        user = info.context.get("user", {})
+        print(f"[INSERT] User: {user.get('fullname')} ({user.get('id')})")
+        print(f"[INSERT] Roles: {user.get('roles', [])}")
 
         return await Insert[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
 
-    @strawberry.mutation(
+    @strawberry.field(
         description="Update an admission application",
-        permission_classes=[OnlyForAuthentized],
-        extensions=[LoadDataExtension[UpdateError, AdmissionApplicationGQLModel]()]
+        extensions=create_update_permissions(
+            UpdateError,
+            AdmissionApplicationGQLModel,
+            required_roles=EDITOR_ROLES
+        )
     )
     async def admission_application_update(
         self,
         info: strawberry.Info,
-        application: AdmissionApplicationUpdateGQLModel,
-        db_row: typing.Any
+        application: AdmissionApplicationUpdateGQLModel
     ) -> typing.Union[AdmissionApplicationGQLModel, UpdateError[AdmissionApplicationGQLModel]]:
         from uoishelpers.resolvers import Update
 
-        user = getUserFromInfo(info=info)
-        application.changedby_id = user["id"]
+        # Debug logging
+        user = info.context.get("user", {})
+        print(f"[UPDATE] User: {user.get('fullname')} ({user.get('id')})")
+        print(f"[UPDATE] Roles: {user.get('roles', [])}")
+        print(f"[UPDATE] Target ID: {application.id}")
 
         return await Update[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
 
-    @strawberry.mutation(
+    @strawberry.field(
         description="Delete an admission application",
-        permission_classes=[OnlyForAuthentized],
-        extensions=[LoadDataExtension[DeleteError, AdmissionApplicationGQLModel]()]
+        extensions=create_delete_permissions(
+            DeleteError,
+            AdmissionApplicationGQLModel,
+            required_roles=ADMIN_ROLES
+        )
     )
     async def admission_application_delete(
         self,
         info: strawberry.Info,
-        application: AdmissionApplicationDeleteGQLModel,
-        db_row: typing.Any
+        application: AdmissionApplicationDeleteGQLModel
     ) -> typing.Optional[DeleteError[AdmissionApplicationGQLModel]]:
         from uoishelpers.resolvers import Delete
+
+        # Debug logging
+        user = info.context.get("user", {})
+        print(f"[DELETE] User: {user.get('fullname')} ({user.get('id')})")
+        print(f"[DELETE] Roles: {user.get('roles', [])}")
+        print(f"[DELETE] Target ID: {application.id}")
 
         return await Delete[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)

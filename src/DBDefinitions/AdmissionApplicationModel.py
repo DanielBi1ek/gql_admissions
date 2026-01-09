@@ -38,6 +38,7 @@ class AdmissionApplicationModel(BaseModel):
         server_default=sqlalchemy.sql.func.now(),
         comment="date of application"
     )
+
     process_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("admission_processes.id"),
         comment="admission process reference"
@@ -46,6 +47,7 @@ class AdmissionApplicationModel(BaseModel):
         ForeignKey("admission_payments.id"),
         comment="admission payment reference"
     )
+
 
     process = relationship(
         "AdmissionProcessModel",

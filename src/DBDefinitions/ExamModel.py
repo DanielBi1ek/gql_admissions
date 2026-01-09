@@ -39,3 +39,4 @@ class ExamModel(BaseModel):
         uselist=False,
         lazy="joined"
     )
+

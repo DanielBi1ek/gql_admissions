@@ -12,7 +12,6 @@ from src.DBDefinitions import (
     ExamModel,
     StudyProgramModel,
     BankStatementPaymentModel,
-    UserModel,
 )
 from src.DBFeeder import get_demodata
 from src.Dataloaders import createLoadersContext
@@ -29,14 +28,151 @@ async def prepare_in_memory_sqllite():
     return async_session_maker
 
 
+class SessionMakerWrapper:
+    """Wrapper that makes a sessionmaker look like a session for loaders"""
+
+    def __init__(self, sessionmaker):
+        self._sessionmaker = sessionmaker
+        self._session = None
+
+    async def get_session(self):
+        """Get or create a session"""
+        if self._session is None:
+            self._session = self._sessionmaker()
+        return self._session
+
+    @property
+    def identity_map(self):
+        """Proxy to session's identity_map"""
+        # Return a dummy dict-like object for testing
+        class DummyIdentityMap(dict):
+            def get(self, key, default=None):
+                return default
+
+        return DummyIdentityMap()
+
+    async def execute(self, statement):
+        """Proxy to session's execute method"""
+        session = await self.get_session()
+        return await session.execute(statement)
+
+
+def createContext(asyncSessionMaker, withuser=True, user_role="administrátor"):
+    """
+    Create context for testing with unified RBAC.
+
+    Args:
+        asyncSessionMaker: Async session maker for database access
+        withuser: Whether to include a user in the context
+        user_role: Role to assign to the user (administrátor, editor, viewer)
+    """
+    loadersContext = createLoadersContext(asyncSessionMaker)
+
+    user = {
+        "id": "2d9dc5ca-a4a2-11ed-b9df-0242ac120003",
+        "name": "John",
+        "surname": "Newbie",
+        "email": "john.newbie@world.com",
+        "roles": [{"name": user_role}]  # Role for unified RBAC
+    }
+
+    if withuser:
+        loadersContext["user"] = user
+    # Store the sessionmaker for later use by resolvers and extensions
+    loadersContext["asyncSessionMaker"] = asyncSessionMaker
+    # Also store it as the session for compatibility with extensions
+    loadersContext["session"] = asyncSessionMaker
+    return loadersContext
+
+
+def createInfo(asyncSessionMaker, withuser=True, user_role="administrátor"):
+    class Request:
+        def __init__(self, user_data=None):
+            self.scope = {
+                "type": "http",
+                "headers": [(b"authorization", b"Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003")],
+                "user": user_data,
+            }
+
+        @property
+        def headers(self):
+            return {"Authorization": "Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003"}
+
+    class Info:
+        def __init__(self, request_obj, context_dict):
+            self._request = request_obj
+            self._context = context_dict
+
+        @property
+        def context(self):
+            return self._context
+
+        @property
+        def request(self):
+            return self._request
+
+    context = createContext(asyncSessionMaker, withuser=withuser, user_role=user_role)
+    user_data = context.get("user") if withuser else None
+    request_obj = Request(user_data)
+    context["request"] = request_obj
+
+    return Info(request_obj, context)
+
+
 async def prepare_demodata(async_session_maker):
     data = get_demodata()
+    import datetime as _dt
+
+    # Parse ISO format dates with microsecond precision
+    def _parse_iso(v):
+        if isinstance(v, str):
+            try:
+                return _dt.datetime.fromisoformat(v)
+            except (ValueError, TypeError):
+                try:
+                    v_clean = v.rstrip("Z")
+                    return _dt.datetime.strptime(v_clean, "%Y-%m-%dT%H:%M:%S.%f")
+                except (ValueError, TypeError):
+                    return v
+        return v
+
+    # Parse dates in exams
+    if isinstance(data, dict) and "exams" in data:
+        for row in data.get("exams", []):
+            if not isinstance(row, dict):
+                continue
+            for key in [
+                "application_start_date",
+                "application_end_date",
+                "created",
+                "lastchange",
+            ]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
+    # Parse dates in admission_applications
+    if isinstance(data, dict) and "admission_applications" in data:
+        for row in data.get("admission_applications", []):
+            if not isinstance(row, dict):
+                continue
+            for key in ["applied_date", "created", "lastchange"]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
+    # Parse dates in admission_payments
+    if isinstance(data, dict) and "admission_payments" in data:
+        for row in data.get("admission_payments", []):
+            if not isinstance(row, dict):
+                continue
+            for key in ["paid_at", "created", "lastchange"]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
     from uoishelpers.feeders import ImportModels
 
     await ImportModels(
         async_session_maker,
         [
-            UserModel,
             StudyProgramModel,
             AdmissionPaymentInfoModel,
             ExamModel,
@@ -47,32 +183,3 @@ async def prepare_demodata(async_session_maker):
         ],
         data,
     )
-
-
-def createContext(asyncSessionMaker, withuser=True):
-    loadersContext = createLoadersContext(asyncSessionMaker)
-    user = {
-        "id": "2d9dc5ca-a4a2-11ed-b9df-0242ac120003",
-        "name": "John",
-        "surname": "Newbie",
-        "email": "john.newbie@world.com",
-    }
-    if withuser:
-        loadersContext["user"] = user
-    return loadersContext
-
-
-def createInfo(asyncSessionMaker, withuser=True):
-    class Request:
-        @property
-        def headers(self):
-            return {"Authorization": "Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003"}
-
-    class Info:
-        @property
-        def context(self):
-            context = createContext(asyncSessionMaker, withuser=withuser)
-            context["request"] = Request()
-            return context
-
-    return Info()

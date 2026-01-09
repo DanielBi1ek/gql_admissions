@@ -1,11 +1,16 @@
 import aiohttp
+import os
 
 
 
 def createGQLClient():
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
-    import DBDefinitions
+    import src.DBDefinitions as DBDefinitions
+
+    # Set DEMO environment variable for tests
+    os.environ.setdefault("DEMO", "True")
+    os.environ.setdefault("GQLUG_ENDPOINT_URL", "http://localhost:33333")
 
     def ComposeCString():
         return "sqlite+aiosqlite:///:memory:"
