@@ -28,16 +28,16 @@ The service is federated, so user references are stored without foreign keys.
 - Purpose: reusable template with bank details and required fee amount.
 - Fields: `account_prefix`, `account_number`, `bank_code`, `required_amount`.
 
-### ExamModel (ExamModel.py)
-- Table: `exams`.
+### AdmissionOfferModel (AdmissionOfferModel.py)
+- Table: `admission_offers`.
 - Purpose: admission offer for a specific study program with a valid application window and payment info.
 - Fields: `program_id` (FK), `application_start_date`, `application_end_date`, `payment_info_id` (FK).
-- Relationships: `program`, `payment_info` (view-only), `applications` (many AdmissionApplicationModels).
-- GraphQL: ExamGQLModel with RBAC permissions requiring user authentication. Queries available: `examById`, `examPage`.
-- RBAC: All exam fields require `OnlyForAuthentized` permission. Mutations (insert/update/delete) require `AnyRole` (user must have at least one role).
+- Relationships: `program`, `payment_info` (view-only).
+- GraphQL: AdmissionOfferGQLModel with RBAC permissions requiring user authentication. Queries available: `admissionOfferById`, `admissionOfferPage`.
+- RBAC: All fields require `OnlyForAuthentized` permission. Mutations (insert/update/delete) require `AnyRole`.
 
-### BankStatementPaymentModel (BankStatementPaymentModel.py)
-- Table: `bank_statement_payments`.
+### BankStatementModel (BankStatementModel.py)
+- Table: `bank_statements`.
 - Purpose: imported payments from bank statements used for matching.
 - Fields: `variable_symbol`, `amount_received`.
 - Note: treated as read-only reference data (no GraphQL API here).
@@ -45,8 +45,8 @@ The service is federated, so user references are stored without foreign keys.
 ### AdmissionPaymentModel (AdmissionPaymentModel.py)
 - Table: `admission_payments`.
 - Purpose: waiting/confirmed admission payments to be matched against bank statements.
-- Fields: `required_amount`, `paid_at`, `bank_payment_id` (FK).
-- Relationship: `bank_payment` (view-only).
+- Fields: `required_amount`, `paid_at`, `bank_statement_id` (FK).
+- Relationship: `bank_statement` (view-only).
 
 ### AdmissionProcessModel (AdmissionProcessModel.py)
 - Table: `admission_processes`.
@@ -56,10 +56,10 @@ The service is federated, so user references are stored without foreign keys.
 
 ### AdmissionApplicationModel (AdmissionApplicationModel.py)
 - Table: `admission_applications`.
-- Purpose: submitted application by a user for a specific exam.
+- Purpose: submitted application by a user in a specific admission process.
 - Fields: `applicant_user_id` (no FK), `street`, `house_number`, `city`, `postal_code`, `applied_date`,
-  `exam_id` (FK), `process_id` (FK), `payment_id` (FK).
-- Relationships: `exam`, `process`, `payment` (all view-only, with back_populates to ExamModel).
+  `process_id` (FK), `payment_id` (FK).
+- Relationships: `process`, `payment` (view-only).
 - GraphQL: AdmissionApplicationGQLModel with RBAC permissions. Queries available: `admissionApplicationById`, `admissionApplicationPage`.
 - RBAC: All fields require `OnlyForAuthentized` permission. Mutations (insert/update/delete) require `AnyRole` (user must have at least one role).
   - Insert sets `createdby_id` from authenticated user context.
@@ -67,11 +67,9 @@ The service is federated, so user references are stored without foreign keys.
 
 ## Relationships
 
-### Exam ↔ AdmissionApplication
-- One Exam can have many AdmissionApplications.
-- AdmissionApplicationModel has `exam_id` FK referencing ExamModel.
-- Bidirectional relationship with `back_populates` for data consistency.
-- GraphQL: ExamGQLModel exposes `applications` field; AdmissionApplicationGQLModel exposes `exam` field.
+### AdmissionPayment ↔ BankStatement
+- One AdmissionPayment can reference one BankStatement entry.
+- `admission_payments.bank_statement_id` points to `bank_statements.id`.
 
 ## RBAC System (rbac_simple.py)
 
@@ -85,7 +83,7 @@ The service is federated, so user references are stored without foreign keys.
 ### Implementation Details
 - Checks if `roles` list/tuple is non-empty and contains at least one role string.
 - Silently returns `False` for users without a user context (anonymous access).
-- Used on all mutation resolvers in AdmissionApplicationGQLModel and ExamGQLModel.
+- Used on all mutation resolvers in AdmissionApplicationGQLModel and AdmissionOfferGQLModel.
 
 ## Utilities
 

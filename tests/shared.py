@@ -9,9 +9,9 @@ from src.DBDefinitions import (
     AdmissionApplicationModel,
     AdmissionPaymentModel,
     AdmissionPaymentInfoModel,
-    ExamModel,
+    AdmissionOfferModel,
     StudyProgramModel,
-    BankStatementPaymentModel,
+    BankStatementModel,
 )
 from src.DBFeeder import get_demodata
 from src.Dataloaders import createLoadersContext
@@ -136,9 +136,15 @@ async def prepare_demodata(async_session_maker):
                     return v
         return v
 
-    # Parse dates in exams
-    if isinstance(data, dict) and "exams" in data:
-        for row in data.get("exams", []):
+    if isinstance(data, dict):
+        if "admission_offers" not in data and "exams" in data:
+            data["admission_offers"] = data.pop("exams")
+        if "bank_statements" not in data and "bank_statement_payments" in data:
+            data["bank_statements"] = data.pop("bank_statement_payments")
+
+    # Parse dates in admission offers
+    if isinstance(data, dict) and "admission_offers" in data:
+        for row in data.get("admission_offers", []):
             if not isinstance(row, dict):
                 continue
             for key in [
@@ -164,6 +170,8 @@ async def prepare_demodata(async_session_maker):
         for row in data.get("admission_payments", []):
             if not isinstance(row, dict):
                 continue
+            if "bank_payment_id" in row and "bank_statement_id" not in row:
+                row["bank_statement_id"] = row.pop("bank_payment_id")
             for key in ["paid_at", "created", "lastchange"]:
                 if key in row:
                     row[key] = _parse_iso(row.get(key))
@@ -175,8 +183,8 @@ async def prepare_demodata(async_session_maker):
         [
             StudyProgramModel,
             AdmissionPaymentInfoModel,
-            ExamModel,
-            BankStatementPaymentModel,
+            AdmissionOfferModel,
+            BankStatementModel,
             AdmissionPaymentModel,
             AdmissionProcessModel,
             AdmissionApplicationModel,

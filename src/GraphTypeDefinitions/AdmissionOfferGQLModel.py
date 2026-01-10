@@ -11,7 +11,7 @@ AdmissionPaymentInfoGQLModel = typing.Annotated["AdmissionPaymentInfoGQLModel", 
 
 
 @createInputs2
-class ExamInputFilter:
+class AdmissionOfferInputFilter:
     id: IDType
     program_id: IDType
     application_start_date: datetime.datetime
@@ -19,12 +19,12 @@ class ExamInputFilter:
     payment_info_id: IDType
 
 
-@strawberry.federation.type(keys=["id"], description="Admission exam offer for a study program")
-class ExamGQLModel(BaseGQLModel):
+@strawberry.federation.type(keys=["id"], description="Admission offer for a study program")
+class AdmissionOfferGQLModel(BaseGQLModel):
 
     @classmethod
     def getLoader(cls, info: strawberry.types.Info):
-        return getLoadersFromInfo(info).ExamModel
+        return getLoadersFromInfo(info).AdmissionOfferModel
 
     program_id: typing.Optional[IDType] = strawberry.field(
         default=None,
@@ -54,18 +54,18 @@ class ExamGQLModel(BaseGQLModel):
     )
 
 
-@strawberry.type(description="Exam queries")
-class ExamQuery:
-    exam_by_id: typing.Optional[ExamGQLModel] = strawberry.field(
-        description="get exam by id",
+@strawberry.type(description="Admission offer queries")
+class AdmissionOfferQuery:
+    admission_offer_by_id: typing.Optional[AdmissionOfferGQLModel] = strawberry.field(
+        description="get admission offer by id",
         permission_classes=[OnlyForAuthentized],
-        resolver=ExamGQLModel.load_with_loader
+        resolver=AdmissionOfferGQLModel.load_with_loader
     )
 
-    exam_page: typing.List[ExamGQLModel] = strawberry.field(
-        description="page of exams",
+    admission_offer_page: typing.List[AdmissionOfferGQLModel] = strawberry.field(
+        description="page of admission offers",
         permission_classes=[OnlyForAuthentized],
-        resolver=PageResolver[ExamGQLModel](whereType=ExamInputFilter)
+        resolver=PageResolver[AdmissionOfferGQLModel](whereType=AdmissionOfferInputFilter)
     )
 
 
@@ -73,16 +73,16 @@ from uoishelpers.resolvers import InsertError, UpdateError, DeleteError
 from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
 
 
-@strawberry.input(description="Input model for creating an exam")
-class ExamInsertGQLModel:
+@strawberry.input(description="Input model for creating an admission offer")
+class AdmissionOfferInsertGQLModel:
     program_id: typing.Optional[IDType] = None
     application_start_date: typing.Optional[datetime.datetime] = None
     application_end_date: typing.Optional[datetime.datetime] = None
     payment_info_id: typing.Optional[IDType] = None
 
 
-@strawberry.input(description="Input model for updating an exam")
-class ExamUpdateGQLModel:
+@strawberry.input(description="Input model for updating an admission offer")
+class AdmissionOfferUpdateGQLModel:
     id: IDType
     lastchange: datetime.datetime
     program_id: typing.Optional[IDType] = None
@@ -91,50 +91,50 @@ class ExamUpdateGQLModel:
     payment_info_id: typing.Optional[IDType] = None
 
 
-@strawberry.input(description="Input model for deleting an exam")
-class ExamDeleteGQLModel:
+@strawberry.input(description="Input model for deleting an admission offer")
+class AdmissionOfferDeleteGQLModel:
     id: IDType
     lastchange: datetime.datetime
 
 
-@strawberry.type(description="Exam mutations")
-class ExamMutation:
-    @strawberry.mutation(description="Insert an exam", permission_classes=[OnlyForAuthentized])
-    async def exam_insert(
+@strawberry.type(description="Admission offer mutations")
+class AdmissionOfferMutation:
+    @strawberry.mutation(description="Insert an admission offer", permission_classes=[OnlyForAuthentized])
+    async def admission_offer_insert(
         self,
         info: strawberry.Info,
-        exam: ExamInsertGQLModel
-    ) -> typing.Union[ExamGQLModel, InsertError[ExamGQLModel]]:
+        admission_offer: AdmissionOfferInsertGQLModel
+    ) -> typing.Union[AdmissionOfferGQLModel, InsertError[AdmissionOfferGQLModel]]:
         from uoishelpers.resolvers import Insert
 
-        return await Insert[ExamGQLModel].DoItSafeWay(info=info, entity=exam)
+        return await Insert[AdmissionOfferGQLModel].DoItSafeWay(info=info, entity=admission_offer)
 
     @strawberry.mutation(
-        description="Update an exam",
+        description="Update an admission offer",
         permission_classes=[OnlyForAuthentized],
-        extensions=[LoadDataExtension[UpdateError, ExamGQLModel]()]
+        extensions=[LoadDataExtension[UpdateError, AdmissionOfferGQLModel]()]
     )
-    async def exam_update(
+    async def admission_offer_update(
         self,
         info: strawberry.Info,
-        exam: ExamUpdateGQLModel,
+        admission_offer: AdmissionOfferUpdateGQLModel,
         db_row: typing.Any
-    ) -> typing.Union[ExamGQLModel, UpdateError[ExamGQLModel]]:
+    ) -> typing.Union[AdmissionOfferGQLModel, UpdateError[AdmissionOfferGQLModel]]:
         from uoishelpers.resolvers import Update
 
-        return await Update[ExamGQLModel].DoItSafeWay(info=info, entity=exam)
+        return await Update[AdmissionOfferGQLModel].DoItSafeWay(info=info, entity=admission_offer)
 
     @strawberry.mutation(
-        description="Delete an exam",
+        description="Delete an admission offer",
         permission_classes=[OnlyForAuthentized],
-        extensions=[LoadDataExtension[DeleteError, ExamGQLModel]()]
+        extensions=[LoadDataExtension[DeleteError, AdmissionOfferGQLModel]()]
     )
-    async def exam_delete(
+    async def admission_offer_delete(
         self,
         info: strawberry.Info,
-        exam: ExamDeleteGQLModel,
+        admission_offer: AdmissionOfferDeleteGQLModel,
         db_row: typing.Any
-    ) -> typing.Optional[DeleteError[ExamGQLModel]]:
+    ) -> typing.Optional[DeleteError[AdmissionOfferGQLModel]]:
         from uoishelpers.resolvers import Delete
 
-        return await Delete[ExamGQLModel].DoItSafeWay(info=info, entity=exam)
+        return await Delete[AdmissionOfferGQLModel].DoItSafeWay(info=info, entity=admission_offer)

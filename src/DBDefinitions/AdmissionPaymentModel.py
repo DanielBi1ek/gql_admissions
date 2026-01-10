@@ -18,13 +18,13 @@ class AdmissionPaymentModel(BaseModel):
         nullable=True,
         comment="payment date"
     )
-    bank_payment_id: Mapped[IDType] = UUIDFKey(
-        ForeignKey("bank_statement_payments.id"),
-        comment="reference to bank statement payment"
+    bank_statement_id: Mapped[IDType] = UUIDFKey(
+        ForeignKey("bank_statements.id"),
+        comment="reference to bank statement"
     )
 
-    bank_payment = relationship(
-        "BankStatementPaymentModel",
+    bank_statement = relationship(
+        "BankStatementModel",
         viewonly=True,
         uselist=False,
         lazy="joined"

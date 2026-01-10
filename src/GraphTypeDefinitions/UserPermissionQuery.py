@@ -37,8 +37,8 @@ class UserRoleInfo:
     can_delete_own_applications: bool = strawberry.field(
         description="Can user delete their own applications?"
     )
-    can_manage_exams: bool = strawberry.field(
-        description="Can user create/update/delete exams? (Admin only)"
+    can_manage_admission_offers: bool = strawberry.field(
+        description="Can user create/update/delete admission offers? (Admin only)"
     )
 
 
@@ -81,6 +81,5 @@ class UserPermissionQuery:
             can_create_applications=rbac.is_editor() or rbac.is_admin(),
             can_update_own_applications=rbac.is_editor() or rbac.is_admin(),
             can_delete_own_applications=rbac.is_editor() or rbac.is_admin(),
-            can_manage_exams=rbac.is_admin(),
+            can_manage_admission_offers=rbac.is_admin(),
         )
-

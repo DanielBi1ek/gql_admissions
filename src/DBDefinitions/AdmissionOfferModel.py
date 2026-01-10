@@ -5,8 +5,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .BaseModel import BaseModel, IDType, UUIDFKey
 
 
-class ExamModel(BaseModel):
-    __tablename__ = "exams"
+class AdmissionOfferModel(BaseModel):
+    __tablename__ = "admission_offers"
 
     program_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("study_programs.id"),
@@ -39,4 +39,3 @@ class ExamModel(BaseModel):
         uselist=False,
         lazy="joined"
     )
-

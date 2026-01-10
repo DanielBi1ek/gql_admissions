@@ -4,7 +4,7 @@ from .AdmissionProcessGQLModel import AdmissionProcessQuery
 from .AdmissionApplicationGQLModel import AdmissionApplicationQuery
 from .AdmissionPaymentGQLModel import AdmissionPaymentQuery
 from .AdmissionPaymentInfoGQLModel import AdmissionPaymentInfoQuery
-from .ExamGQLModel import ExamQuery
+from .AdmissionOfferGQLModel import AdmissionOfferQuery
 from .UserPermissionQuery import UserPermissionQuery
 
 
@@ -14,7 +14,7 @@ class Query(
     AdmissionApplicationQuery,
     AdmissionPaymentQuery,
     AdmissionPaymentInfoQuery,
-    ExamQuery,
+    AdmissionOfferQuery,
     UserPermissionQuery,
 ):
     pass

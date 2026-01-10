@@ -8,9 +8,10 @@ from src.DBDefinitions import (
     AdmissionApplicationModel,
     AdmissionPaymentModel,
     AdmissionPaymentInfoModel,
-    ExamModel,
+    AdmissionOfferModel,
     StudyProgramModel,
-    BankStatementPaymentModel,
+    BankStatementModel,
+    UserModel,
 )
 
 get_demodata = lambda: readJsonFile(jsonFileName="./systemdata.json")
@@ -23,10 +24,11 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
     if isDemo:
         print("Demo mode", flush=True)
         dbModels = [
+            UserModel,
             StudyProgramModel,
             AdmissionPaymentInfoModel,
-            ExamModel,
-            BankStatementPaymentModel,
+            AdmissionOfferModel,
+            BankStatementModel,
             AdmissionPaymentModel,
             AdmissionProcessModel,
             AdmissionApplicationModel,
@@ -43,8 +45,14 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
                 return v
         return v
 
-    if isinstance(jsonData, dict) and "exams" in jsonData:
-        for row in jsonData.get("exams", []):
+    if isinstance(jsonData, dict):
+        if "admission_offers" not in jsonData and "exams" in jsonData:
+            jsonData["admission_offers"] = jsonData.pop("exams")
+        if "bank_statements" not in jsonData and "bank_statement_payments" in jsonData:
+            jsonData["bank_statements"] = jsonData.pop("bank_statement_payments")
+
+    if isinstance(jsonData, dict) and "admission_offers" in jsonData:
+        for row in jsonData.get("admission_offers", []):
             if not isinstance(row, dict):
                 continue
             for key in ["application_start_date", "application_end_date", "created", "lastchange"]:
@@ -63,6 +71,8 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
         for row in jsonData.get("admission_payments", []):
             if not isinstance(row, dict):
                 continue
+            if "bank_payment_id" in row and "bank_statement_id" not in row:
+                row["bank_statement_id"] = row.pop("bank_payment_id")
             for key in ["paid_at", "created", "lastchange"]:
                 if key in row:
                     row[key] = _parse_iso(row.get(key))
@@ -78,10 +88,11 @@ async def backupDB(asyncSessionMaker, filename="./systemdata.backup.json"):
     import json
 
     dbModels = [
+        UserModel,
         StudyProgramModel,
         AdmissionPaymentInfoModel,
-        ExamModel,
-        BankStatementPaymentModel,
+        AdmissionOfferModel,
+        BankStatementModel,
         AdmissionPaymentModel,
         AdmissionProcessModel,
         AdmissionApplicationModel,

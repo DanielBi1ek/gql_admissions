@@ -20,6 +20,16 @@ AdmissionProcessGQLModel = typing.Annotated["AdmissionProcessGQLModel", strawber
 AdmissionPaymentGQLModel = typing.Annotated["AdmissionPaymentGQLModel", strawberry.lazy(".AdmissionPaymentGQLModel")]
 
 
+def _normalize_applied_date(entity: typing.Any) -> None:
+    if not hasattr(entity, "applied_date"):
+        return
+    value = entity.applied_date
+    if value is None or value is strawberry.UNSET:
+        return
+    if value.tzinfo is not None and value.utcoffset() is not None:
+        entity.applied_date = value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+
+
 @createInputs2
 class AdmissionApplicationInputFilter:
     id: IDType
@@ -162,6 +172,7 @@ class AdmissionApplicationMutation:
         print(f"[INSERT] User: {user.get('fullname')} ({user.get('id')})")
         print(f"[INSERT] Roles: {user.get('roles', [])}")
 
+        _normalize_applied_date(application)
         return await Insert[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
 
     @strawberry.field(
@@ -185,6 +196,7 @@ class AdmissionApplicationMutation:
         print(f"[UPDATE] Roles: {user.get('roles', [])}")
         print(f"[UPDATE] Target ID: {application.id}")
 
+        _normalize_applied_date(application)
         return await Update[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
 
     @strawberry.field(

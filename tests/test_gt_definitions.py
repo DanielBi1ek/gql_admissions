@@ -91,13 +91,13 @@ async def test_admission_payment_info_page():
 
 
 @pytest.mark.asyncio
-async def test_exam_page():
+async def test_admission_offer_page():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
     query = """
         query {
-            result: examPage {
+            result: admissionOfferPage {
                 id
                 programId
                 paymentInfoId

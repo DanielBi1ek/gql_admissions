@@ -11,9 +11,10 @@ from .AdmissionProcessModel import AdmissionProcessModel
 from .AdmissionApplicationModel import AdmissionApplicationModel
 from .AdmissionPaymentModel import AdmissionPaymentModel
 from .AdmissionPaymentInfoModel import AdmissionPaymentInfoModel
-from .ExamModel import ExamModel
+from .AdmissionOfferModel import AdmissionOfferModel
 from .StudyProgramModel import StudyProgramModel
-from .BankStatementPaymentModel import BankStatementPaymentModel
+from .BankStatementModel import BankStatementModel
+from .UserModel import UserModel
 
 async def startEngine(connectionstring, makeDrop=False, makeUp=True):
     """Provede nezbytne ukony a vrati asynchronni SessionMaker"""

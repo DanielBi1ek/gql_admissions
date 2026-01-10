@@ -39,8 +39,9 @@ def test_metadata_tables_present():
         "admission_applications",
         "admission_payment_infos",
         "admission_payments",
-        "bank_statement_payments",
+        "bank_statements",
         "study_programs",
-        "exams",
+        "admission_offers",
+        "users",
     }
     assert expected.issubset(table_names)

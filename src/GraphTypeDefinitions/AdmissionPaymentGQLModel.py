@@ -13,7 +13,7 @@ class AdmissionPaymentInputFilter:
     id: IDType
     required_amount: float
     paid_at: datetime.datetime
-    bank_payment_id: IDType
+    bank_statement_id: IDType
 
 
 @strawberry.federation.type(keys=["id"], description="Admission payment waiting for matching")
@@ -33,9 +33,9 @@ class AdmissionPaymentGQLModel(BaseGQLModel):
         description="payment date",
         permission_classes=[OnlyForAuthentized]
     )
-    bank_payment_id: typing.Optional[IDType] = strawberry.field(
+    bank_statement_id: typing.Optional[IDType] = strawberry.field(
         default=None,
-        description="bank statement payment reference",
+        description="bank statement reference",
         permission_classes=[OnlyForAuthentized]
     )
 
@@ -63,7 +63,7 @@ from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
 class AdmissionPaymentInsertGQLModel:
     required_amount: typing.Optional[float] = None
     paid_at: typing.Optional[datetime.datetime] = None
-    bank_payment_id: typing.Optional[IDType] = None
+    bank_statement_id: typing.Optional[IDType] = None
 
 
 @strawberry.input(description="Input model for updating admission payment")
@@ -72,7 +72,7 @@ class AdmissionPaymentUpdateGQLModel:
     lastchange: datetime.datetime
     required_amount: typing.Optional[float] = None
     paid_at: typing.Optional[datetime.datetime] = None
-    bank_payment_id: typing.Optional[IDType] = None
+    bank_statement_id: typing.Optional[IDType] = None
 
 
 @strawberry.input(description="Input model for deleting admission payment")

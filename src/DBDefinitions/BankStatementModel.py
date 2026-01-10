@@ -3,8 +3,8 @@ from sqlalchemy.orm import Mapped, mapped_column
 from .BaseModel import BaseModel
 
 
-class BankStatementPaymentModel(BaseModel):
-    __tablename__ = "bank_statement_payments"
+class BankStatementModel(BaseModel):
+    __tablename__ = "bank_statements"
 
     variable_symbol: Mapped[str] = mapped_column(
         default=None,
