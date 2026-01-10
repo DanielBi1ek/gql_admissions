@@ -158,11 +158,6 @@
     "admission_applications": [
         {
             "id": "c76a8069-f7d3-43d7-8c0b-363127e1a8a7",
-            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-            "street": "Testovaci 1",
-            "house_number": "101",
-            "city": "Brno",
-            "postal_code": "60200",
             "applied_date": "2025-01-01T10:00:00.000000",
             "process_id": "3a140ac8-cd49-4a38-95ef-ea96514962ca",
             "payment_id": "145ca89f-2caa-4981-b20c-b1bdecfaf9d7",
@@ -170,15 +165,15 @@
             "lastchange": "2025-01-01T10:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
-            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "applicant_id": "8d94b3fe-4960-4ec8-aba2-aa9b32f02b60",
+            "accepted": false,
+            "accepted_at": null,
+            "acceptedby_id": null,
+            "offer_id": "66bc6b6e-88a6-4472-8a6e-f6dd805e4f5e"
         },
         {
             "id": "961633a1-3a79-4efd-b8c8-c3b8782f73cc",
-            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-            "street": "Testovaci 2",
-            "house_number": "102",
-            "city": "Brno",
-            "postal_code": "60200",
             "applied_date": "2025-01-02T10:00:00.000000",
             "process_id": "4af62d1a-26b8-4d8e-bb10-49c79ef3f5a5",
             "payment_id": "fba234fa-58a6-4b86-ad78-12f8f2e59f41",
@@ -186,15 +181,15 @@
             "lastchange": "2025-01-02T10:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
-            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "applicant_id": "cf7a8a0d-6383-49a2-a4a1-bf68464d6a96",
+            "accepted": false,
+            "accepted_at": null,
+            "acceptedby_id": null,
+            "offer_id": "053ea132-77af-4414-a7e3-9d89507205d2"
         },
         {
             "id": "c54dc8aa-4c34-4aaf-92b4-09493d22cef7",
-            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-            "street": "Testovaci 3",
-            "house_number": "103",
-            "city": "Brno",
-            "postal_code": "60200",
             "applied_date": "2025-01-03T10:00:00.000000",
             "process_id": "c6289381-b8de-492e-8b64-24c0e1737c92",
             "payment_id": "026b3412-0210-44a7-80ef-93acf3043fc1",
@@ -202,15 +197,15 @@
             "lastchange": "2025-01-03T10:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
-            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "applicant_id": "aed1ffc6-f7f9-40ab-aa7e-2ac89015fbc4",
+            "accepted": false,
+            "accepted_at": null,
+            "acceptedby_id": null,
+            "offer_id": "fda1a9fa-2abf-49ad-bb16-5b8c013f7787"
         },
         {
             "id": "460db915-7d50-4771-8dd7-a37125c947b2",
-            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-            "street": "Testovaci 4",
-            "house_number": "104",
-            "city": "Brno",
-            "postal_code": "60200",
             "applied_date": "2025-01-04T10:00:00.000000",
             "process_id": "c70613aa-dcd1-4153-996e-dd6c5e742959",
             "payment_id": "36b72e71-1341-4a74-bf0f-56f429327505",
@@ -218,15 +213,15 @@
             "lastchange": "2025-01-04T10:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
-            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "applicant_id": "5f93bd72-1962-4a0c-a8f1-13051126cd69",
+            "accepted": false,
+            "accepted_at": null,
+            "acceptedby_id": null,
+            "offer_id": "66bc6b6e-88a6-4472-8a6e-f6dd805e4f5e"
         },
         {
             "id": "637bc4f6-8779-4c8a-9618-1ee039224206",
-            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-            "street": "Testovaci 5",
-            "house_number": "105",
-            "city": "Brno",
-            "postal_code": "60200",
             "applied_date": "2025-01-05T10:00:00.000000",
             "process_id": "86cce081-b095-4384-a322-ecc89d7c0617",
             "payment_id": "81812022-7a10-4f5f-9d67-9cc4a324a280",
@@ -234,15 +229,15 @@
             "lastchange": "2025-01-05T10:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
-            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "applicant_id": "caed00c6-e5a9-45b7-9a1f-0709d001f108",
+            "accepted": false,
+            "accepted_at": null,
+            "acceptedby_id": null,
+            "offer_id": "053ea132-77af-4414-a7e3-9d89507205d2"
         },
         {
             "id": "77e06170-5809-452c-9896-4ed6875a9f68",
-            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-            "street": "Testovaci 6",
-            "house_number": "106",
-            "city": "Brno",
-            "postal_code": "60200",
             "applied_date": "2025-01-06T10:00:00.000000",
             "process_id": "09391dcc-f356-4ad1-93d6-16368dd16463",
             "payment_id": "aa08f591-90cf-4259-b891-bc74138743a1",
@@ -250,7 +245,12 @@
             "lastchange": "2025-01-06T10:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
-            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "applicant_id": "e179c4d5-5a73-43a5-b079-0e83e82d3630",
+            "accepted": false,
+            "accepted_at": null,
+            "acceptedby_id": null,
+            "offer_id": "fda1a9fa-2abf-49ad-bb16-5b8c013f7787"
         }
     ],
     "study_programs": [
@@ -378,6 +378,148 @@
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        }
+    ],
+    "admission_applicants": [
+        {
+            "id": "8d94b3fe-4960-4ec8-aba2-aa9b32f02b60",
+            "applicant_user_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+            "street": "Testovaci 1",
+            "house_number": "101",
+            "city": "Brno",
+            "phone_number": "+420700000001",
+            "email": "Zdenka.Simeckova@world.com",
+            "databox_number": "DBX000001",
+            "created": "2025-01-01T10:00:00.000000",
+            "lastchange": "2025-01-01T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "firstname": "Zde\u0148ka",
+            "lastname": "\u0160ime\u010dkov\u00e1"
+        },
+        {
+            "id": "cf7a8a0d-6383-49a2-a4a1-bf68464d6a96",
+            "applicant_user_id": "76dac14f-7114-4bb2-882d-0d762eab6f4a",
+            "street": "Testovaci 2",
+            "house_number": "102",
+            "city": "Brno",
+            "phone_number": "+420700000002",
+            "email": "Estera.Luckova@world.com",
+            "databox_number": "DBX000002",
+            "created": "2025-01-02T10:00:00.000000",
+            "lastchange": "2025-01-02T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "firstname": "Estera",
+            "lastname": "Lu\u010dkov\u00e1"
+        },
+        {
+            "id": "aed1ffc6-f7f9-40ab-aa7e-2ac89015fbc4",
+            "applicant_user_id": "6a6ca6e9-2222-498f-b270-b7b07c2afa41",
+            "street": "Testovaci 3",
+            "house_number": "103",
+            "city": "Brno",
+            "phone_number": "+420700000003",
+            "email": "Oliver.Hortik@world.com",
+            "databox_number": "DBX000003",
+            "created": "2025-01-03T10:00:00.000000",
+            "lastchange": "2025-01-03T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "firstname": "Oliver",
+            "lastname": "Hort\u00edk"
+        },
+        {
+            "id": "5f93bd72-1962-4a0c-a8f1-13051126cd69",
+            "applicant_user_id": "678a2389-dd49-4d44-88be-28841ae34df1",
+            "street": "Testovaci 4",
+            "house_number": "104",
+            "city": "Brno",
+            "phone_number": "+420700000004",
+            "email": "Ornela.Kuckova@world.com",
+            "databox_number": "DBX000004",
+            "created": "2025-01-04T10:00:00.000000",
+            "lastchange": "2025-01-04T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "firstname": "Ornela",
+            "lastname": "Kuckov\u00e1"
+        },
+        {
+            "id": "caed00c6-e5a9-45b7-9a1f-0709d001f108",
+            "applicant_user_id": "35176143-7a86-4ce0-a611-c5824d750f66",
+            "street": "Testovaci 5",
+            "house_number": "105",
+            "city": "Brno",
+            "phone_number": "+420700000005",
+            "email": "Valentin.Krenek@world.com",
+            "databox_number": "DBX000005",
+            "created": "2025-01-05T10:00:00.000000",
+            "lastchange": "2025-01-05T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "firstname": "Valentin",
+            "lastname": "K\u0159enek"
+        },
+        {
+            "id": "e179c4d5-5a73-43a5-b079-0e83e82d3630",
+            "applicant_user_id": "a0506cc4-5d53-4fdb-a989-c06a97e527fd",
+            "street": "Testovaci 6",
+            "house_number": "106",
+            "city": "Brno",
+            "phone_number": "+420700000006",
+            "email": "Ludvik.Kilik@world.com",
+            "databox_number": "DBX000006",
+            "created": "2025-01-06T10:00:00.000000",
+            "lastchange": "2025-01-06T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "firstname": "Ludv\u00edk",
+            "lastname": "Kilik"
+        }
+    ],
+    "users": [
+        {
+            "id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+            "name": "Zde\u0148ka",
+            "surname": "\u0160ime\u010dkov\u00e1",
+            "email": "Zdenka.Simeckova@world.com"
+        },
+        {
+            "id": "76dac14f-7114-4bb2-882d-0d762eab6f4a",
+            "name": "Estera",
+            "surname": "Lu\u010dkov\u00e1",
+            "email": "Estera.Luckova@world.com"
+        },
+        {
+            "id": "6a6ca6e9-2222-498f-b270-b7b07c2afa41",
+            "name": "Oliver",
+            "surname": "Hort\u00edk",
+            "email": "Oliver.Hortik@world.com"
+        },
+        {
+            "id": "678a2389-dd49-4d44-88be-28841ae34df1",
+            "name": "Ornela",
+            "surname": "Kuckov\u00e1",
+            "email": "Ornela.Kuckova@world.com"
+        },
+        {
+            "id": "35176143-7a86-4ce0-a611-c5824d750f66",
+            "name": "Valentin",
+            "surname": "K\u0159enek",
+            "email": "Valentin.Krenek@world.com"
+        },
+        {
+            "id": "a0506cc4-5d53-4fdb-a989-c06a97e527fd",
+            "name": "Ludv\u00edk",
+            "surname": "Kilik",
+            "email": "Ludvik.Kilik@world.com"
         }
     ]
 }

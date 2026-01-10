@@ -17,11 +17,12 @@ from .BaseGQLModel import BaseGQLModel
 from .UserGQLModel import UserGQLModel
 from .StudyProgramGQLModel import StudyProgramGQLModel
 from .AdmissionBankAccountGQLModel import AdmissionBankAccountGQLModel
+from .AdmissionApplicantGQLModel import AdmissionApplicantGQLModel
 
 schema = strawberry.federation.Schema(
     query=Query,
     mutation=Mutation,
-    types=(UserGQLModel, BaseGQLModel, StudyProgramGQLModel, AdmissionBankAccountGQLModel),
+    types=(UserGQLModel, BaseGQLModel, StudyProgramGQLModel, AdmissionBankAccountGQLModel, AdmissionApplicantGQLModel),
     scalar_overrides={datetime.timedelta: timedelta._scalar_definition},
 
     extensions=[],
@@ -30,6 +31,24 @@ schema = strawberry.federation.Schema(
 )
 
 from uoishelpers.schema import WhoAmIExtension, ProfilingExtension, PrometheusExtension
+import uoishelpers.schema.WhoAmIExtension as whoami_module
+
+whoami_module.mequery = """
+{
+  me {
+    id
+    name
+    surname
+    fullname
+    email
+    roles(where: {valid: {_eq: true}}, limit: 1000) {
+      valid
+      group { id name }
+      roletype { id name }
+    }
+  }
+}"""
+WhoAmIExtension.mequery = whoami_module.mequery
 
 schema.extensions.append(WhoAmIExtension)
 schema.extensions.append(ProfilingExtension)

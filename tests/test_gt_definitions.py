@@ -50,6 +50,7 @@ async def test_admission_application_with_relations():
         query($id: UUID!) {
             result: admissionApplicationById(id: $id) {
                 id
+                applicantId
                 process {
                     id
                 }

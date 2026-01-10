@@ -37,7 +37,7 @@ def test_client_admission_application_by_id():
     application = data["admission_applications"][0]
     client = createGQLClient()
     json = {
-        "query": """query($id: UUID!){ result: admissionApplicationById(id: $id) { id street } }""",
+        "query": """query($id: UUID!){ result: admissionApplicationById(id: $id) { id applicantId } }""",
         "variables": {
             "id": _uuid_to_str(application["id"]),
         },

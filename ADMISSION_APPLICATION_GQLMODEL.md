@@ -21,17 +21,14 @@
 ```
 AdmissionApplicationGQLModel
 ├── id: IDType [Federation Key]
-├── applicant_user_id: IDType
-├── street: str
-├── house_number: str
-├── city: str
-├── postal_code: str
+├── applicant_id: IDType → AdmissionApplicantGQLModel
 ├── applied_date: datetime
 ├── process_id: IDType → AdmissionProcessGQLModel
 ├── payment_id: IDType → AdmissionPaymentGQLModel
 ├── created / lastchange / createdby_id / changedby_id / rbacobject_id
 ├── process (relation)
-└── payment (relation)
+├── payment (relation)
+└── applicant (relation)
 ```
 
 ## Input Models
@@ -43,11 +40,7 @@ Used for filtering in `admissionApplicationPage`.
 @createInputs2
 class AdmissionApplicationInputFilter:
     id: IDType
-    applicant_user_id: IDType
-    street: str
-    house_number: str
-    city: str
-    postal_code: str
+    applicant_id: IDType
     applied_date: datetime.datetime
     process_id: IDType
     payment_id: IDType
@@ -57,11 +50,7 @@ class AdmissionApplicationInputFilter:
 ```python
 @strawberry.input
 class AdmissionApplicationInsertGQLModel:
-    applicant_user_id: Optional[IDType]
-    street: Optional[str]
-    house_number: Optional[str]
-    city: Optional[str]
-    postal_code: Optional[str]
+    applicant_id: Optional[IDType]
     applied_date: Optional[datetime]
     process_id: Optional[IDType]
     payment_id: Optional[IDType]
@@ -73,11 +62,7 @@ class AdmissionApplicationInsertGQLModel:
 class AdmissionApplicationUpdateGQLModel:
     id: IDType
     lastchange: datetime
-    applicant_user_id: Optional[IDType]
-    street: Optional[str]
-    house_number: Optional[str]
-    city: Optional[str]
-    postal_code: Optional[str]
+    applicant_id: Optional[IDType]
     applied_date: Optional[datetime]
     process_id: Optional[IDType]
     payment_id: Optional[IDType]
@@ -98,8 +83,8 @@ class AdmissionApplicationDeleteGQLModel:
 query {
   admissionApplicationById(id: "app-uuid") {
     id
-    street
-    city
+    applicantId
+    applicant { id street city }
     process { id }
     payment { id requiredAmount }
   }
@@ -111,7 +96,7 @@ query {
 query {
   admissionApplicationPage(where: { processId: "proc-uuid" }) {
     id
-    applicantUserId
+    applicantId
     appliedDate
   }
 }
@@ -123,11 +108,7 @@ query {
 ```graphql
 mutation {
   admissionApplicationInsert(application: {
-    applicantUserId: "user-uuid"
-    street: "Main"
-    houseNumber: "123"
-    city: "Brno"
-    postalCode: "60200"
+    applicantId: "applicant-uuid"
     appliedDate: "2025-03-01T08:00:00"
     processId: "proc-uuid"
     paymentId: "payment-uuid"

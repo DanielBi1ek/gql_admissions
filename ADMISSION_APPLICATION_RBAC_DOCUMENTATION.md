@@ -43,11 +43,7 @@ Role lists are defined in `src/GraphTypeDefinitions/unified_rbac_extensions.py`.
 ```graphql
 mutation {
   admissionApplicationInsert(application: {
-    applicantUserId: "user-uuid"
-    street: "Main"
-    houseNumber: "123"
-    city: "Brno"
-    postalCode: "60200"
+    applicantId: "applicant-uuid"
     appliedDate: "2025-03-01T08:00:00"
     processId: "proc-uuid"
     paymentId: "payment-uuid"

@@ -13,6 +13,7 @@ from src.DBDefinitions import (
     AdmissionOfferModel,
     StudyProgramModel,
     BankStatementModel,
+    AdmissionApplicantModel,
 )
 from src.DBFeeder import get_demodata
 from src.Dataloaders import createLoadersContext
@@ -186,6 +187,15 @@ async def prepare_demodata(async_session_maker):
                 if key in row:
                     row[key] = _parse_iso(row.get(key))
 
+    # Parse dates in admission_applicants
+    if isinstance(data, dict) and "admission_applicants" in data:
+        for row in data.get("admission_applicants", []):
+            if not isinstance(row, dict):
+                continue
+            for key in ["created", "lastchange"]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
     # Parse dates in admission_bank_accounts
     if isinstance(data, dict) and "admission_bank_accounts" in data:
         for row in data.get("admission_bank_accounts", []):
@@ -207,6 +217,7 @@ async def prepare_demodata(async_session_maker):
             BankStatementModel,
             AdmissionPaymentModel,
             AdmissionProcessModel,
+            AdmissionApplicantModel,
             AdmissionApplicationModel,
         ],
         data,

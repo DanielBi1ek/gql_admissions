@@ -6,6 +6,7 @@ from .AdmissionPaymentGQLModel import AdmissionPaymentQuery
 from .AdmissionPaymentInfoGQLModel import AdmissionPaymentInfoQuery
 from .AdmissionOfferGQLModel import AdmissionOfferQuery
 from .AdmissionBankAccountGQLModel import AdmissionBankAccountQuery
+from .AdmissionApplicantGQLModel import AdmissionApplicantQuery
 from .UserPermissionQuery import UserPermissionQuery
 
 
@@ -17,6 +18,7 @@ class Query(
     AdmissionPaymentInfoQuery,
     AdmissionOfferQuery,
     AdmissionBankAccountQuery,
+    AdmissionApplicantQuery,
     UserPermissionQuery,
 ):
     pass

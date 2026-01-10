@@ -9,6 +9,7 @@ from src.DBDefinitions import (
     AdmissionOfferModel,
     StudyProgramModel,
     AdmissionBankAccountModel,
+    AdmissionApplicantModel,
 )
 
 from uoishelpers.dataloaders.LoaderMapBase import LoaderMapBase
@@ -25,6 +26,7 @@ class LoaderMap(LoaderMapBase[BaseModel]):
     AdmissionOfferModel: Optional[IDLoader]
     StudyProgramModel: Optional[IDLoader]
     AdmissionBankAccountModel: Optional[IDLoader]
+    AdmissionApplicantModel: Optional[IDLoader]
 
     def __init__(self, session):
         super().__init__(session)
@@ -36,6 +38,7 @@ class LoaderMap(LoaderMapBase[BaseModel]):
         self.AdmissionOfferModel = self.get(AdmissionOfferModel)
         self.StudyProgramModel = self.get(StudyProgramModel)
         self.AdmissionBankAccountModel = self.get(AdmissionBankAccountModel)
+        self.AdmissionApplicantModel = self.get(AdmissionApplicantModel)
 
 
 def createLoadersContext(session):

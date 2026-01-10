@@ -6,6 +6,7 @@ from .AdmissionPaymentGQLModel import AdmissionPaymentMutation
 from .AdmissionPaymentInfoGQLModel import AdmissionPaymentInfoMutation
 from .AdmissionOfferGQLModel import AdmissionOfferMutation
 from .AdmissionBankAccountGQLModel import AdmissionBankAccountMutation
+from .AdmissionApplicantGQLModel import AdmissionApplicantMutation
 
 
 @strawberry.type(description="""Type for mutation root""")
@@ -16,5 +17,6 @@ class Mutation(
     AdmissionPaymentInfoMutation,
     AdmissionOfferMutation,
     AdmissionBankAccountMutation,
+    AdmissionApplicantMutation,
 ):
     pass

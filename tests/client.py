@@ -76,7 +76,7 @@ async def main():
     client = createFederationClient()
     result = await client("""query MyQuery {
   admissionApplicationPage {
-    street
+    applicantId
   }
 }""", {})
     print(result)

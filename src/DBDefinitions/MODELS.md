@@ -60,12 +60,16 @@ The service is federated, so user references are stored without foreign keys.
 - Fields: `payment_id` (FK to `admission_payments`).
 - Relationship: `payment` (view-only).
 
+### AdmissionApplicantModel (AdmissionApplicantModel.py)
+- Table: `admission_applicants`.
+- Purpose: personal data for admission applicants.
+- Fields: `applicant_user_id`, `firstname`, `lastname`, `street`, `house_number`, `city`, `phone_number`, `email`, `databox_number`.
+
 ### AdmissionApplicationModel (AdmissionApplicationModel.py)
 - Table: `admission_applications`.
 - Purpose: submitted application by a user in a specific admission process.
-- Fields: `applicant_user_id` (no FK), `street`, `house_number`, `city`, `postal_code`, `applied_date`,
-  `process_id` (FK), `payment_id` (FK).
-- Relationships: `process`, `payment` (view-only).
+- Fields: `applicant_id` (FK), `applied_date`, `accepted`, `accepted_at`, `acceptedby_id`, `process_id` (FK), `payment_id` (FK), `offer_id` (FK).
+- Relationships: `process`, `payment`, `offer`, `applicant` (view-only).
 - GraphQL: AdmissionApplicationGQLModel with RBAC permissions. Queries available: `admissionApplicationById`, `admissionApplicationPage`.
 - RBAC: All fields require `OnlyForAuthentized` permission. Mutations (insert/update/delete) require `AnyRole` (user must have at least one role).
   - Insert sets `createdby_id` from authenticated user context.

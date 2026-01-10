@@ -6,6 +6,7 @@ from uoishelpers.dataloaders import readJsonFile
 from src.DBDefinitions import (
     AdmissionProcessModel,
     AdmissionApplicationModel,
+    AdmissionApplicantModel,
     AdmissionPaymentModel,
     AdmissionPaymentInfoModel,
     AdmissionBankAccountModel,
@@ -33,6 +34,7 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
             BankStatementModel,
             AdmissionPaymentModel,
             AdmissionProcessModel,
+            AdmissionApplicantModel,
             AdmissionApplicationModel,
         ]
 
@@ -95,6 +97,14 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
                 if key in row:
                     row[key] = _parse_iso(row.get(key))
 
+    if isinstance(jsonData, dict) and "admission_applicants" in jsonData:
+        for row in jsonData.get("admission_applicants", []):
+            if not isinstance(row, dict):
+                continue
+            for key in ["created", "lastchange"]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
     await ImportModels(asyncSessionMaker, dbModels, jsonData)
 
     print("Data initialized", flush=True)
@@ -114,6 +124,7 @@ async def backupDB(asyncSessionMaker, filename="./systemdata.backup.json"):
         BankStatementModel,
         AdmissionPaymentModel,
         AdmissionProcessModel,
+        AdmissionApplicantModel,
         AdmissionApplicationModel,
     ]
     data = []

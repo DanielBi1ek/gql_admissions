@@ -142,24 +142,22 @@ async def test_admin_can_create_admission_application():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
+    data = get_demodata()
+    applicant_id = _uuid_to_str(data["admission_applicants"][0]["id"])
     context_value = get_john_newbie_context(async_session_maker)
 
-    mutation = """
+    mutation = f"""
         mutation {
             admissionApplicationInsert(
                 application: {
-                    applicantUserId: "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
-                    street: "Test Street"
-                    houseNumber: "123"
-                    city: "Test City"
-                    postalCode: "12345"
+                    applicantId: "{applicant_id}"
                     appliedDate: "2024-01-15T10:00:00"
                 }
             ) {
                 __typename
                 ... on AdmissionApplicationGQLModel {
                     id
-                    city
+                    applicantId
                     rbacobjectId
                 }
                 ... on AdmissionApplicationGQLModelInsertError {
@@ -175,7 +173,7 @@ async def test_admin_can_create_admission_application():
     # Should succeed
     assert resp.errors is None, f"Unexpected errors: {resp.errors}"
     assert resp.data["admissionApplicationInsert"]["__typename"] == "AdmissionApplicationGQLModel"
-    assert resp.data["admissionApplicationInsert"]["city"] == "Test City"
+    assert resp.data["admissionApplicationInsert"]["applicantId"] == applicant_id
 
 
 @pytest.mark.asyncio
@@ -184,20 +182,21 @@ async def test_odpovedly_resitel_can_create_admission_application():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
+    data = get_demodata()
+    applicant_id = _uuid_to_str(data["admission_applicants"][0]["id"])
     context_value = get_oliver_hortik_context(async_session_maker)
 
-    mutation = """
+    mutation = f"""
         mutation {
             admissionApplicationInsert(
                 application: {
-                    applicantUserId: "6a6ca6e9-2222-498f-b270-b7b07c2afa41"
-                    city: "Oliver City"
+                    applicantId: "{applicant_id}"
                 }
             ) {
                 __typename
                 ... on AdmissionApplicationGQLModel {
                     id
-                    city
+                    applicantId
                 }
             }
         }
@@ -215,14 +214,15 @@ async def test_no_role_user_cannot_create_admission_application():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
+    data = get_demodata()
+    applicant_id = _uuid_to_str(data["admission_applicants"][0]["id"])
     context_value = get_miriam_jaksikova_context(async_session_maker)
 
-    mutation = """
+    mutation = f"""
         mutation {
             admissionApplicationInsert(
                 application: {
-                    applicantUserId: "2297fe33-4820-42c6-929a-d848e92a90e5"
-                    city: "Should Fail"
+                    applicantId: "{applicant_id}"
                 }
             ) {
                 __typename
@@ -251,22 +251,24 @@ async def test_creator_can_update_own_admission_application():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
+    data = get_demodata()
+    applicant_id = _uuid_to_str(data["admission_applicants"][0]["id"])
     context_value = get_john_newbie_context(async_session_maker)
 
     # First, create an application
-    create_mutation = """
+    create_mutation = f"""
         mutation {
             admissionApplicationInsert(
                 application: {
-                    applicantUserId: "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
-                    city: "Original City"
+                    applicantId: "{applicant_id}"
+                    appliedDate: "2024-01-15T10:00:00"
                 }
             ) {
                 __typename
                 ... on AdmissionApplicationGQLModel {
                     id
                     lastchange
-                    city
+                    appliedDate
                 }
             }
         }
@@ -285,13 +287,13 @@ async def test_creator_can_update_own_admission_application():
                 application: {{
                     id: "{app_id}"
                     lastchange: "{lastchange}"
-                    city: "Updated City"
+                    appliedDate: "2024-01-16T10:00:00"
                 }}
             ) {{
                 __typename
                 ... on AdmissionApplicationGQLModel {{
                     id
-                    city
+                    appliedDate
                 }}
                 ... on AdmissionApplicationGQLModelUpdateError {{
                     code
@@ -306,7 +308,7 @@ async def test_creator_can_update_own_admission_application():
     # Should succeed - creator owns the application
     assert update_resp.errors is None, f"Unexpected errors: {update_resp.errors}"
     assert update_resp.data["admissionApplicationUpdate"]["__typename"] == "AdmissionApplicationGQLModel"
-    assert update_resp.data["admissionApplicationUpdate"]["city"] == "Updated City"
+    assert update_resp.data["admissionApplicationUpdate"]["appliedDate"] == "2024-01-16T10:00:00"
 
 
 @pytest.mark.asyncio
@@ -315,15 +317,17 @@ async def test_same_group_user_can_update_application():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
+    data = get_demodata()
+    applicant_id = _uuid_to_str(data["admission_applicants"][0]["id"])
     # Create application as John (admin in Univerzita)
     context1 = get_john_newbie_context(async_session_maker)
 
-    create_mutation = """
+    create_mutation = f"""
         mutation {
             admissionApplicationInsert(
                 application: {
-                    applicantUserId: "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
-                    city: "Original City"
+                    applicantId: "{applicant_id}"
+                    appliedDate: "2024-01-15T10:00:00"
                 }
             ) {
                 __typename
@@ -350,13 +354,13 @@ async def test_same_group_user_can_update_application():
                 application: {{
                     id: "{app_id}"
                     lastchange: "{lastchange}"
-                    city: "Updated by Estera"
+                    appliedDate: "2024-01-16T10:00:00"
                 }}
             ) {{
                 __typename
                 ... on AdmissionApplicationGQLModel {{
                     id
-                    city
+                    appliedDate
                 }}
             }}
         }}
@@ -375,15 +379,17 @@ async def test_viewer_cannot_update_admission_application():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
+    data = get_demodata()
+    applicant_id = _uuid_to_str(data["admission_applicants"][0]["id"])
     # Create application as John (admin)
     context1 = get_john_newbie_context(async_session_maker)
 
-    create_mutation = """
+    create_mutation = f"""
         mutation {
             admissionApplicationInsert(
                 application: {
-                    applicantUserId: "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
-                    city: "Original City"
+                    applicantId: "{applicant_id}"
+                    appliedDate: "2024-01-15T10:00:00"
                 }
             ) {
                 __typename
@@ -410,7 +416,7 @@ async def test_viewer_cannot_update_admission_application():
                 application: {{
                     id: "{app_id}"
                     lastchange: "{lastchange}"
-                    city: "Should Fail"
+                    appliedDate: "2024-01-16T10:00:00"
                 }}
             ) {{
                 __typename
@@ -439,15 +445,17 @@ async def test_admin_can_delete_admission_application():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
+    data = get_demodata()
+    applicant_id = _uuid_to_str(data["admission_applicants"][0]["id"])
     context_value = get_john_newbie_context(async_session_maker)
 
     # Create application
-    create_mutation = """
+    create_mutation = f"""
         mutation {
             admissionApplicationInsert(
                 application: {
-                    applicantUserId: "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
-                    city: "To Be Deleted"
+                    applicantId: "{applicant_id}"
+                    appliedDate: "2024-01-15T10:00:00"
                 }
             ) {
                 __typename
@@ -495,15 +503,17 @@ async def test_odpovedly_resitel_cannot_delete_admission_application():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
+    data = get_demodata()
+    applicant_id = _uuid_to_str(data["admission_applicants"][0]["id"])
     context_value = get_oliver_hortik_context(async_session_maker)
 
     # Create application
-    create_mutation = """
+    create_mutation = f"""
         mutation {
             admissionApplicationInsert(
                 application: {
-                    applicantUserId: "6a6ca6e9-2222-498f-b270-b7b07c2afa41"
-                    city: "Cannot Be Deleted"
+                    applicantId: "{applicant_id}"
+                    appliedDate: "2024-01-15T10:00:00"
                 }
             ) {
                 __typename
@@ -553,15 +563,17 @@ async def test_user_can_read_admission_applications():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
+    data = get_demodata()
+    applicant_id = _uuid_to_str(data["admission_applicants"][0]["id"])
     # Create application as John
     context1 = get_john_newbie_context(async_session_maker)
 
-    create_mutation = """
+    create_mutation = f"""
         mutation {
             admissionApplicationInsert(
                 application: {
-                    applicantUserId: "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
-                    city: "Readable City"
+                    applicantId: "{applicant_id}"
+                    appliedDate: "2024-01-15T10:00:00"
                 }
             ) {
                 __typename
@@ -583,7 +595,7 @@ async def test_user_can_read_admission_applications():
         query {{
             admissionApplicationById(id: "{app_id}") {{
                 id
-                city
+                applicantId
             }}
         }}
     """
@@ -593,5 +605,4 @@ async def test_user_can_read_admission_applications():
     # Should succeed - can read
     assert query_resp.errors is None, f"Unexpected errors: {query_resp.errors}"
     assert query_resp.data["admissionApplicationById"]["id"] == app_id
-    assert query_resp.data["admissionApplicationById"]["city"] == "Readable City"
-
+    assert query_resp.data["admissionApplicationById"]["applicantId"] == applicant_id

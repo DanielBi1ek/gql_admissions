@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import create_async_engine
 from .BaseModel import BaseModel
 from .AdmissionProcessModel import AdmissionProcessModel
 from .AdmissionApplicationModel import AdmissionApplicationModel
+from .AdmissionApplicantModel import AdmissionApplicantModel
 from .AdmissionPaymentModel import AdmissionPaymentModel
 from .AdmissionPaymentInfoModel import AdmissionPaymentInfoModel
 from .AdmissionBankAccountModel import AdmissionBankAccountModel
