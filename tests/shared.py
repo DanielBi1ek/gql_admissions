@@ -9,6 +9,7 @@ from src.DBDefinitions import (
     AdmissionApplicationModel,
     AdmissionPaymentModel,
     AdmissionPaymentInfoModel,
+    AdmissionBankAccountModel,
     AdmissionOfferModel,
     StudyProgramModel,
     BankStatementModel,
@@ -176,12 +177,31 @@ async def prepare_demodata(async_session_maker):
                 if key in row:
                     row[key] = _parse_iso(row.get(key))
 
+    # Parse dates in admission_payment_infos
+    if isinstance(data, dict) and "admission_payment_infos" in data:
+        for row in data.get("admission_payment_infos", []):
+            if not isinstance(row, dict):
+                continue
+            for key in ["created", "lastchange"]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
+    # Parse dates in admission_bank_accounts
+    if isinstance(data, dict) and "admission_bank_accounts" in data:
+        for row in data.get("admission_bank_accounts", []):
+            if not isinstance(row, dict):
+                continue
+            for key in ["created", "lastchange"]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
     from uoishelpers.feeders import ImportModels
 
     await ImportModels(
         async_session_maker,
         [
             StudyProgramModel,
+            AdmissionBankAccountModel,
             AdmissionPaymentInfoModel,
             AdmissionOfferModel,
             BankStatementModel,

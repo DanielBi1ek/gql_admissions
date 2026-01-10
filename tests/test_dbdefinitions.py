@@ -37,6 +37,7 @@ def test_metadata_tables_present():
     expected = {
         "admission_processes",
         "admission_applications",
+        "admission_bank_accounts",
         "admission_payment_infos",
         "admission_payments",
         "bank_statements",

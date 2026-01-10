@@ -100,7 +100,7 @@ query {
     id
     street
     city
-    process { id name }
+    process { id }
     payment { id requiredAmount }
   }
 }

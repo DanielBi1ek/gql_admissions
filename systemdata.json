@@ -1,38 +1,155 @@
 {
     "admission_payment_infos": [
         {
-            "id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
-            "account_prefix": "19",
-            "account_number": "123456789",
-            "bank_code": "0100",
-            "required_amount": 500.0,
+            "id": "18c7bf2e-45a8-4c58-8896-c0727d9d975e",
+            "required_amount": 555.0,
+            "created": "2025-01-01T08:00:00.000000",
+            "lastchange": "2025-01-01T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "bank_account_id": "770d4eae-6373-4893-bcfd-7202eeaef8b5"
+        },
+        {
+            "id": "2f5ab04a-6a64-4efc-a203-7fec2c99ad0c",
+            "required_amount": 600.0,
+            "created": "2025-01-01T08:00:00.000000",
+            "lastchange": "2025-01-01T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "bank_account_id": "ab7e5ef7-86e8-4e29-9ad3-30f95063d4c7"
+        },
+        {
+            "id": "7b112d60-4bb4-42d8-9b87-c2c8e004baac",
+            "required_amount": 650.0,
+            "created": "2025-01-01T08:00:00.000000",
+            "lastchange": "2025-01-01T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "bank_account_id": "cf0d13f2-de0b-4996-a101-8ed767f91211"
+        }
+    ],
+    "admission_payments": [
+        {
+            "id": "145ca89f-2caa-4981-b20c-b1bdecfaf9d7",
+            "required_amount": 555.0,
+            "paid_at": null,
+            "created": "2025-01-01T08:00:00.000000",
+            "lastchange": "2025-01-01T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "bank_statement_id": "77777777-7777-7777-7777-777777777777"
+        },
+        {
+            "id": "fba234fa-58a6-4b86-ad78-12f8f2e59f41",
+            "required_amount": 555.0,
+            "paid_at": null,
+            "created": "2025-01-02T08:00:00.000000",
+            "lastchange": "2025-01-02T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "bank_statement_id": "88888888-8888-8888-8888-888888888888"
+        },
+        {
+            "id": "026b3412-0210-44a7-80ef-93acf3043fc1",
+            "required_amount": 600.0,
+            "paid_at": null,
+            "created": "2025-01-03T08:00:00.000000",
+            "lastchange": "2025-01-03T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "bank_statement_id": "77777777-7777-7777-7777-777777777777"
+        },
+        {
+            "id": "36b72e71-1341-4a74-bf0f-56f429327505",
+            "required_amount": 600.0,
+            "paid_at": null,
+            "created": "2025-01-04T08:00:00.000000",
+            "lastchange": "2025-01-04T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "bank_statement_id": "88888888-8888-8888-8888-888888888888"
+        },
+        {
+            "id": "81812022-7a10-4f5f-9d67-9cc4a324a280",
+            "required_amount": 650.0,
+            "paid_at": null,
+            "created": "2025-01-05T08:00:00.000000",
+            "lastchange": "2025-01-05T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "bank_statement_id": "77777777-7777-7777-7777-777777777777"
+        },
+        {
+            "id": "aa08f591-90cf-4259-b891-bc74138743a1",
+            "required_amount": 650.0,
+            "paid_at": null,
+            "created": "2025-01-06T08:00:00.000000",
+            "lastchange": "2025-01-06T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+            "bank_statement_id": "88888888-8888-8888-8888-888888888888"
+        }
+    ],
+    "admission_processes": [
+        {
+            "id": "3a140ac8-cd49-4a38-95ef-ea96514962ca",
+            "payment_id": "145ca89f-2caa-4981-b20c-b1bdecfaf9d7",
             "created": "2025-01-01T08:00:00.000000",
             "lastchange": "2025-01-01T08:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
-        }
-    ],
-    "admission_payments": [
+        },
         {
-            "id": "99999999-9999-9999-9999-999999999999",
-            "required_amount": 500.0,
-            "paid_at": "2025-03-01T10:05:00.000000",
-            "created": "2025-03-01T10:05:00.000000",
-            "lastchange": "2025-03-01T10:05:00.000000",
+            "id": "4af62d1a-26b8-4d8e-bb10-49c79ef3f5a5",
+            "payment_id": "fba234fa-58a6-4b86-ad78-12f8f2e59f41",
+            "created": "2025-01-02T08:00:00.000000",
+            "lastchange": "2025-01-02T08:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
-            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
-            "bank_statement_id": "77777777-7777-7777-7777-777777777777"
-        }
-    ],
-    "admission_processes": [
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
         {
-            "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-            "name": "Prijimaci rizeni 2025/2026",
-            "payment_id": "99999999-9999-9999-9999-999999999999",
-            "created": "2025-01-01T08:00:00.000000",
-            "lastchange": "2025-01-01T08:00:00.000000",
+            "id": "c6289381-b8de-492e-8b64-24c0e1737c92",
+            "payment_id": "026b3412-0210-44a7-80ef-93acf3043fc1",
+            "created": "2025-01-03T08:00:00.000000",
+            "lastchange": "2025-01-03T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "c70613aa-dcd1-4153-996e-dd6c5e742959",
+            "payment_id": "36b72e71-1341-4a74-bf0f-56f429327505",
+            "created": "2025-01-04T08:00:00.000000",
+            "lastchange": "2025-01-04T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "86cce081-b095-4384-a322-ecc89d7c0617",
+            "payment_id": "81812022-7a10-4f5f-9d67-9cc4a324a280",
+            "created": "2025-01-05T08:00:00.000000",
+            "lastchange": "2025-01-05T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "09391dcc-f356-4ad1-93d6-16368dd16463",
+            "payment_id": "aa08f591-90cf-4259-b891-bc74138743a1",
+            "created": "2025-01-06T08:00:00.000000",
+            "lastchange": "2025-01-06T08:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
@@ -40,17 +157,97 @@
     ],
     "admission_applications": [
         {
-            "id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+            "id": "c76a8069-f7d3-43d7-8c0b-363127e1a8a7",
             "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-            "street": "Hlavni",
-            "house_number": "123",
+            "street": "Testovaci 1",
+            "house_number": "101",
             "city": "Brno",
             "postal_code": "60200",
-            "applied_date": "2025-03-01T08:00:00.123456",
-            "process_id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
-            "payment_id": "99999999-9999-9999-9999-999999999999",
-            "created": "2025-03-01T08:00:00.123456",
-            "lastchange": "2025-03-01T08:00:00.123456",
+            "applied_date": "2025-01-01T10:00:00.000000",
+            "process_id": "3a140ac8-cd49-4a38-95ef-ea96514962ca",
+            "payment_id": "145ca89f-2caa-4981-b20c-b1bdecfaf9d7",
+            "created": "2025-01-01T10:00:00.000000",
+            "lastchange": "2025-01-01T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "961633a1-3a79-4efd-b8c8-c3b8782f73cc",
+            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "street": "Testovaci 2",
+            "house_number": "102",
+            "city": "Brno",
+            "postal_code": "60200",
+            "applied_date": "2025-01-02T10:00:00.000000",
+            "process_id": "4af62d1a-26b8-4d8e-bb10-49c79ef3f5a5",
+            "payment_id": "fba234fa-58a6-4b86-ad78-12f8f2e59f41",
+            "created": "2025-01-02T10:00:00.000000",
+            "lastchange": "2025-01-02T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "c54dc8aa-4c34-4aaf-92b4-09493d22cef7",
+            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "street": "Testovaci 3",
+            "house_number": "103",
+            "city": "Brno",
+            "postal_code": "60200",
+            "applied_date": "2025-01-03T10:00:00.000000",
+            "process_id": "c6289381-b8de-492e-8b64-24c0e1737c92",
+            "payment_id": "026b3412-0210-44a7-80ef-93acf3043fc1",
+            "created": "2025-01-03T10:00:00.000000",
+            "lastchange": "2025-01-03T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "460db915-7d50-4771-8dd7-a37125c947b2",
+            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "street": "Testovaci 4",
+            "house_number": "104",
+            "city": "Brno",
+            "postal_code": "60200",
+            "applied_date": "2025-01-04T10:00:00.000000",
+            "process_id": "c70613aa-dcd1-4153-996e-dd6c5e742959",
+            "payment_id": "36b72e71-1341-4a74-bf0f-56f429327505",
+            "created": "2025-01-04T10:00:00.000000",
+            "lastchange": "2025-01-04T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "637bc4f6-8779-4c8a-9618-1ee039224206",
+            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "street": "Testovaci 5",
+            "house_number": "105",
+            "city": "Brno",
+            "postal_code": "60200",
+            "applied_date": "2025-01-05T10:00:00.000000",
+            "process_id": "86cce081-b095-4384-a322-ecc89d7c0617",
+            "payment_id": "81812022-7a10-4f5f-9d67-9cc4a324a280",
+            "created": "2025-01-05T10:00:00.000000",
+            "lastchange": "2025-01-05T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "77e06170-5809-452c-9896-4ed6875a9f68",
+            "applicant_user_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "street": "Testovaci 6",
+            "house_number": "106",
+            "city": "Brno",
+            "postal_code": "60200",
+            "applied_date": "2025-01-06T10:00:00.000000",
+            "process_id": "09391dcc-f356-4ad1-93d6-16368dd16463",
+            "payment_id": "aa08f591-90cf-4259-b891-bc74138743a1",
+            "created": "2025-01-06T10:00:00.000000",
+            "lastchange": "2025-01-06T10:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
@@ -58,7 +255,7 @@
     ],
     "study_programs": [
         {
-            "id": "11111111-1111-1111-1111-111111111111",
+            "id": "5c56a069-cb0e-45f2-a1fc-fa48d71f34db",
             "name": "Kyberneticka bezpecnost",
             "created": "2025-01-01T08:00:00.000000",
             "lastchange": "2025-01-01T08:00:00.000000",
@@ -67,7 +264,7 @@
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
         },
         {
-            "id": "22222222-2222-2222-2222-222222222222",
+            "id": "6fb96c93-416e-457b-ae12-1f8cd626b676",
             "name": "Vojenske technologie - elektrotechnicke",
             "created": "2025-01-01T08:00:00.000000",
             "lastchange": "2025-01-01T08:00:00.000000",
@@ -76,7 +273,7 @@
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
         },
         {
-            "id": "33333333-3333-3333-3333-333333333333",
+            "id": "4f1c1aaa-e40d-49ec-ad6b-60bdf5fcd27e",
             "name": "Vojenske technologie - strojni",
             "created": "2025-01-01T08:00:00.000000",
             "lastchange": "2025-01-01T08:00:00.000000",
@@ -87,40 +284,40 @@
     ],
     "admission_offers": [
         {
-            "id": "44444444-4444-4444-4444-444444444444",
-            "application_start_date": "2025-02-01T00:00:00.000000",
-            "application_end_date": "2025-05-31T23:59:59.000000",
-            "payment_info_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "id": "66bc6b6e-88a6-4472-8a6e-f6dd805e4f5e",
+            "application_start_date": "2025-11-01T00:00:00.000000",
+            "application_end_date": "2026-03-31T23:59:59.000000",
+            "payment_info_id": "18c7bf2e-45a8-4c58-8896-c0727d9d975e",
             "created": "2025-01-01T08:00:00.000000",
             "lastchange": "2025-01-01T08:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
-            "program_id": "11111111-1111-1111-1111-111111111111"
+            "program_id": "5c56a069-cb0e-45f2-a1fc-fa48d71f34db"
         },
         {
-            "id": "55555555-5555-5555-5555-555555555555",
-            "application_start_date": "2025-02-01T00:00:00.000000",
-            "application_end_date": "2025-05-31T23:59:59.000000",
-            "payment_info_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "id": "053ea132-77af-4414-a7e3-9d89507205d2",
+            "application_start_date": "2025-11-01T00:00:00.000000",
+            "application_end_date": "2026-03-31T23:59:59.000000",
+            "payment_info_id": "2f5ab04a-6a64-4efc-a203-7fec2c99ad0c",
             "created": "2025-01-01T08:00:00.000000",
             "lastchange": "2025-01-01T08:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
-            "program_id": "22222222-2222-2222-2222-222222222222"
+            "program_id": "6fb96c93-416e-457b-ae12-1f8cd626b676"
         },
         {
-            "id": "66666666-6666-6666-6666-666666666666",
-            "application_start_date": "2025-02-01T00:00:00.000000",
-            "application_end_date": "2025-05-31T23:59:59.000000",
-            "payment_info_id": "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+            "id": "fda1a9fa-2abf-49ad-bb16-5b8c013f7787",
+            "application_start_date": "2025-11-01T00:00:00.000000",
+            "application_end_date": "2026-03-31T23:59:59.000000",
+            "payment_info_id": "7b112d60-4bb4-42d8-9b87-c2c8e004baac",
             "created": "2025-01-01T08:00:00.000000",
             "lastchange": "2025-01-01T08:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
-            "program_id": "33333333-3333-3333-3333-333333333333"
+            "program_id": "4f1c1aaa-e40d-49ec-ad6b-60bdf5fcd27e"
         }
     ],
     "bank_statements": [
@@ -140,6 +337,44 @@
             "amount_received": 500.0,
             "created": "2025-03-02T10:00:00.000000",
             "lastchange": "2025-03-02T10:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        }
+    ],
+    "admission_bank_accounts": [
+        {
+            "id": "770d4eae-6373-4893-bcfd-7202eeaef8b5",
+            "account_prefix": "101",
+            "account_number": "123456789",
+            "bank_code": "0300",
+            "description": "Ucet pro platbu 555.0 K\u010d",
+            "created": "2025-01-01T08:00:00.000000",
+            "lastchange": "2025-01-01T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "ab7e5ef7-86e8-4e29-9ad3-30f95063d4c7",
+            "account_prefix": "202",
+            "account_number": "987654321",
+            "bank_code": "0800",
+            "description": "Ucet pro platbu 600.0 K\u010d",
+            "created": "2025-01-01T08:00:00.000000",
+            "lastchange": "2025-01-01T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "cf0d13f2-de0b-4996-a101-8ed767f91211",
+            "account_prefix": "303",
+            "account_number": "555666777",
+            "bank_code": "0100",
+            "description": "Ucet pro platbu 650.0 K\u010d",
+            "created": "2025-01-01T08:00:00.000000",
+            "lastchange": "2025-01-01T08:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"

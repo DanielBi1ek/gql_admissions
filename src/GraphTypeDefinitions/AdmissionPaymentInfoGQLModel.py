@@ -2,19 +2,19 @@ import typing
 import datetime
 import strawberry
 
-from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2
+from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, ScalarResolver
 from uoishelpers.gqlpermissions import OnlyForAuthentized
 
 from .BaseGQLModel import BaseGQLModel, IDType
+
+AdmissionBankAccountGQLModel = typing.Annotated["AdmissionBankAccountGQLModel", strawberry.lazy(".AdmissionBankAccountGQLModel")]
 
 
 @createInputs2
 class AdmissionPaymentInfoInputFilter:
     id: IDType
-    account_prefix: str
-    account_number: str
-    bank_code: str
     required_amount: float
+    bank_account_id: IDType
 
 
 @strawberry.federation.type(keys=["id"], description="Payment info template for admission fees")
@@ -24,25 +24,21 @@ class AdmissionPaymentInfoGQLModel(BaseGQLModel):
     def getLoader(cls, info: strawberry.types.Info):
         return getLoadersFromInfo(info).AdmissionPaymentInfoModel
 
-    account_prefix: typing.Optional[str] = strawberry.field(
-        default=None,
-        description="bank account prefix",
-        permission_classes=[OnlyForAuthentized]
-    )
-    account_number: typing.Optional[str] = strawberry.field(
-        default=None,
-        description="bank account number",
-        permission_classes=[OnlyForAuthentized]
-    )
-    bank_code: typing.Optional[str] = strawberry.field(
-        default=None,
-        description="bank code",
-        permission_classes=[OnlyForAuthentized]
-    )
     required_amount: typing.Optional[float] = strawberry.field(
         default=None,
         description="required amount",
         permission_classes=[OnlyForAuthentized]
+    )
+    bank_account_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="bank account reference",
+        permission_classes=[OnlyForAuthentized]
+    )
+
+    bank_account: typing.Optional["AdmissionBankAccountGQLModel"] = strawberry.field(
+        description="bank account details",
+        permission_classes=[OnlyForAuthentized],
+        resolver=ScalarResolver["AdmissionBankAccountGQLModel"](fkey_field_name="bank_account_id")
     )
 
 
@@ -67,20 +63,16 @@ from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
 
 @strawberry.input(description="Input model for creating admission payment info")
 class AdmissionPaymentInfoInsertGQLModel:
-    account_prefix: typing.Optional[str] = None
-    account_number: typing.Optional[str] = None
-    bank_code: typing.Optional[str] = None
     required_amount: typing.Optional[float] = None
+    bank_account_id: typing.Optional[IDType] = None
 
 
 @strawberry.input(description="Input model for updating admission payment info")
 class AdmissionPaymentInfoUpdateGQLModel:
     id: IDType
     lastchange: datetime.datetime
-    account_prefix: typing.Optional[str] = None
-    account_number: typing.Optional[str] = None
-    bank_code: typing.Optional[str] = None
     required_amount: typing.Optional[float] = None
+    bank_account_id: typing.Optional[IDType] = None
 
 
 @strawberry.input(description="Input model for deleting admission payment info")

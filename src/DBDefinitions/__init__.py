@@ -11,6 +11,7 @@ from .AdmissionProcessModel import AdmissionProcessModel
 from .AdmissionApplicationModel import AdmissionApplicationModel
 from .AdmissionPaymentModel import AdmissionPaymentModel
 from .AdmissionPaymentInfoModel import AdmissionPaymentInfoModel
+from .AdmissionBankAccountModel import AdmissionBankAccountModel
 from .AdmissionOfferModel import AdmissionOfferModel
 from .StudyProgramModel import StudyProgramModel
 from .BankStatementModel import BankStatementModel

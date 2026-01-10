@@ -25,8 +25,14 @@ The service is federated, so user references are stored without foreign keys.
 
 ### AdmissionPaymentInfoModel (AdmissionPaymentInfoModel.py)
 - Table: `admission_payment_infos`.
-- Purpose: reusable template with bank details and required fee amount.
-- Fields: `account_prefix`, `account_number`, `bank_code`, `required_amount`.
+- Purpose: reusable template with required fee amount and selected bank account.
+- Fields: `required_amount`, `bank_account_id` (FK to `admission_bank_accounts`).
+- Relationship: `bank_account` (view-only).
+
+### AdmissionBankAccountModel (AdmissionBankAccountModel.py)
+- Table: `admission_bank_accounts`.
+- Purpose: stored bank account details for admission payments.
+- Fields: `account_prefix`, `account_number`, `bank_code`, `description`.
 
 ### AdmissionOfferModel (AdmissionOfferModel.py)
 - Table: `admission_offers`.
@@ -51,7 +57,7 @@ The service is federated, so user references are stored without foreign keys.
 ### AdmissionProcessModel (AdmissionProcessModel.py)
 - Table: `admission_processes`.
 - Purpose: high-level admission process that points to a pending payment condition.
-- Fields: `name`, `payment_id` (FK to `admission_payments`).
+- Fields: `payment_id` (FK to `admission_payments`).
 - Relationship: `payment` (view-only).
 
 ### AdmissionApplicationModel (AdmissionApplicationModel.py)

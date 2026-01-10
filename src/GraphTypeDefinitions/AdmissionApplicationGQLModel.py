@@ -18,6 +18,7 @@ from uoishelpers.resolvers import InsertError, UpdateError, DeleteError
 
 AdmissionProcessGQLModel = typing.Annotated["AdmissionProcessGQLModel", strawberry.lazy(".AdmissionProcessGQLModel")]
 AdmissionPaymentGQLModel = typing.Annotated["AdmissionPaymentGQLModel", strawberry.lazy(".AdmissionPaymentGQLModel")]
+UserGQLModel = typing.Annotated["UserGQLModel", strawberry.lazy(".UserGQLModel")]
 
 
 def _normalize_applied_date(entity: typing.Any) -> None:
@@ -101,6 +102,14 @@ class AdmissionApplicationGQLModel(BaseGQLModel):
         permission_classes=[OnlyForAuthentized],
         resolver=ScalarResolver["AdmissionPaymentGQLModel"](fkey_field_name="payment_id")
     )
+    @strawberry.field(
+        description="applicant user details",
+        permission_classes=[OnlyForAuthentized]
+    )
+    async def applicant_user(self) -> typing.Optional["UserGQLModel"]:
+        from .UserGQLModel import UserGQLModel
+
+        return None if self.applicant_user_id is None else UserGQLModel(id=self.applicant_user_id)
 
 
 @strawberry.type(description="Admission application queries")

@@ -8,6 +8,7 @@ from src.DBDefinitions import (
     AdmissionApplicationModel,
     AdmissionPaymentModel,
     AdmissionPaymentInfoModel,
+    AdmissionBankAccountModel,
     AdmissionOfferModel,
     StudyProgramModel,
     BankStatementModel,
@@ -26,6 +27,7 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
         dbModels = [
             UserModel,
             StudyProgramModel,
+            AdmissionBankAccountModel,
             AdmissionPaymentInfoModel,
             AdmissionOfferModel,
             BankStatementModel,
@@ -59,6 +61,14 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
                 if key in row:
                     row[key] = _parse_iso(row.get(key))
 
+    if isinstance(jsonData, dict) and "admission_bank_accounts" in jsonData:
+        for row in jsonData.get("admission_bank_accounts", []):
+            if not isinstance(row, dict):
+                continue
+            for key in ["created", "lastchange"]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
     if isinstance(jsonData, dict) and "admission_applications" in jsonData:
         for row in jsonData.get("admission_applications", []):
             if not isinstance(row, dict):
@@ -77,6 +87,14 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
                 if key in row:
                     row[key] = _parse_iso(row.get(key))
 
+    if isinstance(jsonData, dict) and "admission_payment_infos" in jsonData:
+        for row in jsonData.get("admission_payment_infos", []):
+            if not isinstance(row, dict):
+                continue
+            for key in ["created", "lastchange"]:
+                if key in row:
+                    row[key] = _parse_iso(row.get(key))
+
     await ImportModels(asyncSessionMaker, dbModels, jsonData)
 
     print("Data initialized", flush=True)
@@ -90,6 +108,7 @@ async def backupDB(asyncSessionMaker, filename="./systemdata.backup.json"):
     dbModels = [
         UserModel,
         StudyProgramModel,
+        AdmissionBankAccountModel,
         AdmissionPaymentInfoModel,
         AdmissionOfferModel,
         BankStatementModel,

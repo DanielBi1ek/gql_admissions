@@ -26,7 +26,6 @@ async def test_admission_process_by_id():
         query($id: UUID!) {
             result: admissionProcessById(id: $id) {
                 id
-                name
                 paymentId
             }
         }
@@ -77,7 +76,7 @@ async def test_admission_payment_info_page():
         query {
             result: admissionPaymentInfoPage {
                 id
-                accountNumber
+                bankAccountId
             }
         }
     """

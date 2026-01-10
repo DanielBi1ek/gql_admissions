@@ -8,6 +8,7 @@ from uoishelpers.gqlpermissions import OnlyForAuthentized
 from .BaseGQLModel import BaseGQLModel, IDType
 
 AdmissionPaymentInfoGQLModel = typing.Annotated["AdmissionPaymentInfoGQLModel", strawberry.lazy(".AdmissionPaymentInfoGQLModel")]
+StudyProgramGQLModel = typing.Annotated["StudyProgramGQLModel", strawberry.lazy(".StudyProgramGQLModel")]
 
 
 @createInputs2
@@ -51,6 +52,11 @@ class AdmissionOfferGQLModel(BaseGQLModel):
         description="payment info",
         permission_classes=[OnlyForAuthentized],
         resolver=ScalarResolver["AdmissionPaymentInfoGQLModel"](fkey_field_name="payment_info_id")
+    )
+    program: typing.Optional["StudyProgramGQLModel"] = strawberry.field(
+        description="study program details",
+        permission_classes=[OnlyForAuthentized],
+        resolver=ScalarResolver["StudyProgramGQLModel"](fkey_field_name="program_id")
     )
 
 

@@ -9,12 +9,12 @@ from uoishelpers.resolvers import getUserFromInfo
 from .BaseGQLModel import BaseGQLModel, IDType
 
 AdmissionPaymentGQLModel = typing.Annotated["AdmissionPaymentGQLModel", strawberry.lazy(".AdmissionPaymentGQLModel")]
+AdmissionApplicationGQLModel = typing.Annotated["AdmissionApplicationGQLModel", strawberry.lazy(".AdmissionApplicationGQLModel")]
 
 
 @createInputs2
 class AdmissionProcessInputFilter:
     id: IDType
-    name: str
     payment_id: IDType
 
 
@@ -25,11 +25,6 @@ class AdmissionProcessGQLModel(BaseGQLModel):
     def getLoader(cls, info: strawberry.types.Info):
         return getLoadersFromInfo(info).AdmissionProcessModel
 
-    name: typing.Optional[str] = strawberry.field(
-        default=None,
-        description="process name",
-        permission_classes=[OnlyForAuthentized]
-    )
     payment_id: typing.Optional[IDType] = strawberry.field(
         default=None,
         description="waiting payment reference",
@@ -41,6 +36,20 @@ class AdmissionProcessGQLModel(BaseGQLModel):
         permission_classes=[OnlyForAuthentized],
         resolver=ScalarResolver["AdmissionPaymentGQLModel"](fkey_field_name="payment_id")
     )
+    @strawberry.field(
+        description="related admission application",
+        permission_classes=[OnlyForAuthentized]
+    )
+    async def application(self, info: strawberry.types.Info) -> typing.Optional["AdmissionApplicationGQLModel"]:
+        from sqlalchemy import select
+        from src.DBDefinitions import AdmissionApplicationModel
+        from .AdmissionApplicationGQLModel import AdmissionApplicationGQLModel
+
+        loader = getLoadersFromInfo(info).AdmissionApplicationModel
+        stmt = select(AdmissionApplicationModel.id).where(AdmissionApplicationModel.process_id == self.id)
+        result = await loader.session.execute(stmt)
+        application_id = result.scalars().first()
+        return None if application_id is None else AdmissionApplicationGQLModel(id=application_id)
 
 
 @strawberry.type(description="Admission process queries")
@@ -64,7 +73,6 @@ from uoishelpers.gqlpermissions.LoadDataExtension import LoadDataExtension
 
 @strawberry.input(description="Input model for creating an admission process")
 class AdmissionProcessInsertGQLModel:
-    name: typing.Optional[str] = None
     payment_id: typing.Optional[IDType] = None
 
 
@@ -72,7 +80,6 @@ class AdmissionProcessInsertGQLModel:
 class AdmissionProcessUpdateGQLModel:
     id: IDType
     lastchange: datetime.datetime
-    name: typing.Optional[str] = None
     payment_id: typing.Optional[IDType] = None
 
 

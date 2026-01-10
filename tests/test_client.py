@@ -1,14 +1,24 @@
 import logging
+import uuid
 
 from .client import createGQLClient
+from src.DBFeeder import get_demodata
+
+
+def _uuid_to_str(val):
+    if isinstance(val, uuid.UUID):
+        return str(val)
+    return val
 
 
 def test_client_admission_process_by_id():
+    data = get_demodata()
+    process = data["admission_processes"][0]
     client = createGQLClient()
     json = {
-        "query": """query($id: UUID!){ result: admissionProcessById(id: $id) { id name } }""",
+        "query": """query($id: UUID!){ result: admissionProcessById(id: $id) { id paymentId } }""",
         "variables": {
-            "id": "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee",
+            "id": _uuid_to_str(process["id"]),
         },
     }
     headers = {"Authorization": "Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003"}
@@ -19,15 +29,17 @@ def test_client_admission_process_by_id():
     assert response.get("errors", None) is None
     data = response.get("data", None)
     assert data is not None
-    assert data["result"]["id"] == "aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"
+    assert data["result"]["id"] == _uuid_to_str(process["id"])
 
 
 def test_client_admission_application_by_id():
+    data = get_demodata()
+    application = data["admission_applications"][0]
     client = createGQLClient()
     json = {
         "query": """query($id: UUID!){ result: admissionApplicationById(id: $id) { id street } }""",
         "variables": {
-            "id": "70520d39-a157-4874-b3c8-96a9a6d6795b",
+            "id": _uuid_to_str(application["id"]),
         },
     }
     headers = {"Authorization": "Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003"}
@@ -38,4 +50,4 @@ def test_client_admission_application_by_id():
     assert response.get("errors", None) is None
     data = response.get("data", None)
     assert data is not None
-    assert data["result"]["id"] == "70520d39-a157-4874-b3c8-96a9a6d6795b"
+    assert data["result"]["id"] == _uuid_to_str(application["id"])
