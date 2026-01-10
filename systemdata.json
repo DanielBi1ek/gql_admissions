@@ -280,6 +280,24 @@
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "de1bd68d-6adc-44e8-b9cc-379704c07cad",
+            "name": "Vojenska geografie a meteorologie",
+            "created": "2025-01-01T08:00:00.000000",
+            "lastchange": "2025-01-01T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
+        },
+        {
+            "id": "41f1bed3-013a-465e-80c7-1bec60918248",
+            "name": "Vojenska chemie",
+            "created": "2025-01-01T08:00:00.000000",
+            "lastchange": "2025-01-01T08:00:00.000000",
+            "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+            "changedby_id": null,
+            "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7"
         }
     ],
     "admission_offers": [

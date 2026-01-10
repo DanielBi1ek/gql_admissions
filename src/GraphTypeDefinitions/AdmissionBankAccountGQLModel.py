@@ -89,8 +89,60 @@ class AdmissionBankAccountDeleteGQLModel:
     lastchange: datetime.datetime
 
 
+@strawberry.input(description="Input model for creating admission bank account with validation")
+class AdmissionBankAccountCreateGQLModel:
+    account_prefix: str
+    account_number: str
+    bank_code: str
+    description: typing.Optional[str] = None
+
+
 @strawberry.type(description="Admission bank account mutations")
 class AdmissionBankAccountMutation:
+    @strawberry.mutation(
+        description="Create admission bank account with validation",
+        permission_classes=[OnlyForAuthentized]
+    )
+    async def admission_bank_account_create(
+        self,
+        info: strawberry.Info,
+        account: AdmissionBankAccountCreateGQLModel
+    ) -> typing.Union[AdmissionBankAccountGQLModel, InsertError[AdmissionBankAccountGQLModel]]:
+        from uoishelpers.resolvers import Insert
+
+        def _is_digits(value: str) -> bool:
+            return isinstance(value, str) and value.isdigit()
+
+        if not _is_digits(account.account_prefix):
+            return InsertError[AdmissionBankAccountGQLModel](
+                msg="Account prefix must be numeric",
+                code="0b1f2f3b-0e76-4f86-9d93-3a8c62b4c4a1",
+                location="admissionBankAccountCreate",
+                _input=account
+            )
+        if not _is_digits(account.account_number):
+            return InsertError[AdmissionBankAccountGQLModel](
+                msg="Account number must be numeric",
+                code="2a6b8f97-1a7c-4c3b-9b77-8f3a2c1d0f5e",
+                location="admissionBankAccountCreate",
+                _input=account
+            )
+        if not _is_digits(account.bank_code):
+            return InsertError[AdmissionBankAccountGQLModel](
+                msg="Bank code must be numeric",
+                code="4c9f1d3a-5f1b-4b6e-9b62-5aef2c8e5c1c",
+                location="admissionBankAccountCreate",
+                _input=account
+            )
+
+        entity = AdmissionBankAccountInsertGQLModel(
+            account_prefix=account.account_prefix,
+            account_number=account.account_number,
+            bank_code=account.bank_code,
+            description=account.description
+        )
+        return await Insert[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=entity)
+
     @strawberry.mutation(description="Insert admission bank account", permission_classes=[OnlyForAuthentized])
     async def admission_bank_account_insert(
         self,

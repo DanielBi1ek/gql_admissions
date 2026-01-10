@@ -15514,6 +15514,26 @@
                 "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
                 "name": "Vojenske technologie - strojni",
                 "_chunk": 0
+            },
+            {
+                "id": "de1bd68d-6adc-44e8-b9cc-379704c07cad",
+                "created": "2025-01-01 08:00:00",
+                "lastchange": "2025-01-01 08:00:00",
+                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+                "changedby_id": null,
+                "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+                "name": "Vojenska geografie a meteorologie",
+                "_chunk": 0
+            },
+            {
+                "id": "41f1bed3-013a-465e-80c7-1bec60918248",
+                "created": "2025-01-01 08:00:00",
+                "lastchange": "2025-01-01 08:00:00",
+                "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
+                "changedby_id": null,
+                "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
+                "name": "Vojenska chemie",
+                "_chunk": 0
             }
         ]
     },
@@ -15557,6 +15577,19 @@
                 "bank_code": "0100",
                 "description": "Ucet pro platbu 650.0 Kč",
                 "_chunk": 0
+            },
+            {
+                "id": "b1e9bc07-ebb3-4085-abd0-ca1f8f87f2f5",
+                "created": "2026-01-10 22:04:45.026550",
+                "lastchange": "2026-01-10 22:04:45.026550",
+                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+                "changedby_id": null,
+                "rbacobject_id": null,
+                "account_prefix": "555",
+                "account_number": "9876543210",
+                "bank_code": "0300",
+                "description": "Chemie ucet 2",
+                "_chunk": 0
             }
         ]
     },
@@ -15593,6 +15626,28 @@
                 "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
                 "required_amount": 650.0,
                 "bank_account_id": "cf0d13f2-de0b-4996-a101-8ed767f91211",
+                "_chunk": 0
+            },
+            {
+                "id": "44b4864b-60fb-4ea9-b282-fa42fe1f6eea",
+                "created": "2026-01-10 22:05:00.170771",
+                "lastchange": "2026-01-10 22:05:00.170771",
+                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+                "changedby_id": null,
+                "rbacobject_id": null,
+                "required_amount": 888.0,
+                "bank_account_id": "b1e9bc07-ebb3-4085-abd0-ca1f8f87f2f5",
+                "_chunk": 0
+            },
+            {
+                "id": "9ce83e12-a13b-435f-a97b-49b5e675506d",
+                "created": "2026-01-10 22:23:15.497617",
+                "lastchange": "2026-01-10 22:23:15.497617",
+                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+                "changedby_id": null,
+                "rbacobject_id": null,
+                "required_amount": 123.0,
+                "bank_account_id": "b1e9bc07-ebb3-4085-abd0-ca1f8f87f2f5",
                 "_chunk": 0
             }
         ]
@@ -15636,6 +15691,32 @@
                 "application_start_date": "2025-11-01 00:00:00",
                 "application_end_date": "2026-03-31 23:59:59",
                 "payment_info_id": "7b112d60-4bb4-42d8-9b87-c2c8e004baac",
+                "_chunk": 0
+            },
+            {
+                "id": "9ca6b8c0-62f7-47a5-9fa2-eb76ca2b177d",
+                "created": "2026-01-10 21:49:42.824643",
+                "lastchange": "2026-01-10 21:49:42.824643",
+                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+                "changedby_id": null,
+                "rbacobject_id": null,
+                "program_id": "de1bd68d-6adc-44e8-b9cc-379704c07cad",
+                "application_start_date": "2025-11-01 00:00:00",
+                "application_end_date": "2026-03-31 23:59:59",
+                "payment_info_id": "18c7bf2e-45a8-4c58-8896-c0727d9d975e",
+                "_chunk": 0
+            },
+            {
+                "id": "70af966d-5f87-4de6-97a0-5cf103b2cb16",
+                "created": "2026-01-10 22:05:12.146937",
+                "lastchange": "2026-01-10 22:05:12.146937",
+                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+                "changedby_id": null,
+                "rbacobject_id": null,
+                "program_id": "41f1bed3-013a-465e-80c7-1bec60918248",
+                "application_start_date": "2025-11-01 00:00:00",
+                "application_end_date": "2026-03-31 23:59:59",
+                "payment_info_id": "44b4864b-60fb-4ea9-b282-fa42fe1f6eea",
                 "_chunk": 0
             }
         ]
@@ -15914,24 +15995,6 @@
                 "phone_number": "+420700000006",
                 "email": "Ludvik.Kilik@world.com",
                 "databox_number": "DBX000006",
-                "_chunk": 0
-            },
-            {
-                "id": "486f6227-3517-4a88-983e-8ae07346347e",
-                "created": "2026-01-10 21:13:22.366914",
-                "lastchange": "2026-01-10 21:13:22.366914",
-                "createdby_id": "3ca2c2cf-28bc-4855-8936-3bafe8c94b7c",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "applicant_user_id": "3ca2c2cf-28bc-4855-8936-3bafe8c94b7c",
-                "firstname": "Jitka",
-                "lastname": "Kloučková",
-                "street": "Nova",
-                "house_number": "10",
-                "city": "Brno",
-                "phone_number": "777123456",
-                "email": "jitka.klouckova@world.com",
-                "databox_number": null,
                 "_chunk": 0
             }
         ]

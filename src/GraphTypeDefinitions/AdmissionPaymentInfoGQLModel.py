@@ -81,8 +81,49 @@ class AdmissionPaymentInfoDeleteGQLModel:
     lastchange: datetime.datetime
 
 
+@strawberry.input(description="Input model for creating admission payment info with validation")
+class AdmissionPaymentInfoCreateGQLModel:
+    required_amount: float
+    bank_account_id: IDType
+
+
 @strawberry.type(description="Admission payment info mutations")
 class AdmissionPaymentInfoMutation:
+    @strawberry.mutation(
+        description="Create admission payment info with validation",
+        permission_classes=[OnlyForAuthentized]
+    )
+    async def admission_payment_info_create(
+        self,
+        info: strawberry.Info,
+        payment_info: AdmissionPaymentInfoCreateGQLModel
+    ) -> typing.Union[AdmissionPaymentInfoGQLModel, InsertError[AdmissionPaymentInfoGQLModel]]:
+        from uoishelpers.resolvers import Insert
+
+        if not isinstance(payment_info.required_amount, (int, float)):
+            return InsertError[AdmissionPaymentInfoGQLModel](
+                msg="Required amount must be numeric",
+                code="7a62fb9b-3d7f-4e23-8a3b-44a7e9bce31f",
+                location="admissionPaymentInfoCreate",
+                _input=payment_info
+            )
+
+        bank_account_loader = getLoadersFromInfo(info).AdmissionBankAccountModel
+        bank_account = await bank_account_loader.load(payment_info.bank_account_id)
+        if bank_account is None:
+            return InsertError[AdmissionPaymentInfoGQLModel](
+                msg="Bank account not found",
+                code="9c3b5b1a-7b7f-4fb6-8e75-1e8a9c4b2d6f",
+                location="admissionPaymentInfoCreate",
+                _input=payment_info
+            )
+
+        entity = AdmissionPaymentInfoInsertGQLModel(
+            required_amount=payment_info.required_amount,
+            bank_account_id=payment_info.bank_account_id
+        )
+        return await Insert[AdmissionPaymentInfoGQLModel].DoItSafeWay(info=info, entity=entity)
+
     @strawberry.mutation(description="Insert admission payment info", permission_classes=[OnlyForAuthentized])
     async def admission_payment_info_insert(
         self,

@@ -103,8 +103,92 @@ class AdmissionOfferDeleteGQLModel:
     lastchange: datetime.datetime
 
 
+@strawberry.input(description="Input model for creating an admission offer with validation")
+class AdmissionOfferCreateGQLModel:
+    program_id: IDType
+    application_start_date: datetime.datetime
+    application_end_date: datetime.datetime
+    payment_info_id: IDType
+
+
 @strawberry.type(description="Admission offer mutations")
 class AdmissionOfferMutation:
+    @strawberry.mutation(
+        description="Create an admission offer with validation",
+        permission_classes=[OnlyForAuthentized]
+    )
+    async def admission_offer_create(
+        self,
+        info: strawberry.Info,
+        admission_offer: AdmissionOfferCreateGQLModel
+    ) -> typing.Union[AdmissionOfferGQLModel, InsertError[AdmissionOfferGQLModel]]:
+        from sqlalchemy import select
+        from uoishelpers.resolvers import Insert
+        from src.DBDefinitions import AdmissionOfferModel
+
+        def _to_naive(value: datetime.datetime) -> datetime.datetime:
+            if value.tzinfo is not None and value.utcoffset() is not None:
+                return value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
+            return value
+
+        start_date = _to_naive(admission_offer.application_start_date)
+        end_date = _to_naive(admission_offer.application_end_date)
+        if end_date <= start_date:
+            return InsertError[AdmissionOfferGQLModel](
+                msg="Application end date must be after start date",
+                code="b3c57cc6-4f34-4d0d-b7a8-5a47f4d58278",
+                location="admissionOfferCreate",
+                _input=admission_offer
+            )
+        if end_date.date() == start_date.date():
+            return InsertError[AdmissionOfferGQLModel](
+                msg="Application start and end date must not be on the same day",
+                code="c9c2f2b5-7b8b-49cf-9c73-1264f2b5353f",
+                location="admissionOfferCreate",
+                _input=admission_offer
+            )
+
+        program_loader = getLoadersFromInfo(info).StudyProgramModel
+        program = await program_loader.load(admission_offer.program_id)
+        if program is None:
+            return InsertError[AdmissionOfferGQLModel](
+                msg="Study program not found",
+                code="22a16a6a-0b62-4d0f-bb69-4efee7c2e1f9",
+                location="admissionOfferCreate",
+                _input=admission_offer
+            )
+
+        payment_info_loader = getLoadersFromInfo(info).AdmissionPaymentInfoModel
+        payment_info = await payment_info_loader.load(admission_offer.payment_info_id)
+        if payment_info is None:
+            return InsertError[AdmissionOfferGQLModel](
+                msg="Payment info not found",
+                code="5e6d8de6-f74c-4e0a-9f20-2d4f25d5ac3b",
+                location="admissionOfferCreate",
+                _input=admission_offer
+            )
+
+        offer_loader = getLoadersFromInfo(info).AdmissionOfferModel
+        stmt = select(AdmissionOfferModel.id).where(
+            AdmissionOfferModel.program_id == admission_offer.program_id
+        )
+        result = await offer_loader.session.execute(stmt)
+        if result.scalars().first() is not None:
+            return InsertError[AdmissionOfferGQLModel](
+                msg="Offer already exists for this study program",
+                code="c6f27c8c-33d8-4cd0-a76a-5eb3f4a59262",
+                location="admissionOfferCreate",
+                _input=admission_offer
+            )
+
+        entity = AdmissionOfferInsertGQLModel(
+            program_id=admission_offer.program_id,
+            application_start_date=start_date,
+            application_end_date=end_date,
+            payment_info_id=admission_offer.payment_info_id
+        )
+        return await Insert[AdmissionOfferGQLModel].DoItSafeWay(info=info, entity=entity)
+
     @strawberry.mutation(description="Insert an admission offer", permission_classes=[OnlyForAuthentized])
     async def admission_offer_insert(
         self,
