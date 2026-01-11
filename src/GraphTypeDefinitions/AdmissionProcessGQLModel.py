@@ -60,11 +60,32 @@ class AdmissionProcessQuery:
         resolver=AdmissionProcessGQLModel.load_with_loader
     )
 
-    admission_process_page: typing.List[AdmissionProcessGQLModel] = strawberry.field(
+    @strawberry.field(
         description="page of admission processes",
         permission_classes=[OnlyForAuthentized],
-        resolver=PageResolver[AdmissionProcessGQLModel](whereType=AdmissionProcessInputFilter)
     )
+    async def admission_process_page(
+        self,
+        info: strawberry.Info,
+        where: typing.Optional[AdmissionProcessInputFilter] = None,
+        skip: typing.Optional[int] = 0,
+        limit: typing.Optional[int] = 10,
+        orderby: typing.Optional[str] = None,
+        desc: typing.Optional[bool] = None,
+        offset: typing.Optional[int] = None,
+    ) -> typing.List[AdmissionProcessGQLModel]:
+        if offset is not None:
+            skip = offset
+        loader = AdmissionProcessGQLModel.getLoader(info=info)
+        wheredict = None if where is None else strawberry.asdict(where)
+        rows = await loader.page(
+            where=wheredict,
+            skip=skip or 0,
+            limit=limit,
+            orderby=orderby,
+            desc=desc,
+        )
+        return [AdmissionProcessGQLModel.from_dataclass(row) for row in rows]
 
 
 from uoishelpers.resolvers import InsertError, UpdateError, DeleteError

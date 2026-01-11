@@ -7,14 +7,9 @@ from uoishelpers.gqlpermissions import OnlyForAuthentized
 from uoishelpers.resolvers import getUserFromInfo
 
 from .BaseGQLModel import BaseGQLModel, IDType
-from .unified_rbac_extensions import (
-    create_insert_permissions,
-    create_update_permissions,
-    create_delete_permissions,
-    EDITOR_ROLES,
-    ADMIN_ROLES,
-)
-from uoishelpers.resolvers import InsertError, UpdateError, DeleteError
+from .admission_permissions import AdmissionsAdminPermission
+from uoishelpers.resolvers import InsertError, UpdateError
+from .db_errors import integrity_error_to_error
 
 
 AdmissionProcessGQLModel = typing.Annotated["AdmissionProcessGQLModel", strawberry.lazy(".AdmissionProcessGQLModel")]
@@ -33,6 +28,19 @@ def _normalize_applied_date(entity: typing.Any) -> None:
         entity.applied_date = value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
 
 
+def _is_admissions_admin(user: typing.Any) -> bool:
+    roles = user.get("roles", []) or []
+    for role in roles:
+        group_id = (role.get("group") or {}).get("id")
+        roletype_id = (role.get("roletype") or {}).get("id")
+        if (
+            group_id == AdmissionsAdminPermission.GROUP_ID
+            and roletype_id == AdmissionsAdminPermission.ROLETYPE_ID
+        ):
+            return True
+    return False
+
+
 @createInputs2
 class AdmissionApplicationInputFilter:
     id: IDType
@@ -41,6 +49,9 @@ class AdmissionApplicationInputFilter:
     accepted: bool
     accepted_at: datetime.datetime
     acceptedby_id: IDType
+    withdrawn: bool
+    withdrawn_at: datetime.datetime
+    withdrawnby_id: IDType
     process_id: IDType
     payment_id: IDType
     offer_id: IDType
@@ -76,6 +87,21 @@ class AdmissionApplicationGQLModel(BaseGQLModel):
     acceptedby_id: typing.Optional[IDType] = strawberry.field(
         default=None,
         description="user who accepted application",
+        permission_classes=[OnlyForAuthentized]
+    )
+    withdrawn: typing.Optional[bool] = strawberry.field(
+        default=None,
+        description="application withdrawn by applicant",
+        permission_classes=[OnlyForAuthentized]
+    )
+    withdrawn_at: typing.Optional[datetime.datetime] = strawberry.field(
+        default=None,
+        description="withdrawal date",
+        permission_classes=[OnlyForAuthentized]
+    )
+    withdrawnby_id: typing.Optional[IDType] = strawberry.field(
+        default=None,
+        description="user who withdrew application",
         permission_classes=[OnlyForAuthentized]
     )
     process_id: typing.Optional[IDType] = strawberry.field(
@@ -121,17 +147,100 @@ class AdmissionApplicationGQLModel(BaseGQLModel):
 
 @strawberry.type(description="Admission application queries")
 class AdmissionApplicationQuery:
-    admission_application_by_id: typing.Optional[AdmissionApplicationGQLModel] = strawberry.field(
+    @strawberry.field(
         description="get admission application by id",
         permission_classes=[OnlyForAuthentized],
-        resolver=AdmissionApplicationGQLModel.load_with_loader
     )
+    async def admission_application_by_id(
+        self,
+        info: strawberry.Info,
+        id: IDType,
+    ) -> typing.Optional[AdmissionApplicationGQLModel]:
+        from sqlalchemy import select
+        from src.DBDefinitions import AdmissionApplicantModel, AdmissionApplicationModel
 
-    admission_application_page: typing.List[AdmissionApplicationGQLModel] = strawberry.field(
+        user = getUserFromInfo(info=info) or {}
+        if _is_admissions_admin(user):
+            return await AdmissionApplicationGQLModel.load_with_loader(info=info, id=id)
+
+        user_id = user.get("id")
+        if not user_id:
+            return None
+
+        loader = AdmissionApplicationGQLModel.getLoader(info=info)
+        stmt = (
+            select(AdmissionApplicationModel.id)
+            .join(
+                AdmissionApplicantModel,
+                AdmissionApplicantModel.id == AdmissionApplicationModel.applicant_id,
+            )
+            .where(
+                AdmissionApplicationModel.id == id,
+                AdmissionApplicantModel.applicant_user_id == user_id,
+            )
+        )
+        result = await loader.session.execute(stmt)
+        row_id = result.scalars().first()
+        if row_id is None:
+            return None
+        db_row = await loader.load(row_id)
+        return None if db_row is None else AdmissionApplicationGQLModel.from_dataclass(db_row)
+
+    @strawberry.field(
         description="page of admission applications",
         permission_classes=[OnlyForAuthentized],
-        resolver=PageResolver[AdmissionApplicationGQLModel](whereType=AdmissionApplicationInputFilter)
     )
+    async def admission_application_page(
+        self,
+        info: strawberry.Info,
+        where: typing.Optional[AdmissionApplicationInputFilter] = None,
+        skip: typing.Optional[int] = 0,
+        limit: typing.Optional[int] = 10,
+        orderby: typing.Optional[str] = None,
+        desc: typing.Optional[bool] = None,
+        offset: typing.Optional[int] = None,
+    ) -> typing.List[AdmissionApplicationGQLModel]:
+        from sqlalchemy import select
+        from src.DBDefinitions import AdmissionApplicantModel
+
+        if offset is not None:
+            skip = offset
+
+        user = getUserFromInfo(info=info) or {}
+        loader = AdmissionApplicationGQLModel.getLoader(info=info)
+        wheredict = None if where is None else strawberry.asdict(where)
+
+        if _is_admissions_admin(user):
+            rows = await loader.page(
+                where=wheredict,
+                skip=skip or 0,
+                limit=limit,
+                orderby=orderby,
+                desc=desc,
+            )
+            return [AdmissionApplicationGQLModel.from_dataclass(row) for row in rows]
+
+        user_id = user.get("id")
+        if not user_id:
+            return []
+
+        applicant_stmt = select(AdmissionApplicantModel.id).where(
+            AdmissionApplicantModel.applicant_user_id == user_id
+        )
+        result = await loader.session.execute(applicant_stmt)
+        applicant_id = result.scalars().first()
+        if applicant_id is None:
+            return []
+
+        rows = await loader.page(
+            where=wheredict,
+            skip=skip or 0,
+            limit=limit,
+            orderby=orderby,
+            desc=desc,
+            extendedfilter={"applicant_id": applicant_id},
+        )
+        return [AdmissionApplicationGQLModel.from_dataclass(row) for row in rows]
 
 
 @strawberry.input(description="Input model for creating an admission application")
@@ -141,6 +250,9 @@ class AdmissionApplicationInsertGQLModel:
     accepted: typing.Optional[bool] = None
     accepted_at: typing.Optional[datetime.datetime] = None
     acceptedby_id: typing.Optional[IDType] = None
+    withdrawn: typing.Optional[bool] = None
+    withdrawn_at: typing.Optional[datetime.datetime] = None
+    withdrawnby_id: typing.Optional[IDType] = None
     process_id: typing.Optional[IDType] = None
     payment_id: typing.Optional[IDType] = None
     offer_id: typing.Optional[IDType] = None
@@ -155,15 +267,12 @@ class AdmissionApplicationUpdateGQLModel:
     accepted: typing.Optional[bool] = strawberry.UNSET
     accepted_at: typing.Optional[datetime.datetime] = strawberry.UNSET
     acceptedby_id: typing.Optional[IDType] = strawberry.UNSET
+    withdrawn: typing.Optional[bool] = strawberry.UNSET
+    withdrawn_at: typing.Optional[datetime.datetime] = strawberry.UNSET
+    withdrawnby_id: typing.Optional[IDType] = strawberry.UNSET
     process_id: typing.Optional[IDType] = strawberry.UNSET
     payment_id: typing.Optional[IDType] = strawberry.UNSET
     offer_id: typing.Optional[IDType] = strawberry.UNSET
-
-
-@strawberry.input(description="Input model for deleting an admission application")
-class AdmissionApplicationDeleteGQLModel:
-    id: IDType
-    lastchange: datetime.datetime
 
 
 @strawberry.input(description="Input model for submitting an admission application")
@@ -176,77 +285,58 @@ class AdmissionApplicationAcceptGQLModel:
     application_id: IDType
 
 
+@strawberry.input(description="Input model for withdrawing an admission application")
+class AdmissionApplicationWithdrawGQLModel:
+    application_id: IDType
+
+
 @strawberry.type(description="Admission application mutations")
 class AdmissionApplicationMutation:
     @strawberry.field(
         description="Insert an admission application",
-        extensions=create_insert_permissions(
-            InsertError,
-            AdmissionApplicationGQLModel,
-            required_roles=EDITOR_ROLES
-        )
+        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission]
     )
     async def admission_application_insert(
         self,
         info: strawberry.Info,
         application: AdmissionApplicationInsertGQLModel
     ) -> typing.Union[AdmissionApplicationGQLModel, InsertError[AdmissionApplicationGQLModel]]:
+        from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Insert
 
-        # Debug logging
-        user = info.context.get("user", {})
-        print(f"[INSERT] User: {user.get('fullname')} ({user.get('id')})")
-        print(f"[INSERT] Roles: {user.get('roles', [])}")
-
         _normalize_applied_date(application)
-        return await Insert[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
+        try:
+            return await Insert[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
+        except IntegrityError as exc:
+            return integrity_error_to_error(
+                exc,
+                InsertError[AdmissionApplicationGQLModel],
+                "admissionApplicationInsert",
+                application
+            )
 
     @strawberry.field(
         description="Update an admission application",
-        extensions=create_update_permissions(
-            UpdateError,
-            AdmissionApplicationGQLModel,
-            required_roles=EDITOR_ROLES
-        )
+        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission]
     )
     async def admission_application_update(
         self,
         info: strawberry.Info,
         application: AdmissionApplicationUpdateGQLModel
     ) -> typing.Union[AdmissionApplicationGQLModel, UpdateError[AdmissionApplicationGQLModel]]:
-        from uoishelpers.resolvers import Insert, Update
-
-        # Debug logging
-        user = info.context.get("user", {})
-        print(f"[UPDATE] User: {user.get('fullname')} ({user.get('id')})")
-        print(f"[UPDATE] Roles: {user.get('roles', [])}")
-        print(f"[UPDATE] Target ID: {application.id}")
+        from sqlalchemy.exc import IntegrityError
+        from uoishelpers.resolvers import Update
 
         _normalize_applied_date(application)
-        return await Update[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
-
-    @strawberry.field(
-        description="Delete an admission application",
-        extensions=create_delete_permissions(
-            DeleteError,
-            AdmissionApplicationGQLModel,
-            required_roles=ADMIN_ROLES
-        )
-    )
-    async def admission_application_delete(
-        self,
-        info: strawberry.Info,
-        application: AdmissionApplicationDeleteGQLModel
-    ) -> typing.Optional[DeleteError[AdmissionApplicationGQLModel]]:
-        from uoishelpers.resolvers import Delete
-
-        # Debug logging
-        user = info.context.get("user", {})
-        print(f"[DELETE] User: {user.get('fullname')} ({user.get('id')})")
-        print(f"[DELETE] Roles: {user.get('roles', [])}")
-        print(f"[DELETE] Target ID: {application.id}")
-
-        return await Delete[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
+        try:
+            return await Update[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
+        except IntegrityError as exc:
+            return integrity_error_to_error(
+                exc,
+                UpdateError[AdmissionApplicationGQLModel],
+                "admissionApplicationUpdate",
+                application
+            )
 
     @strawberry.field(
         description="Submit admission application for an offer",
@@ -304,7 +394,7 @@ class AdmissionApplicationMutation:
                 return value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
             return value
 
-        now = datetime.datetime.now()
+        now = datetime.datetime.utcnow()
         start_date = _to_naive(getattr(offer, "application_start_date", None))
         end_date = _to_naive(getattr(offer, "application_end_date", None))
         if start_date and now < start_date:
@@ -348,30 +438,67 @@ class AdmissionApplicationMutation:
                 _input=submission
             )
 
-        payment = AdmissionPaymentInsertGQLModel(
-            required_amount=payment_info.required_amount,
-            paid_at=None,
-            bank_statement_id=None
-        )
-        payment_row = await Insert[AdmissionPaymentGQLModel].DoItSafeWay(info=info, entity=payment)
-        if isinstance(payment_row, InsertError):
-            return payment_row
+        class _AbortTransaction(Exception):
+            def __init__(self, result):
+                super().__init__("abort transaction")
+                self.result = result
 
-        application = AdmissionApplicationInsertGQLModel(
-            applicant_id=applicant_id,
-            applied_date=now,
-            payment_id=payment_row.id,
-            offer_id=submission.offer_id,
-        )
-        application.accepted = False
-        application.accepted_at = None
-        application.acceptedby_id = None
-        _normalize_applied_date(application)
-        return await Insert[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
+        session = app_loader.session
+        tx = session.begin_nested() if session.in_transaction() else session.begin()
+        try:
+            async with tx:
+                payment = AdmissionPaymentInsertGQLModel(
+                    required_amount=payment_info.required_amount,
+                    paid_at=None,
+                    bank_statement_id=None
+                )
+                try:
+                    payment_row = await Insert[AdmissionPaymentGQLModel].DoItSafeWay(info=info, entity=payment)
+                except Exception as exc:
+                    raise _AbortTransaction(
+                        integrity_error_to_error(
+                            exc,
+                            InsertError[AdmissionApplicationGQLModel],
+                            "admissionApplicationSubmit",
+                            submission
+                        )
+                    ) from exc
+                if isinstance(payment_row, InsertError):
+                    raise _AbortTransaction(payment_row)
+
+                application = AdmissionApplicationInsertGQLModel(
+                    applicant_id=applicant_id,
+                    applied_date=now,
+                    payment_id=payment_row.id,
+                    offer_id=submission.offer_id,
+                )
+                application.accepted = False
+                application.accepted_at = None
+                application.acceptedby_id = None
+                application.withdrawn = False
+                application.withdrawn_at = None
+                application.withdrawnby_id = None
+                _normalize_applied_date(application)
+                try:
+                    app_row = await Insert[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
+                except Exception as exc:
+                    raise _AbortTransaction(
+                        integrity_error_to_error(
+                            exc,
+                            InsertError[AdmissionApplicationGQLModel],
+                            "admissionApplicationSubmit",
+                            submission
+                        )
+                    ) from exc
+                if isinstance(app_row, InsertError):
+                    raise _AbortTransaction(app_row)
+                return app_row
+        except _AbortTransaction as exc:
+            return exc.result
 
     @strawberry.field(
         description="Accept admission application by study office",
-        permission_classes=[OnlyForAuthentized]
+        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission]
     )
     async def admission_application_accept(
         self,
@@ -405,24 +532,112 @@ class AdmissionApplicationMutation:
                 location="admissionApplicationAccept",
                 _input=acceptance
             )
-
-        process = AdmissionProcessInsertGQLModel(payment_id=db_row.payment_id)
-        process_row = await Insert[AdmissionProcessGQLModel].DoItSafeWay(info=info, entity=process)
-        if isinstance(process_row, InsertError):
+        if getattr(db_row, "accepted", False) or getattr(db_row, "process_id", None) is not None:
             return UpdateError[AdmissionApplicationGQLModel](
-                msg=process_row.msg,
-                code=process_row.code,
+                msg="Application already accepted",
+                code="9f4b7f2a-64b4-4d7b-9e60-8a2d9c1f3b72",
                 location="admissionApplicationAccept",
                 _input=acceptance
+            )
+        if getattr(db_row, "withdrawn", False):
+            return UpdateError[AdmissionApplicationGQLModel](
+                msg="Cannot accept a withdrawn application",
+                code="c2d8f6a1-b04c-4e2c-9b3f-9e6c1c6b67d9",
+                location="admissionApplicationAccept",
+                _input=acceptance
+            )
+
+        class _AbortTransaction(Exception):
+            def __init__(self, result):
+                super().__init__("abort transaction")
+                self.result = result
+
+        session = app_loader.session
+        tx = session.begin_nested() if session.in_transaction() else session.begin()
+        try:
+            async with tx:
+                process = AdmissionProcessInsertGQLModel(payment_id=db_row.payment_id)
+                process_row = await Insert[AdmissionProcessGQLModel].DoItSafeWay(info=info, entity=process)
+                if isinstance(process_row, InsertError):
+                    raise _AbortTransaction(
+                        UpdateError[AdmissionApplicationGQLModel](
+                            msg=process_row.msg,
+                            code=process_row.code,
+                            location="admissionApplicationAccept",
+                            _input=acceptance
+                        )
+                    )
+
+                update = AdmissionApplicationUpdateGQLModel(
+                    id=db_row.id,
+                    lastchange=db_row.lastchange,
+                    process_id=process_row.id,
+                    accepted=True,
+                    accepted_at=datetime.datetime.utcnow(),
+                    acceptedby_id=user_id,
+                )
+                _normalize_applied_date(update)
+                updated = await Update[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=update)
+                if isinstance(updated, UpdateError):
+                    raise _AbortTransaction(updated)
+                return updated
+        except _AbortTransaction as exc:
+            return exc.result
+
+    @strawberry.field(
+        description="Withdraw admission application by applicant",
+        permission_classes=[OnlyForAuthentized]
+    )
+    async def admission_application_withdraw(
+        self,
+        info: strawberry.Info,
+        withdrawal: AdmissionApplicationWithdrawGQLModel
+    ) -> typing.Union[AdmissionApplicationGQLModel, UpdateError[AdmissionApplicationGQLModel]]:
+        from sqlalchemy import select
+        from uoishelpers.resolvers import Update
+        from src.DBDefinitions import AdmissionApplicationModel, AdmissionApplicantModel
+
+        user = getUserFromInfo(info=info) or {}
+        user_id = user.get("id")
+        if not user_id:
+            return UpdateError[AdmissionApplicationGQLModel](
+                msg="Missing authenticated user id",
+                code="d42c8e2c-3d01-4f52-9eb9-569b4f57a6d1",
+                location="admissionApplicationWithdraw",
+                _input=withdrawal
+            )
+
+        app_loader = getLoadersFromInfo(info).AdmissionApplicationModel
+        stmt = select(AdmissionApplicationModel).where(AdmissionApplicationModel.id == withdrawal.application_id)
+        result = await app_loader.session.execute(stmt)
+        db_row = result.scalars().first()
+        if db_row is None:
+            return UpdateError[AdmissionApplicationGQLModel](
+                msg="Admission application not found",
+                code="0f5ef0d1-3b2b-49bb-9da8-1d0a0fdfdc68",
+                location="admissionApplicationWithdraw",
+                _input=withdrawal
+            )
+
+        applicant_loader = getLoadersFromInfo(info).AdmissionApplicantModel
+        stmt = select(AdmissionApplicantModel.id).where(
+            AdmissionApplicantModel.id == db_row.applicant_id,
+            AdmissionApplicantModel.applicant_user_id == user_id
+        )
+        applicant = await applicant_loader.session.execute(stmt)
+        if applicant.scalars().first() is None:
+            return UpdateError[AdmissionApplicationGQLModel](
+                msg="Cannot withdraw application for another applicant",
+                code="b1e4b6a1-3f7b-4b83-a38d-8a5a6d5c4f12",
+                location="admissionApplicationWithdraw",
+                _input=withdrawal
             )
 
         update = AdmissionApplicationUpdateGQLModel(
             id=db_row.id,
             lastchange=db_row.lastchange,
-            process_id=process_row.id,
-            accepted=True,
-            accepted_at=datetime.datetime.now(),
-            acceptedby_id=user_id,
+            withdrawn=True,
+            withdrawn_at=datetime.datetime.utcnow(),
+            withdrawnby_id=user_id,
         )
-        _normalize_applied_date(update)
         return await Update[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=update)

@@ -75,7 +75,13 @@ async def initDB(asyncSessionMaker, filename="./systemdata.json"):
         for row in jsonData.get("admission_applications", []):
             if not isinstance(row, dict):
                 continue
-            for key in ["applied_date", "created", "lastchange"]:
+            for key in [
+                "applied_date",
+                "accepted_at",
+                "withdrawn_at",
+                "created",
+                "lastchange",
+            ]:
                 if key in row:
                     row[key] = _parse_iso(row.get(key))
 

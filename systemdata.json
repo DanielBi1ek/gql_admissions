@@ -170,7 +170,10 @@
             "accepted": false,
             "accepted_at": null,
             "acceptedby_id": null,
-            "offer_id": "66bc6b6e-88a6-4472-8a6e-f6dd805e4f5e"
+            "offer_id": "66bc6b6e-88a6-4472-8a6e-f6dd805e4f5e",
+            "withdrawn": false,
+            "withdrawn_at": null,
+            "withdrawnby_id": null
         },
         {
             "id": "961633a1-3a79-4efd-b8c8-c3b8782f73cc",
@@ -186,7 +189,10 @@
             "accepted": false,
             "accepted_at": null,
             "acceptedby_id": null,
-            "offer_id": "053ea132-77af-4414-a7e3-9d89507205d2"
+            "offer_id": "053ea132-77af-4414-a7e3-9d89507205d2",
+            "withdrawn": false,
+            "withdrawn_at": null,
+            "withdrawnby_id": null
         },
         {
             "id": "c54dc8aa-4c34-4aaf-92b4-09493d22cef7",
@@ -202,7 +208,10 @@
             "accepted": false,
             "accepted_at": null,
             "acceptedby_id": null,
-            "offer_id": "fda1a9fa-2abf-49ad-bb16-5b8c013f7787"
+            "offer_id": "fda1a9fa-2abf-49ad-bb16-5b8c013f7787",
+            "withdrawn": false,
+            "withdrawn_at": null,
+            "withdrawnby_id": null
         },
         {
             "id": "460db915-7d50-4771-8dd7-a37125c947b2",
@@ -218,7 +227,10 @@
             "accepted": false,
             "accepted_at": null,
             "acceptedby_id": null,
-            "offer_id": "66bc6b6e-88a6-4472-8a6e-f6dd805e4f5e"
+            "offer_id": "66bc6b6e-88a6-4472-8a6e-f6dd805e4f5e",
+            "withdrawn": false,
+            "withdrawn_at": null,
+            "withdrawnby_id": null
         },
         {
             "id": "637bc4f6-8779-4c8a-9618-1ee039224206",
@@ -234,7 +246,10 @@
             "accepted": false,
             "accepted_at": null,
             "acceptedby_id": null,
-            "offer_id": "053ea132-77af-4414-a7e3-9d89507205d2"
+            "offer_id": "053ea132-77af-4414-a7e3-9d89507205d2",
+            "withdrawn": false,
+            "withdrawn_at": null,
+            "withdrawnby_id": null
         },
         {
             "id": "77e06170-5809-452c-9896-4ed6875a9f68",
@@ -250,7 +265,10 @@
             "accepted": false,
             "accepted_at": null,
             "acceptedby_id": null,
-            "offer_id": "fda1a9fa-2abf-49ad-bb16-5b8c013f7787"
+            "offer_id": "fda1a9fa-2abf-49ad-bb16-5b8c013f7787",
+            "withdrawn": false,
+            "withdrawn_at": null,
+            "withdrawnby_id": null
         }
     ],
     "study_programs": [
@@ -366,7 +384,7 @@
             "account_prefix": "101",
             "account_number": "123456789",
             "bank_code": "0300",
-            "description": "Ucet pro platbu 555.0 K\u010d",
+            "description": "Ucet pro platbu 555.0 Kč",
             "created": "2025-01-01T08:00:00.000000",
             "lastchange": "2025-01-01T08:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
@@ -378,7 +396,7 @@
             "account_prefix": "202",
             "account_number": "987654321",
             "bank_code": "0800",
-            "description": "Ucet pro platbu 600.0 K\u010d",
+            "description": "Ucet pro platbu 600.0 Kč",
             "created": "2025-01-01T08:00:00.000000",
             "lastchange": "2025-01-01T08:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
@@ -390,7 +408,7 @@
             "account_prefix": "303",
             "account_number": "555666777",
             "bank_code": "0100",
-            "description": "Ucet pro platbu 650.0 K\u010d",
+            "description": "Ucet pro platbu 650.0 Kč",
             "created": "2025-01-01T08:00:00.000000",
             "lastchange": "2025-01-01T08:00:00.000000",
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
@@ -413,8 +431,8 @@
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
-            "firstname": "Zde\u0148ka",
-            "lastname": "\u0160ime\u010dkov\u00e1"
+            "firstname": "Zdeňka",
+            "lastname": "Šimečková"
         },
         {
             "id": "cf7a8a0d-6383-49a2-a4a1-bf68464d6a96",
@@ -431,7 +449,7 @@
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
             "firstname": "Estera",
-            "lastname": "Lu\u010dkov\u00e1"
+            "lastname": "Lučková"
         },
         {
             "id": "aed1ffc6-f7f9-40ab-aa7e-2ac89015fbc4",
@@ -448,7 +466,7 @@
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
             "firstname": "Oliver",
-            "lastname": "Hort\u00edk"
+            "lastname": "Hortík"
         },
         {
             "id": "5f93bd72-1962-4a0c-a8f1-13051126cd69",
@@ -465,7 +483,7 @@
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
             "firstname": "Ornela",
-            "lastname": "Kuckov\u00e1"
+            "lastname": "Kucková"
         },
         {
             "id": "caed00c6-e5a9-45b7-9a1f-0709d001f108",
@@ -482,7 +500,7 @@
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
             "firstname": "Valentin",
-            "lastname": "K\u0159enek"
+            "lastname": "Křenek"
         },
         {
             "id": "e179c4d5-5a73-43a5-b079-0e83e82d3630",
@@ -498,44 +516,44 @@
             "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
             "changedby_id": null,
             "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
-            "firstname": "Ludv\u00edk",
+            "firstname": "Ludvík",
             "lastname": "Kilik"
         }
     ],
     "users": [
         {
             "id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-            "name": "Zde\u0148ka",
-            "surname": "\u0160ime\u010dkov\u00e1",
+            "name": "Zdeňka",
+            "surname": "Šimečková",
             "email": "Zdenka.Simeckova@world.com"
         },
         {
             "id": "76dac14f-7114-4bb2-882d-0d762eab6f4a",
             "name": "Estera",
-            "surname": "Lu\u010dkov\u00e1",
+            "surname": "Lučková",
             "email": "Estera.Luckova@world.com"
         },
         {
             "id": "6a6ca6e9-2222-498f-b270-b7b07c2afa41",
             "name": "Oliver",
-            "surname": "Hort\u00edk",
+            "surname": "Hortík",
             "email": "Oliver.Hortik@world.com"
         },
         {
             "id": "678a2389-dd49-4d44-88be-28841ae34df1",
             "name": "Ornela",
-            "surname": "Kuckov\u00e1",
+            "surname": "Kucková",
             "email": "Ornela.Kuckova@world.com"
         },
         {
             "id": "35176143-7a86-4ce0-a611-c5824d750f66",
             "name": "Valentin",
-            "surname": "K\u0159enek",
+            "surname": "Křenek",
             "email": "Valentin.Krenek@world.com"
         },
         {
             "id": "a0506cc4-5d53-4fdb-a989-c06a97e527fd",
-            "name": "Ludv\u00edk",
+            "name": "Ludvík",
             "surname": "Kilik",
             "email": "Ludvik.Kilik@world.com"
         }

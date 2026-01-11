@@ -2,16 +2,15 @@
 User Role and Permission Query Endpoints
 
 Allows users to query:
-- Their current role level
-- Whether they're an admin, editor, or viewer
-- What permissions they have
+- Their current admin status within admissions
+- Whether they can perform key admission actions
 """
 
 import typing
 import strawberry
 
 from uoishelpers.resolvers import getUserFromInfo
-from .rbac_db_level import RBACQueryHelper, get_user_info_for_rbac
+from .admission_permissions import AdmissionsAdminPermission
 
 
 @strawberry.type(description="User role and permissions information")
@@ -21,21 +20,21 @@ class UserRoleInfo:
     user_id: str = strawberry.field(description="Current user ID")
     user_name: typing.Optional[str] = strawberry.field(description="Current user name")
     role_level: str = strawberry.field(
-        description="User's role level: 'admin', 'editor', 'viewer', or 'none'"
+        description="User's role level: 'admin' or 'none'"
     )
     is_admin: bool = strawberry.field(description="Is user an administrator?")
-    is_editor: bool = strawberry.field(description="Is user an editor?")
-    is_viewer: bool = strawberry.field(description="Is user a viewer?")
+    is_editor: bool = strawberry.field(description="Is user an editor? (unused)")
+    is_viewer: bool = strawberry.field(description="Is user a viewer? (unused)")
     has_role: bool = strawberry.field(description="Does user have any role?")
 
     can_create_applications: bool = strawberry.field(
-        description="Can user create admission applications?"
+        description="Can user submit admission applications?"
     )
     can_update_own_applications: bool = strawberry.field(
-        description="Can user update their own applications?"
+        description="Can user withdraw their own applications?"
     )
     can_delete_own_applications: bool = strawberry.field(
-        description="Can user delete their own applications?"
+        description="Can user delete their own applications? (always false)"
     )
     can_manage_admission_offers: bool = strawberry.field(
         description="Can user create/update/delete admission offers? (Admin only)"
@@ -65,21 +64,34 @@ class UserPermissionQuery:
 
         Returns None if user is not authenticated.
         """
-        user, rbac = await get_user_info_for_rbac(info)
-
+        user = getUserFromInfo(info=info) or {}
         if not user:
             return None
+        roles = user.get("roles", []) or []
+        is_admin = False
+        for role in roles:
+            group_id = (role.get("group") or {}).get("id")
+            roletype_id = (role.get("roletype") or {}).get("id")
+            if (
+                group_id == AdmissionsAdminPermission.GROUP_ID
+                and roletype_id == AdmissionsAdminPermission.ROLETYPE_ID
+            ):
+                is_admin = True
+                break
+
+        has_role = len(roles) > 0
+        role_level = "admin" if is_admin else "none"
 
         return UserRoleInfo(
             user_id=user.get("id", "unknown"),
             user_name=user.get("name") or user.get("firstname") or "Unknown User",
-            role_level=rbac.role,
-            is_admin=rbac.is_admin(),
-            is_editor=rbac.is_editor(),
-            is_viewer=rbac.is_viewer(),
-            has_role=rbac.has_role(),
-            can_create_applications=rbac.is_editor() or rbac.is_admin(),
-            can_update_own_applications=rbac.is_editor() or rbac.is_admin(),
-            can_delete_own_applications=rbac.is_editor() or rbac.is_admin(),
-            can_manage_admission_offers=rbac.is_admin(),
+            role_level=role_level,
+            is_admin=is_admin,
+            is_editor=False,
+            is_viewer=False,
+            has_role=has_role,
+            can_create_applications=True,
+            can_update_own_applications=True,
+            can_delete_own_applications=False,
+            can_manage_admission_offers=is_admin,
         )

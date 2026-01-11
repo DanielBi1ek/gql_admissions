@@ -43,13 +43,13 @@ class BaseModel(MappedAsDataclass, DeclarativeBase):
     id: Mapped[IDType] = UUIDColumn(index=True, primary_key=True, default_factory=uuid.uuid4)
 
     created: Mapped[datetime.datetime] = mapped_column(
-        default=None,
+        default_factory=datetime.datetime.utcnow,
         nullable=True,
         server_default=sqlalchemy.sql.func.now(),
         comment="date time of creation"
     )
     lastchange: Mapped[datetime.datetime] = mapped_column(
-        default=None,
+        default_factory=datetime.datetime.utcnow,
         nullable=True,
         server_default=sqlalchemy.sql.func.now(),
         comment="date time stamp"

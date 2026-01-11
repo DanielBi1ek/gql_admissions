@@ -59,23 +59,37 @@ class SessionMakerWrapper:
         return await session.execute(statement)
 
 
-def createContext(asyncSessionMaker, withuser=True, user_role="administrátor"):
+def createContext(asyncSessionMaker, withuser=True, user_role="administrátor", roles=None, user_id=None):
     """
-    Create context for testing with unified RBAC.
+    Create context for testing with admissions RBAC.
 
     Args:
         asyncSessionMaker: Async session maker for database access
         withuser: Whether to include a user in the context
-        user_role: Role to assign to the user (administrátor, editor, viewer)
+        user_role: Legacy role hint ("administrátor" => admissions admin, other => no roles)
+        roles: Explicit roles list (overrides user_role)
+        user_id: Explicit user id for context
     """
+    from src.GraphTypeDefinitions.admission_permissions import AdmissionsAdminPermission
+
     loadersContext = createLoadersContext(asyncSessionMaker)
 
+    if roles is None:
+        if user_role in ["administrátor", "admin"]:
+            roles = [{
+                "group": {"id": AdmissionsAdminPermission.GROUP_ID},
+                "roletype": {"id": AdmissionsAdminPermission.ROLETYPE_ID},
+            }]
+        else:
+            roles = []
+
+    user_id = user_id or "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
     user = {
-        "id": "2d9dc5ca-a4a2-11ed-b9df-0242ac120003",
+        "id": user_id,
         "name": "John",
         "surname": "Newbie",
         "email": "john.newbie@world.com",
-        "roles": [{"name": user_role}]  # Role for unified RBAC
+        "roles": roles,
     }
 
     if withuser:
@@ -87,7 +101,7 @@ def createContext(asyncSessionMaker, withuser=True, user_role="administrátor"):
     return loadersContext
 
 
-def createInfo(asyncSessionMaker, withuser=True, user_role="administrátor"):
+def createInfo(asyncSessionMaker, withuser=True, user_role="administrátor", roles=None, user_id=None):
     class Request:
         def __init__(self, user_data=None):
             self.scope = {
@@ -113,7 +127,13 @@ def createInfo(asyncSessionMaker, withuser=True, user_role="administrátor"):
         def request(self):
             return self._request
 
-    context = createContext(asyncSessionMaker, withuser=withuser, user_role=user_role)
+    context = createContext(
+        asyncSessionMaker,
+        withuser=withuser,
+        user_role=user_role,
+        roles=roles,
+        user_id=user_id
+    )
     user_data = context.get("user") if withuser else None
     request_obj = Request(user_data)
     context["request"] = request_obj
@@ -163,7 +183,13 @@ async def prepare_demodata(async_session_maker):
         for row in data.get("admission_applications", []):
             if not isinstance(row, dict):
                 continue
-            for key in ["applied_date", "created", "lastchange"]:
+            for key in [
+                "applied_date",
+                "accepted_at",
+                "withdrawn_at",
+                "created",
+                "lastchange",
+            ]:
                 if key in row:
                     row[key] = _parse_iso(row.get(key))
 

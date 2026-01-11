@@ -8,9 +8,17 @@ from .BaseModel import BaseModel, IDType, UUIDFKey
 
 class AdmissionApplicationModel(BaseModel):
     __tablename__ = "admission_applications"
+    __table_args__ = (
+        sqlalchemy.UniqueConstraint(
+            "applicant_id",
+            "offer_id",
+            name="uq_admission_applications_applicant_offer"
+        ),
+    )
 
     applicant_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("admission_applicants.id"),
+        nullable=False,
         comment="applicant reference"
     )
     applied_date: Mapped[datetime.datetime] = mapped_column(
@@ -32,6 +40,19 @@ class AdmissionApplicationModel(BaseModel):
     acceptedby_id: Mapped[IDType] = UUIDFKey(
         comment="user who accepted application (no FK)"
     )
+    withdrawn: Mapped[bool] = mapped_column(
+        default=False,
+        nullable=False,
+        comment="application withdrawn by applicant"
+    )
+    withdrawn_at: Mapped[datetime.datetime] = mapped_column(
+        default=None,
+        nullable=True,
+        comment="date of application withdrawal"
+    )
+    withdrawnby_id: Mapped[IDType] = UUIDFKey(
+        comment="user who withdrew application (no FK)"
+    )
 
     process_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("admission_processes.id"),
@@ -39,10 +60,12 @@ class AdmissionApplicationModel(BaseModel):
     )
     payment_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("admission_payments.id"),
+        nullable=False,
         comment="admission payment reference"
     )
     offer_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("admission_offers.id"),
+        nullable=False,
         comment="admission offer reference"
     )
 

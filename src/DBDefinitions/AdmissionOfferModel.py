@@ -1,4 +1,5 @@
 import datetime
+import sqlalchemy
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -7,23 +8,28 @@ from .BaseModel import BaseModel, IDType, UUIDFKey
 
 class AdmissionOfferModel(BaseModel):
     __tablename__ = "admission_offers"
+    __table_args__ = (
+        sqlalchemy.UniqueConstraint("program_id", name="uq_admission_offers_program_id"),
+    )
 
     program_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("study_programs.id"),
+        nullable=False,
         comment="study program reference"
     )
     application_start_date: Mapped[datetime.datetime] = mapped_column(
         default=None,
-        nullable=True,
+        nullable=False,
         comment="start date for applications"
     )
     application_end_date: Mapped[datetime.datetime] = mapped_column(
         default=None,
-        nullable=True,
+        nullable=False,
         comment="end date for applications"
     )
     payment_info_id: Mapped[IDType] = UUIDFKey(
         ForeignKey("admission_payment_infos.id"),
+        nullable=False,
         comment="payment info reference"
     )
 
