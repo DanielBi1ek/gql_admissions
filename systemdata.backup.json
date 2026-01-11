@@ -15577,45 +15577,6 @@
                 "bank_code": "0100",
                 "description": "Ucet pro platbu 650.0 Kč",
                 "_chunk": 0
-            },
-            {
-                "id": "66abbaba-73c9-4c0c-acd6-fe606ae710c9",
-                "created": "2026-01-11 14:00:29.084387",
-                "lastchange": "2026-01-11 14:00:29.084394",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "account_prefix": "303",
-                "account_number": "555000111",
-                "bank_code": "2010",
-                "description": "Positive test account",
-                "_chunk": 0
-            },
-            {
-                "id": "0132420d-eff0-4177-b8bc-c4ba4bc79513",
-                "created": "2026-01-11 14:01:48.754599",
-                "lastchange": "2026-01-11 14:01:48.754605",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "account_prefix": "404",
-                "account_number": "777000222",
-                "bank_code": "2010",
-                "description": "Positive test account 2",
-                "_chunk": 0
-            },
-            {
-                "id": "7ff959cc-4508-4d29-863d-10a1c21ad83c",
-                "created": "2026-01-11 14:03:33.931509",
-                "lastchange": "2026-01-11 15:05:16.010663",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "rbacobject_id": null,
-                "account_prefix": "505",
-                "account_number": "888000333",
-                "bank_code": "2010",
-                "description": "Updated via test",
-                "_chunk": 0
             }
         ]
     },
@@ -15644,46 +15605,13 @@
                 "_chunk": 0
             },
             {
-                "id": "58e0896e-a790-4180-8a91-00bad815aa37",
-                "created": "2026-01-11 14:00:29.153485",
-                "lastchange": "2026-01-11 14:00:29.153491",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "required_amount": 777.0,
-                "bank_account_id": "66abbaba-73c9-4c0c-acd6-fe606ae710c9",
-                "_chunk": 0
-            },
-            {
-                "id": "eb64b7a6-437e-4369-bd47-555d0df9d95e",
-                "created": "2026-01-11 14:01:48.834887",
-                "lastchange": "2026-01-11 14:01:48.834896",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "required_amount": 888.0,
-                "bank_account_id": "0132420d-eff0-4177-b8bc-c4ba4bc79513",
-                "_chunk": 0
-            },
-            {
-                "id": "27b0c497-a5f9-4d66-8c7f-83906ee96dc1",
-                "created": "2026-01-11 14:03:34.010031",
-                "lastchange": "2026-01-11 14:03:34.010039",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "required_amount": 999.0,
-                "bank_account_id": "7ff959cc-4508-4d29-863d-10a1c21ad83c",
-                "_chunk": 0
-            },
-            {
                 "id": "7b112d60-4bb4-42d8-9b87-c2c8e004baac",
                 "created": "2025-01-01 08:00:00",
-                "lastchange": "2026-01-11 15:05:16.076133",
+                "lastchange": "2025-01-01 08:00:00",
                 "createdby_id": "66d8a57c-9ff3-40c3-a019-07808b5150a2",
-                "changedby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+                "changedby_id": null,
                 "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
-                "required_amount": 1001.0,
+                "required_amount": 650.0,
                 "bank_account_id": "cf0d13f2-de0b-4996-a101-8ed767f91211",
                 "_chunk": 0
             }
@@ -15728,32 +15656,6 @@
                 "application_start_date": "2025-11-01 00:00:00",
                 "application_end_date": "2026-03-31 23:59:59",
                 "payment_info_id": "7b112d60-4bb4-42d8-9b87-c2c8e004baac",
-                "_chunk": 0
-            },
-            {
-                "id": "1f7d2d69-dd9e-403a-a603-81b42dbce126",
-                "created": "2026-01-11 14:00:29.224394",
-                "lastchange": "2026-01-11 14:00:29.224401",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "program_id": "de1bd68d-6adc-44e8-b9cc-379704c07cad",
-                "application_start_date": "2025-11-01 00:00:00",
-                "application_end_date": "2026-03-31 23:59:59",
-                "payment_info_id": "58e0896e-a790-4180-8a91-00bad815aa37",
-                "_chunk": 0
-            },
-            {
-                "id": "669501e8-bf15-4008-b2a9-04ac294058c5",
-                "created": "2026-01-11 14:03:34.081331",
-                "lastchange": "2026-01-11 15:05:16.145264",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "rbacobject_id": null,
-                "program_id": "41f1bed3-013a-465e-80c7-1bec60918248",
-                "application_start_date": "2025-10-01 00:00:00",
-                "application_end_date": "2026-04-01 00:00:00",
-                "payment_info_id": "27b0c497-a5f9-4d66-8c7f-83906ee96dc1",
                 "_chunk": 0
             }
         ]
@@ -15859,13 +15761,13 @@
                 "_chunk": 0
             },
             {
-                "id": "44160392-6a2f-4a72-beee-9ef3036e648f",
-                "created": "2026-01-11 14:03:34.152871",
-                "lastchange": "2026-01-11 14:03:34.152879",
-                "createdby_id": "6a6ca6e9-2222-498f-b270-b7b07c2afa41",
+                "id": "400070c9-c713-4c3f-9be5-6b57f393423e",
+                "created": "2026-01-11 17:14:59.024057",
+                "lastchange": "2026-01-11 17:14:59.024061",
+                "createdby_id": "f42da7e9-0b8b-4229-bc4b-c0dc73d55c3e",
                 "changedby_id": null,
                 "rbacobject_id": null,
-                "required_amount": 999.0,
+                "required_amount": 555.0,
                 "paid_at": null,
                 "bank_statement_id": null,
                 "_chunk": 0
@@ -15932,16 +15834,6 @@
                 "changedby_id": null,
                 "rbacobject_id": "007c0a9e-dabf-46de-9b8e-71ec905711d7",
                 "payment_id": "aa08f591-90cf-4259-b891-bc74138743a1",
-                "_chunk": 0
-            },
-            {
-                "id": "7ef21487-5756-4c51-85d7-e603b2ac0c58",
-                "created": "2026-01-11 14:03:34.235468",
-                "lastchange": "2026-01-11 14:03:34.235477",
-                "createdby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
-                "changedby_id": null,
-                "rbacobject_id": null,
-                "payment_id": "44160392-6a2f-4a72-beee-9ef3036e648f",
                 "_chunk": 0
             }
         ]
@@ -16054,6 +15946,24 @@
                 "phone_number": "+420700000006",
                 "email": "Ludvik.Kilik@world.com",
                 "databox_number": "DBX000006",
+                "_chunk": 0
+            },
+            {
+                "id": "5c97e357-63f2-44a8-b0c3-304a238d65ed",
+                "created": "2026-01-11 17:12:47.712913",
+                "lastchange": "2026-01-11 17:12:47.712916",
+                "createdby_id": "f42da7e9-0b8b-4229-bc4b-c0dc73d55c3e",
+                "changedby_id": null,
+                "rbacobject_id": null,
+                "applicant_user_id": "f42da7e9-0b8b-4229-bc4b-c0dc73d55c3e",
+                "firstname": "Drahoš",
+                "lastname": "Keklak",
+                "street": "",
+                "house_number": "",
+                "city": "",
+                "phone_number": "",
+                "email": "",
+                "databox_number": "",
                 "_chunk": 0
             }
         ]
@@ -16181,23 +16091,23 @@
                 "_chunk": 0
             },
             {
-                "id": "c28226d4-d245-43c6-b3fc-8ad738ec365c",
-                "created": "2026-01-11 14:03:34.155368",
-                "lastchange": "2026-01-11 15:05:16.277922",
-                "createdby_id": "6a6ca6e9-2222-498f-b270-b7b07c2afa41",
-                "changedby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+                "id": "4d19487d-c6c6-4c28-adfa-19fbd0a50384",
+                "created": "2026-01-11 17:14:59.026523",
+                "lastchange": "2026-01-11 18:15:05.708588",
+                "createdby_id": "f42da7e9-0b8b-4229-bc4b-c0dc73d55c3e",
+                "changedby_id": "f42da7e9-0b8b-4229-bc4b-c0dc73d55c3e",
                 "rbacobject_id": null,
-                "applicant_id": "aed1ffc6-f7f9-40ab-aa7e-2ac89015fbc4",
-                "applied_date": "2026-01-11 14:03:34.151324",
-                "accepted": true,
-                "accepted_at": "2026-01-11 14:03:34.238327",
-                "acceptedby_id": "51d101a0-81f1-44ca-8366-6cf51432e8d6",
+                "applicant_id": "5c97e357-63f2-44a8-b0c3-304a238d65ed",
+                "applied_date": "2026-01-11 17:14:59.018805",
+                "accepted": false,
+                "accepted_at": null,
+                "acceptedby_id": null,
                 "withdrawn": true,
-                "withdrawn_at": "2026-01-11 14:03:34.298488",
-                "withdrawnby_id": "6a6ca6e9-2222-498f-b270-b7b07c2afa41",
-                "process_id": "7ef21487-5756-4c51-85d7-e603b2ac0c58",
-                "payment_id": "44160392-6a2f-4a72-beee-9ef3036e648f",
-                "offer_id": "669501e8-bf15-4008-b2a9-04ac294058c5",
+                "withdrawn_at": "2026-01-11 17:15:05.708255",
+                "withdrawnby_id": "f42da7e9-0b8b-4229-bc4b-c0dc73d55c3e",
+                "process_id": null,
+                "payment_id": "400070c9-c713-4c3f-9be5-6b57f393423e",
+                "offer_id": "66bc6b6e-88a6-4472-8a6e-f6dd805e4f5e",
                 "_chunk": 0
             }
         ]

@@ -532,7 +532,7 @@ class AdmissionApplicationMutation:
                 location="admissionApplicationAccept",
                 _input=acceptance
             )
-        if getattr(db_row, "accepted", False) or getattr(db_row, "process_id", None) is not None:
+        if getattr(db_row, "accepted", False):
             return UpdateError[AdmissionApplicationGQLModel](
                 msg="Application already accepted",
                 code="9f4b7f2a-64b4-4d7b-9e60-8a2d9c1f3b72",
@@ -553,25 +553,29 @@ class AdmissionApplicationMutation:
                 self.result = result
 
         session = app_loader.session
+        existing_process_id = getattr(db_row, "process_id", None)
         tx = session.begin_nested() if session.in_transaction() else session.begin()
         try:
             async with tx:
-                process = AdmissionProcessInsertGQLModel(payment_id=db_row.payment_id)
-                process_row = await Insert[AdmissionProcessGQLModel].DoItSafeWay(info=info, entity=process)
-                if isinstance(process_row, InsertError):
-                    raise _AbortTransaction(
-                        UpdateError[AdmissionApplicationGQLModel](
-                            msg=process_row.msg,
-                            code=process_row.code,
-                            location="admissionApplicationAccept",
-                            _input=acceptance
+                process_id = existing_process_id
+                if process_id is None:
+                    process = AdmissionProcessInsertGQLModel(payment_id=db_row.payment_id)
+                    process_row = await Insert[AdmissionProcessGQLModel].DoItSafeWay(info=info, entity=process)
+                    if isinstance(process_row, InsertError):
+                        raise _AbortTransaction(
+                            UpdateError[AdmissionApplicationGQLModel](
+                                msg=process_row.msg,
+                                code=process_row.code,
+                                location="admissionApplicationAccept",
+                                _input=acceptance
+                            )
                         )
-                    )
+                    process_id = process_row.id
 
                 update = AdmissionApplicationUpdateGQLModel(
                     id=db_row.id,
                     lastchange=db_row.lastchange,
-                    process_id=process_row.id,
+                    process_id=process_id,
                     accepted=True,
                     accepted_at=datetime.datetime.utcnow(),
                     acceptedby_id=user_id,
