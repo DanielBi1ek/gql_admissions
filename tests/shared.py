@@ -1,4 +1,4 @@
-import pytest
+import uuid
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -28,6 +28,26 @@ async def prepare_in_memory_sqllite():
         async_engine, expire_on_commit=False, class_=AsyncSession
     )
     return async_session_maker
+
+
+def uuid_to_str(value):
+    if isinstance(value, uuid.UUID):
+        return str(value)
+    return value
+
+
+def assert_no_graphql_errors(response):
+    assert response.errors is None, f"GraphQL errors: {response.errors}"
+
+
+async def execute_gql(schema, query, *, context_value, variables=None):
+    response = await schema.execute(
+        query,
+        context_value=context_value,
+        variable_values=variables,
+    )
+    assert_no_graphql_errors(response)
+    return response
 
 
 class SessionMakerWrapper:

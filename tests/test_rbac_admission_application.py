@@ -1,8 +1,9 @@
 import pytest
 
 from src.GraphTypeDefinitions import schema
+from src.GraphTypeDefinitions import error_codes as codes
 from src.DBFeeder import get_demodata
-from .shared import prepare_demodata, prepare_in_memory_sqllite, createContext
+from .shared import prepare_demodata, prepare_in_memory_sqllite, createContext, execute_gql
 
 
 def _pick_applications(data):
@@ -48,8 +49,7 @@ async def test_applicant_can_withdraw_own_application():
     variables = {"id": app["id"]}
     context_value = createContext(async_session_maker, user_role="none", user_id=applicant_user_id)
 
-    resp = await schema.execute(mutation, context_value=context_value, variable_values=variables)
-    assert resp.errors is None
+    resp = await execute_gql(schema, mutation, context_value=context_value, variables=variables)
     assert resp.data["result"]["__typename"] == "AdmissionApplicationGQLModel"
     assert resp.data["result"]["withdrawn"] is True
 
@@ -82,10 +82,9 @@ async def test_applicant_cannot_withdraw_other_application():
     variables = {"id": other_app["id"]}
     context_value = createContext(async_session_maker, user_role="none", user_id=applicant_user_id)
 
-    resp = await schema.execute(mutation, context_value=context_value, variable_values=variables)
-    assert resp.errors is None
+    resp = await execute_gql(schema, mutation, context_value=context_value, variables=variables)
     assert resp.data["result"]["__typename"] == "AdmissionApplicationGQLModelUpdateError"
-    assert resp.data["result"]["code"] == "b1e4b6a1-3f7b-4b83-a38d-8a5a6d5c4f12"
+    assert resp.data["result"]["code"] == codes.ERR_WITHDRAW_NOT_OWNER
 
 
 @pytest.mark.asyncio
@@ -118,12 +117,12 @@ async def test_accept_blocked_for_withdrawn_application():
     update_variables = {"id": app["id"], "lastchange": app["lastchange"]}
     admin_context = createContext(async_session_maker, user_role="administrátor")
 
-    update_resp = await schema.execute(
+    update_resp = await execute_gql(
+        schema,
         update_mutation,
         context_value=admin_context,
-        variable_values=update_variables
+        variables=update_variables,
     )
-    assert update_resp.errors is None
     assert update_resp.data["result"]["__typename"] == "AdmissionApplicationGQLModel"
 
     accept_mutation = """
@@ -140,11 +139,11 @@ async def test_accept_blocked_for_withdrawn_application():
             }
         }
     """
-    accept_resp = await schema.execute(
+    accept_resp = await execute_gql(
+        schema,
         accept_mutation,
         context_value=admin_context,
-        variable_values={"id": app["id"]}
+        variables={"id": app["id"]},
     )
-    assert accept_resp.errors is None
     assert accept_resp.data["result"]["__typename"] == "AdmissionApplicationGQLModelUpdateError"
-    assert accept_resp.data["result"]["code"] == "c2d8f6a1-b04c-4e2c-9b3f-9e6c1c6b67d9"
+    assert accept_resp.data["result"]["code"] == codes.ERR_APPLICATION_WITHDRAWN

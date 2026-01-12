@@ -2,12 +2,15 @@ import typing
 import datetime
 import strawberry
 
-from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2
+from uoishelpers.resolvers import getLoadersFromInfo, createInputs2
 from uoishelpers.gqlpermissions import OnlyForAuthentized
 
 from .BaseGQLModel import BaseGQLModel, IDType
 from .admission_permissions import AdmissionsAdminPermission
 from .db_errors import integrity_error_to_error
+from .pagination import resolve_page
+from .validation import build_error, validate_digits
+from . import error_codes as codes
 
 
 @createInputs2
@@ -70,18 +73,16 @@ class AdmissionBankAccountQuery:
         desc: typing.Optional[bool] = None,
         offset: typing.Optional[int] = None,
     ) -> typing.List[AdmissionBankAccountGQLModel]:
-        if offset is not None:
-            skip = offset
-        loader = AdmissionBankAccountGQLModel.getLoader(info=info)
-        wheredict = None if where is None else strawberry.asdict(where)
-        rows = await loader.page(
-            where=wheredict,
-            skip=skip or 0,
-            limit=limit,
-            orderby=orderby,
-            desc=desc,
+        return await resolve_page(
+            info,
+            AdmissionBankAccountGQLModel,
+            where,
+            skip,
+            limit,
+            orderby,
+            desc,
+            offset,
         )
-        return [AdmissionBankAccountGQLModel.from_dataclass(row) for row in rows]
 
 
 from uoishelpers.resolvers import InsertError, UpdateError, DeleteError
@@ -134,30 +135,36 @@ class AdmissionBankAccountMutation:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Insert
 
-        def _is_digits(value: str) -> bool:
-            return isinstance(value, str) and value.isdigit()
-
-        if not _is_digits(account.account_prefix):
-            return InsertError[AdmissionBankAccountGQLModel](
-                msg="Account prefix must be numeric",
-                code="0b1f2f3b-0e76-4f86-9d93-3a8c62b4c4a1",
-                location="admissionBankAccountCreate",
-                _input=account
-            )
-        if not _is_digits(account.account_number):
-            return InsertError[AdmissionBankAccountGQLModel](
-                msg="Account number must be numeric",
-                code="2a6b8f97-1a7c-4c3b-9b77-8f3a2c1d0f5e",
-                location="admissionBankAccountCreate",
-                _input=account
-            )
-        if not _is_digits(account.bank_code):
-            return InsertError[AdmissionBankAccountGQLModel](
-                msg="Bank code must be numeric",
-                code="7f1f0d3e-2c1a-4bc6-8f8b-6c8f4c7a5e2d",
-                location="admissionBankAccountCreate",
-                _input=account
-            )
+        error = validate_digits(
+            account.account_prefix,
+            error_cls=InsertError[AdmissionBankAccountGQLModel],
+            location="admissionBankAccountCreate",
+            input_obj=account,
+            msg="Account prefix must be numeric",
+            code=codes.ERR_ACCOUNT_PREFIX_NUMERIC,
+        )
+        if error is not None:
+            return error
+        error = validate_digits(
+            account.account_number,
+            error_cls=InsertError[AdmissionBankAccountGQLModel],
+            location="admissionBankAccountCreate",
+            input_obj=account,
+            msg="Account number must be numeric",
+            code=codes.ERR_ACCOUNT_NUMBER_NUMERIC,
+        )
+        if error is not None:
+            return error
+        error = validate_digits(
+            account.bank_code,
+            error_cls=InsertError[AdmissionBankAccountGQLModel],
+            location="admissionBankAccountCreate",
+            input_obj=account,
+            msg="Bank code must be numeric",
+            code=codes.ERR_BANK_CODE_NUMERIC,
+        )
+        if error is not None:
+            return error
 
         entity = AdmissionBankAccountInsertGQLModel(
             account_prefix=account.account_prefix,
@@ -187,37 +194,44 @@ class AdmissionBankAccountMutation:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Insert
 
-        def _is_digits(value: str) -> bool:
-            return isinstance(value, str) and value.isdigit()
-
         if account.account_prefix is None or account.account_number is None or account.bank_code is None:
-            return InsertError[AdmissionBankAccountGQLModel](
+            return build_error(
+                InsertError[AdmissionBankAccountGQLModel],
                 msg="Missing required value",
-                code="a3c2a8f9-3f19-4e88-a5a0-1a7a4f6f0f8d",
+                code=codes.ERR_MISSING_REQUIRED,
                 location="admissionBankAccountInsert",
-                _input=account
+                input_obj=account,
             )
-        if not _is_digits(account.account_prefix):
-            return InsertError[AdmissionBankAccountGQLModel](
-                msg="Account prefix must be numeric",
-                code="0b1f2f3b-0e76-4f86-9d93-3a8c62b4c4a1",
-                location="admissionBankAccountInsert",
-                _input=account
-            )
-        if not _is_digits(account.account_number):
-            return InsertError[AdmissionBankAccountGQLModel](
-                msg="Account number must be numeric",
-                code="2a6b8f97-1a7c-4c3b-9b77-8f3a2c1d0f5e",
-                location="admissionBankAccountInsert",
-                _input=account
-            )
-        if not _is_digits(account.bank_code):
-            return InsertError[AdmissionBankAccountGQLModel](
-                msg="Bank code must be numeric",
-                code="7f1f0d3e-2c1a-4bc6-8f8b-6c8f4c7a5e2d",
-                location="admissionBankAccountInsert",
-                _input=account
-            )
+        error = validate_digits(
+            account.account_prefix,
+            error_cls=InsertError[AdmissionBankAccountGQLModel],
+            location="admissionBankAccountInsert",
+            input_obj=account,
+            msg="Account prefix must be numeric",
+            code=codes.ERR_ACCOUNT_PREFIX_NUMERIC,
+        )
+        if error is not None:
+            return error
+        error = validate_digits(
+            account.account_number,
+            error_cls=InsertError[AdmissionBankAccountGQLModel],
+            location="admissionBankAccountInsert",
+            input_obj=account,
+            msg="Account number must be numeric",
+            code=codes.ERR_ACCOUNT_NUMBER_NUMERIC,
+        )
+        if error is not None:
+            return error
+        error = validate_digits(
+            account.bank_code,
+            error_cls=InsertError[AdmissionBankAccountGQLModel],
+            location="admissionBankAccountInsert",
+            input_obj=account,
+            msg="Bank code must be numeric",
+            code=codes.ERR_BANK_CODE_NUMERIC,
+        )
+        if error is not None:
+            return error
 
         try:
             return await Insert[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=account)
@@ -243,30 +257,39 @@ class AdmissionBankAccountMutation:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Update
 
-        def _is_digits(value: str) -> bool:
-            return isinstance(value, str) and value.isdigit()
-
-        if account.account_prefix is not strawberry.UNSET and not _is_digits(account.account_prefix):
-            return UpdateError[AdmissionBankAccountGQLModel](
+        if account.account_prefix is not strawberry.UNSET:
+            error = validate_digits(
+                account.account_prefix,
+                error_cls=UpdateError[AdmissionBankAccountGQLModel],
+                location="admissionBankAccountUpdate",
+                input_obj=account,
                 msg="Account prefix must be numeric",
-                code="0b1f2f3b-0e76-4f86-9d93-3a8c62b4c4a1",
-                location="admissionBankAccountUpdate",
-                _input=account
+                code=codes.ERR_ACCOUNT_PREFIX_NUMERIC,
             )
-        if account.account_number is not strawberry.UNSET and not _is_digits(account.account_number):
-            return UpdateError[AdmissionBankAccountGQLModel](
+            if error is not None:
+                return error
+        if account.account_number is not strawberry.UNSET:
+            error = validate_digits(
+                account.account_number,
+                error_cls=UpdateError[AdmissionBankAccountGQLModel],
+                location="admissionBankAccountUpdate",
+                input_obj=account,
                 msg="Account number must be numeric",
-                code="2a6b8f97-1a7c-4c3b-9b77-8f3a2c1d0f5e",
-                location="admissionBankAccountUpdate",
-                _input=account
+                code=codes.ERR_ACCOUNT_NUMBER_NUMERIC,
             )
-        if account.bank_code is not strawberry.UNSET and not _is_digits(account.bank_code):
-            return UpdateError[AdmissionBankAccountGQLModel](
+            if error is not None:
+                return error
+        if account.bank_code is not strawberry.UNSET:
+            error = validate_digits(
+                account.bank_code,
+                error_cls=UpdateError[AdmissionBankAccountGQLModel],
+                location="admissionBankAccountUpdate",
+                input_obj=account,
                 msg="Bank code must be numeric",
-                code="7f1f0d3e-2c1a-4bc6-8f8b-6c8f4c7a5e2d",
-                location="admissionBankAccountUpdate",
-                _input=account
+                code=codes.ERR_BANK_CODE_NUMERIC,
             )
+            if error is not None:
+                return error
 
         try:
             return await Update[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=account)

@@ -2,12 +2,22 @@ import typing
 import datetime
 import strawberry
 
-from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, ScalarResolver
+from uoishelpers.resolvers import getLoadersFromInfo, createInputs2, ScalarResolver
 from uoishelpers.gqlpermissions import OnlyForAuthentized
 
 from .BaseGQLModel import BaseGQLModel, IDType
 from .admission_permissions import AdmissionsAdminPermission
 from .db_errors import integrity_error_to_error
+from .pagination import resolve_page
+from .validation import (
+    build_error,
+    resolve_unset,
+    validate_fk_exists,
+    validate_numeric,
+    validate_positive,
+    validate_required,
+)
+from . import error_codes as codes
 
 AdmissionBankAccountGQLModel = typing.Annotated["AdmissionBankAccountGQLModel", strawberry.lazy(".AdmissionBankAccountGQLModel")]
 
@@ -66,18 +76,16 @@ class AdmissionPaymentInfoQuery:
         desc: typing.Optional[bool] = None,
         offset: typing.Optional[int] = None,
     ) -> typing.List[AdmissionPaymentInfoGQLModel]:
-        if offset is not None:
-            skip = offset
-        loader = AdmissionPaymentInfoGQLModel.getLoader(info=info)
-        wheredict = None if where is None else strawberry.asdict(where)
-        rows = await loader.page(
-            where=wheredict,
-            skip=skip or 0,
-            limit=limit,
-            orderby=orderby,
-            desc=desc,
+        return await resolve_page(
+            info,
+            AdmissionPaymentInfoGQLModel,
+            where,
+            skip,
+            limit,
+            orderby,
+            desc,
+            offset,
         )
-        return [AdmissionPaymentInfoGQLModel.from_dataclass(row) for row in rows]
 
 
 from uoishelpers.resolvers import InsertError, UpdateError, DeleteError
@@ -124,30 +132,35 @@ class AdmissionPaymentInfoMutation:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Insert
 
-        if not isinstance(payment_info.required_amount, (int, float)):
-            return InsertError[AdmissionPaymentInfoGQLModel](
-                msg="Required amount must be numeric",
-                code="7a62fb9b-3d7f-4e23-8a3b-44a7e9bce31f",
-                location="admissionPaymentInfoCreate",
-                _input=payment_info
-            )
-        if payment_info.required_amount <= 0:
-            return InsertError[AdmissionPaymentInfoGQLModel](
-                msg="Required amount must be greater than 0",
-                code="f2a1d19b-0e5f-4c2b-b2e9-9f40b81d3bd5",
-                location="admissionPaymentInfoCreate",
-                _input=payment_info
-            )
+        error = validate_numeric(
+            payment_info.required_amount,
+            error_cls=InsertError[AdmissionPaymentInfoGQLModel],
+            location="admissionPaymentInfoCreate",
+            input_obj=payment_info,
+        )
+        if error is not None:
+            return error
+        error = validate_positive(
+            payment_info.required_amount,
+            error_cls=InsertError[AdmissionPaymentInfoGQLModel],
+            location="admissionPaymentInfoCreate",
+            input_obj=payment_info,
+        )
+        if error is not None:
+            return error
 
         bank_account_loader = getLoadersFromInfo(info).AdmissionBankAccountModel
-        bank_account = await bank_account_loader.load(payment_info.bank_account_id)
-        if bank_account is None:
-            return InsertError[AdmissionPaymentInfoGQLModel](
-                msg="Bank account not found",
-                code="9c3b5b1a-7b7f-4fb6-8e75-1e8a9c4b2d6f",
-                location="admissionPaymentInfoCreate",
-                _input=payment_info
-            )
+        error = await validate_fk_exists(
+            bank_account_loader,
+            payment_info.bank_account_id,
+            error_cls=InsertError[AdmissionPaymentInfoGQLModel],
+            location="admissionPaymentInfoCreate",
+            input_obj=payment_info,
+            msg="Bank account not found",
+            code=codes.ERR_BANK_ACCOUNT_NOT_FOUND,
+        )
+        if error is not None:
+            return error
 
         entity = AdmissionPaymentInfoInsertGQLModel(
             required_amount=payment_info.required_amount,
@@ -176,35 +189,41 @@ class AdmissionPaymentInfoMutation:
         from uoishelpers.resolvers import Insert
 
         if payment_info.required_amount is None or payment_info.bank_account_id is None:
-            return InsertError[AdmissionPaymentInfoGQLModel](
+            return build_error(
+                InsertError[AdmissionPaymentInfoGQLModel],
                 msg="Missing required value",
-                code="a3c2a8f9-3f19-4e88-a5a0-1a7a4f6f0f8d",
+                code=codes.ERR_MISSING_REQUIRED,
                 location="admissionPaymentInfoInsert",
-                _input=payment_info
+                input_obj=payment_info,
             )
-        if not isinstance(payment_info.required_amount, (int, float)):
-            return InsertError[AdmissionPaymentInfoGQLModel](
-                msg="Required amount must be numeric",
-                code="7a62fb9b-3d7f-4e23-8a3b-44a7e9bce31f",
-                location="admissionPaymentInfoInsert",
-                _input=payment_info
-            )
-        if payment_info.required_amount <= 0:
-            return InsertError[AdmissionPaymentInfoGQLModel](
-                msg="Required amount must be greater than 0",
-                code="f2a1d19b-0e5f-4c2b-b2e9-9f40b81d3bd5",
-                location="admissionPaymentInfoInsert",
-                _input=payment_info
-            )
+        error = validate_numeric(
+            payment_info.required_amount,
+            error_cls=InsertError[AdmissionPaymentInfoGQLModel],
+            location="admissionPaymentInfoInsert",
+            input_obj=payment_info,
+        )
+        if error is not None:
+            return error
+        error = validate_positive(
+            payment_info.required_amount,
+            error_cls=InsertError[AdmissionPaymentInfoGQLModel],
+            location="admissionPaymentInfoInsert",
+            input_obj=payment_info,
+        )
+        if error is not None:
+            return error
         bank_account_loader = getLoadersFromInfo(info).AdmissionBankAccountModel
-        bank_account = await bank_account_loader.load(payment_info.bank_account_id)
-        if bank_account is None:
-            return InsertError[AdmissionPaymentInfoGQLModel](
-                msg="Bank account not found",
-                code="9c3b5b1a-7b7f-4fb6-8e75-1e8a9c4b2d6f",
-                location="admissionPaymentInfoInsert",
-                _input=payment_info
-            )
+        error = await validate_fk_exists(
+            bank_account_loader,
+            payment_info.bank_account_id,
+            error_cls=InsertError[AdmissionPaymentInfoGQLModel],
+            location="admissionPaymentInfoInsert",
+            input_obj=payment_info,
+            msg="Bank account not found",
+            code=codes.ERR_BANK_ACCOUNT_NOT_FOUND,
+        )
+        if error is not None:
+            return error
 
         try:
             return await Insert[AdmissionPaymentInfoGQLModel].DoItSafeWay(info=info, entity=payment_info)
@@ -230,39 +249,45 @@ class AdmissionPaymentInfoMutation:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Update
 
-        new_required = db_row.required_amount if payment_info.required_amount is strawberry.UNSET else payment_info.required_amount
-        if new_required is None:
-            return UpdateError[AdmissionPaymentInfoGQLModel](
-                msg="Missing required value",
-                code="a3c2a8f9-3f19-4e88-a5a0-1a7a4f6f0f8d",
-                location="admissionPaymentInfoUpdate",
-                _input=payment_info
-            )
-        if not isinstance(new_required, (int, float)):
-            return UpdateError[AdmissionPaymentInfoGQLModel](
-                msg="Required amount must be numeric",
-                code="7a62fb9b-3d7f-4e23-8a3b-44a7e9bce31f",
-                location="admissionPaymentInfoUpdate",
-                _input=payment_info
-            )
-        if new_required <= 0:
-            return UpdateError[AdmissionPaymentInfoGQLModel](
-                msg="Required amount must be greater than 0",
-                code="f2a1d19b-0e5f-4c2b-b2e9-9f40b81d3bd5",
-                location="admissionPaymentInfoUpdate",
-                _input=payment_info
-            )
+        new_required = resolve_unset(payment_info.required_amount, db_row.required_amount)
+        error = validate_required(
+            new_required,
+            error_cls=UpdateError[AdmissionPaymentInfoGQLModel],
+            location="admissionPaymentInfoUpdate",
+            input_obj=payment_info,
+        )
+        if error is not None:
+            return error
+        error = validate_numeric(
+            new_required,
+            error_cls=UpdateError[AdmissionPaymentInfoGQLModel],
+            location="admissionPaymentInfoUpdate",
+            input_obj=payment_info,
+        )
+        if error is not None:
+            return error
+        error = validate_positive(
+            new_required,
+            error_cls=UpdateError[AdmissionPaymentInfoGQLModel],
+            location="admissionPaymentInfoUpdate",
+            input_obj=payment_info,
+        )
+        if error is not None:
+            return error
 
         if payment_info.bank_account_id is not strawberry.UNSET:
             bank_account_loader = getLoadersFromInfo(info).AdmissionBankAccountModel
-            bank_account = await bank_account_loader.load(payment_info.bank_account_id)
-            if bank_account is None:
-                return UpdateError[AdmissionPaymentInfoGQLModel](
-                    msg="Bank account not found",
-                    code="9c3b5b1a-7b7f-4fb6-8e75-1e8a9c4b2d6f",
-                    location="admissionPaymentInfoUpdate",
-                    _input=payment_info
-                )
+            error = await validate_fk_exists(
+                bank_account_loader,
+                payment_info.bank_account_id,
+                error_cls=UpdateError[AdmissionPaymentInfoGQLModel],
+                location="admissionPaymentInfoUpdate",
+                input_obj=payment_info,
+                msg="Bank account not found",
+                code=codes.ERR_BANK_ACCOUNT_NOT_FOUND,
+            )
+            if error is not None:
+                return error
 
         try:
             return await Update[AdmissionPaymentInfoGQLModel].DoItSafeWay(info=info, entity=payment_info)

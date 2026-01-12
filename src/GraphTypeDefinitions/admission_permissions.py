@@ -12,17 +12,19 @@ class AdmissionsAdminPermission(BasePermission):
 
     def has_permission(self, source: typing.Any, info: typing.Any, **kwargs: typing.Any) -> bool:
         user = info.context.get("user", {}) or {}
-        roles = user.get("roles", []) or []
+        return is_admissions_admin(user)
 
-        for role in roles:
-            group = role.get("group") or {}
-            roletype = role.get("roletype") or {}
-            group_id = group.get("id")
-            group_name = group.get("name")
-            roletype_id = roletype.get("id")
-            roletype_name = roletype.get("name")
 
-            if group_id == self.GROUP_ID and roletype_id == self.ROLETYPE_ID:
-                return True
-
-        return False
+def is_admissions_admin(user: typing.Any) -> bool:
+    roles = user.get("roles", []) or []
+    for role in roles:
+        group = role.get("group") or {}
+        roletype = role.get("roletype") or {}
+        group_id = group.get("id")
+        roletype_id = roletype.get("id")
+        if (
+            group_id == AdmissionsAdminPermission.GROUP_ID
+            and roletype_id == AdmissionsAdminPermission.ROLETYPE_ID
+        ):
+            return True
+    return False

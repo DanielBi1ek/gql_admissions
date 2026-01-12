@@ -2,25 +2,14 @@ import typing
 import datetime
 import strawberry
 
-from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, getUserFromInfo
+from uoishelpers.resolvers import getLoadersFromInfo, createInputs2, getUserFromInfo
 from uoishelpers.gqlpermissions import OnlyForAuthentized
 
 from .BaseGQLModel import BaseGQLModel, IDType
-from .admission_permissions import AdmissionsAdminPermission
-from .admission_permissions import AdmissionsAdminPermission
-
-
-def _is_admissions_admin(user: typing.Any) -> bool:
-    roles = user.get("roles", []) or []
-    for role in roles:
-        group_id = (role.get("group") or {}).get("id")
-        roletype_id = (role.get("roletype") or {}).get("id")
-        if (
-            group_id == AdmissionsAdminPermission.GROUP_ID
-            and roletype_id == AdmissionsAdminPermission.ROLETYPE_ID
-        ):
-            return True
-    return False
+from .admission_permissions import AdmissionsAdminPermission, is_admissions_admin
+from .pagination import resolve_page
+from .validation import build_error
+from . import error_codes as codes
 
 
 @createInputs2
@@ -105,7 +94,7 @@ class AdmissionApplicantQuery:
         from sqlalchemy import select
 
         user = getUserFromInfo(info=info) or {}
-        if _is_admissions_admin(user):
+        if is_admissions_admin(user):
             return await AdmissionApplicantGQLModel.load_with_loader(info=info, id=id)
 
         user_id = user.get("id")
@@ -143,17 +132,17 @@ class AdmissionApplicantQuery:
         user = getUserFromInfo(info=info) or {}
         if offset is not None:
             skip = offset
-        if _is_admissions_admin(user):
-            loader = AdmissionApplicantGQLModel.getLoader(info=info)
-            wheredict = None if where is None else strawberry.asdict(where)
-            rows = await loader.page(
-                where=wheredict,
-                skip=skip or 0,
-                limit=limit,
-                orderby=orderby,
-                desc=desc,
+        if is_admissions_admin(user):
+            return await resolve_page(
+                info,
+                AdmissionApplicantGQLModel,
+                where,
+                skip,
+                limit,
+                orderby,
+                desc,
+                offset,
             )
-            return [AdmissionApplicantGQLModel.from_dataclass(row) for row in rows]
 
         user_id = user.get("id")
         if not user_id:
@@ -242,11 +231,12 @@ class AdmissionApplicantMutation:
         firstname = user.get("name") or user.get("firstname")
         lastname = user.get("surname") or user.get("lastname")
         if not user_id:
-            return InsertError[AdmissionApplicantGQLModel](
+            return build_error(
+                InsertError[AdmissionApplicantGQLModel],
                 msg="Missing authenticated user id",
-                code="2a8c5f2a-0b5e-4b0e-8a88-6a4d2a9f33d1",
+                code=codes.ERR_AUTH_USER_MISSING,
                 location="admissionApplicantInit",
-                _input=applicant
+                input_obj=applicant,
             )
         if not firstname or not lastname:
             ug_client = getUgClientFromInfo(info)
@@ -264,11 +254,12 @@ class AdmissionApplicantMutation:
             firstname = firstname or me_data.get("name")
             lastname = lastname or me_data.get("surname")
         if not firstname or not lastname:
-            return InsertError[AdmissionApplicantGQLModel](
+            return build_error(
+                InsertError[AdmissionApplicantGQLModel],
                 msg="Missing user name or surname in context",
-                code="5d5a7c7a-1f8d-4c2c-8f70-2c2db6f5c9a2",
+                code=codes.ERR_AUTH_USER_NAME_MISSING,
                 location="admissionApplicantInit",
-                _input=applicant
+                input_obj=applicant,
             )
 
         loader = AdmissionApplicantGQLModel.getLoader(info=info)
@@ -278,11 +269,12 @@ class AdmissionApplicantMutation:
         result = await loader.session.execute(stmt)
         existing_id = result.scalars().first()
         if existing_id is not None:
-            return InsertError[AdmissionApplicantGQLModel](
+            return build_error(
+                InsertError[AdmissionApplicantGQLModel],
                 msg="Applicant profile already exists for this user",
-                code="e7f2f3c3-0e6d-4a9a-8c1a-5c7a621f8a1c",
+                code=codes.ERR_APPLICANT_EXISTS,
                 location="admissionApplicantInit",
-                _input=applicant
+                input_obj=applicant,
             )
 
         applicant_data = AdmissionApplicantInsertGQLModel(
@@ -320,11 +312,12 @@ class AdmissionApplicantMutation:
         from .db_errors import integrity_error_to_error
 
         if applicant.applicant_user_id is None:
-            return InsertError[AdmissionApplicantGQLModel](
+            return build_error(
+                InsertError[AdmissionApplicantGQLModel],
                 msg="Missing required value",
-                code="a3c2a8f9-3f19-4e88-a5a0-1a7a4f6f0f8d",
+                code=codes.ERR_MISSING_REQUIRED,
                 location="admissionApplicantInsert",
-                _input=applicant
+                input_obj=applicant,
             )
         if any(
             value is None
@@ -338,11 +331,12 @@ class AdmissionApplicantMutation:
                 applicant.email,
             )
         ):
-            return InsertError[AdmissionApplicantGQLModel](
+            return build_error(
+                InsertError[AdmissionApplicantGQLModel],
                 msg="Missing required value",
-                code="a3c2a8f9-3f19-4e88-a5a0-1a7a4f6f0f8d",
+                code=codes.ERR_MISSING_REQUIRED,
                 location="admissionApplicantInsert",
-                _input=applicant
+                input_obj=applicant,
             )
 
         try:
@@ -373,14 +367,15 @@ class AdmissionApplicantMutation:
         from .db_errors import integrity_error_to_error
 
         user = getUserFromInfo(info=info) or {}
-        if not _is_admissions_admin(user):
+        if not is_admissions_admin(user):
             user_id = user.get("id")
             if not user_id or db_row.applicant_user_id != user_id:
-                return UpdateError[AdmissionApplicantGQLModel](
+                return build_error(
+                    UpdateError[AdmissionApplicantGQLModel],
                     msg="You can only update your own applicant profile",
-                    code="9f1c2a5e-70c4-4aa0-9d65-4f2b0d1a7c3e",
+                    code=codes.ERR_APPLICANT_NOT_OWNER,
                     location="admissionApplicantUpdate",
-                    _input=applicant
+                    input_obj=applicant,
                 )
 
         applicant_loader = AdmissionApplicantGQLModel.getLoader(info=info)
@@ -389,11 +384,12 @@ class AdmissionApplicantMutation:
         )
         result = await applicant_loader.session.execute(stmt)
         if result.scalars().first() is not None:
-            return UpdateError[AdmissionApplicantGQLModel](
+            return build_error(
+                UpdateError[AdmissionApplicantGQLModel],
                 msg="Applicant cannot be updated after application submission",
-                code="4e1f1b02-9a2b-4c43-8d25-5c8c7b2e1a94",
+                code=codes.ERR_APPLICANT_UPDATE_FORBIDDEN,
                 location="admissionApplicantUpdate",
-                _input=applicant
+                input_obj=applicant,
             )
 
         try:
@@ -422,14 +418,15 @@ class AdmissionApplicantMutation:
         from src.DBDefinitions import AdmissionApplicationModel
 
         user = getUserFromInfo(info=info) or {}
-        if not _is_admissions_admin(user):
+        if not is_admissions_admin(user):
             user_id = user.get("id")
             if not user_id or db_row.applicant_user_id != user_id:
-                return DeleteError[AdmissionApplicantGQLModel](
+                return build_error(
+                    DeleteError[AdmissionApplicantGQLModel],
                     msg="You can only delete your own applicant profile",
-                    code="34e0f4f8-8f19-4a4f-8c9b-3aaf6e1e3d0e",
+                    code=codes.ERR_APPLICANT_DELETE_NOT_OWNER,
                     location="admissionApplicantDelete",
-                    _input=applicant
+                    input_obj=applicant,
                 )
 
         applicant_loader = AdmissionApplicantGQLModel.getLoader(info=info)
@@ -438,11 +435,12 @@ class AdmissionApplicantMutation:
         )
         result = await applicant_loader.session.execute(stmt)
         if result.scalars().first() is not None:
-            return DeleteError[AdmissionApplicantGQLModel](
+            return build_error(
+                DeleteError[AdmissionApplicantGQLModel],
                 msg="Applicant cannot be deleted after application submission",
-                code="f0c5c9e4-9b33-4a5e-ae29-0c3f4b9c2d1a",
+                code=codes.ERR_APPLICANT_DELETE_FORBIDDEN,
                 location="admissionApplicantDelete",
-                _input=applicant
+                input_obj=applicant,
             )
 
         return await Delete[AdmissionApplicantGQLModel].DoItSafeWay(info=info, entity=applicant)

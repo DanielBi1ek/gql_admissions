@@ -3,8 +3,9 @@ import datetime
 import pytest
 
 from src.GraphTypeDefinitions import schema
+from src.GraphTypeDefinitions import error_codes as codes
 from src.DBFeeder import get_demodata
-from .shared import prepare_demodata, prepare_in_memory_sqllite, createContext
+from .shared import prepare_demodata, prepare_in_memory_sqllite, createContext, execute_gql
 
 
 def _pick_program_without_offer(data):
@@ -46,17 +47,15 @@ async def test_offer_create_date_validation():
             "paymentInfoId": str(payment_info_id),
         }
     }
-    resp = await schema.execute(mutation, context_value=context_value, variable_values=variables)
-    assert resp.errors is None
+    resp = await execute_gql(schema, mutation, context_value=context_value, variables=variables)
     assert resp.data["result"]["__typename"] == "AdmissionOfferGQLModelInsertError"
-    assert resp.data["result"]["code"] == "b3c57cc6-4f34-4d0d-b7a8-5a47f4d58278"
+    assert resp.data["result"]["code"] == codes.ERR_OFFER_END_BEFORE_START
 
     variables["input"]["applicationStartDate"] = datetime.datetime(2025, 1, 1, 10, 0, 0)
     variables["input"]["applicationEndDate"] = datetime.datetime(2025, 1, 1, 12, 0, 0)
-    resp = await schema.execute(mutation, context_value=context_value, variable_values=variables)
-    assert resp.errors is None
+    resp = await execute_gql(schema, mutation, context_value=context_value, variables=variables)
     assert resp.data["result"]["__typename"] == "AdmissionOfferGQLModelInsertError"
-    assert resp.data["result"]["code"] == "c9c2f2b5-7b8b-49cf-9c73-1264f2b5353f"
+    assert resp.data["result"]["code"] == codes.ERR_OFFER_SAME_DAY
 
 
 @pytest.mark.asyncio
@@ -87,10 +86,9 @@ async def test_offer_create_duplicate_program():
             "paymentInfoId": str(payment_info_id),
         }
     }
-    resp = await schema.execute(mutation, context_value=context_value, variable_values=variables)
-    assert resp.errors is None
+    resp = await execute_gql(schema, mutation, context_value=context_value, variables=variables)
     assert resp.data["result"]["__typename"] == "AdmissionOfferGQLModelInsertError"
-    assert resp.data["result"]["code"] == "c6f27c8c-33d8-4cd0-a76a-5eb3f4a59262"
+    assert resp.data["result"]["code"] == codes.ERR_OFFER_EXISTS
 
 
 @pytest.mark.asyncio
@@ -118,10 +116,9 @@ async def test_payment_info_required_amount_validation():
             "bankAccountId": str(bank_account_id),
         }
     }
-    resp = await schema.execute(mutation, context_value=context_value, variable_values=variables)
-    assert resp.errors is None
+    resp = await execute_gql(schema, mutation, context_value=context_value, variables=variables)
     assert resp.data["result"]["__typename"] == "AdmissionPaymentInfoGQLModelInsertError"
-    assert resp.data["result"]["code"] == "f2a1d19b-0e5f-4c2b-b2e9-9f40b81d3bd5"
+    assert resp.data["result"]["code"] == codes.ERR_REQUIRED_POSITIVE
 
 
 @pytest.mark.asyncio
@@ -160,8 +157,12 @@ async def test_application_submit_date_window_and_duplicate():
             "paymentInfoId": str(payment_info_id),
         }
     }
-    offer_resp = await schema.execute(offer_create, context_value=admin_context, variable_values=variables)
-    assert offer_resp.errors is None
+    offer_resp = await execute_gql(
+        schema,
+        offer_create,
+        context_value=admin_context,
+        variables=variables,
+    )
     offer_id = offer_resp.data["result"]["id"]
 
     submit = """
@@ -174,14 +175,14 @@ async def test_application_submit_date_window_and_duplicate():
         }
     """
 
-    submit_resp = await schema.execute(
+    submit_resp = await execute_gql(
+        schema,
         submit,
         context_value=applicant_context,
-        variable_values={"id": offer_id}
+        variables={"id": offer_id},
     )
-    assert submit_resp.errors is None
     assert submit_resp.data["result"]["__typename"] == "AdmissionApplicationGQLModelInsertError"
-    assert submit_resp.data["result"]["code"] == "5f4c1c1d-9c2a-4c0d-9b0e-3f6f9b7d2a11"
+    assert submit_resp.data["result"]["code"] == codes.ERR_OFFER_NOT_STARTED
 
     existing_app = None
     for app in data["admission_applications"]:
@@ -189,14 +190,14 @@ async def test_application_submit_date_window_and_duplicate():
             existing_app = app
             break
     assert existing_app is not None
-    submit_resp = await schema.execute(
+    submit_resp = await execute_gql(
+        schema,
         submit,
         context_value=applicant_context,
-        variable_values={"id": str(existing_app["offer_id"])}
+        variables={"id": str(existing_app["offer_id"])},
     )
-    assert submit_resp.errors is None
     assert submit_resp.data["result"]["__typename"] == "AdmissionApplicationGQLModelInsertError"
-    assert submit_resp.data["result"]["code"] == "b8f0f1a1-2c3d-4e5f-8a9b-0c1d2e3f4a5b"
+    assert submit_resp.data["result"]["code"] == codes.ERR_APPLICATION_EXISTS
 
 
 @pytest.mark.asyncio
@@ -225,7 +226,6 @@ async def test_application_insert_missing_required_fields():
             "paymentId": None,
         }
     }
-    resp = await schema.execute(mutation, context_value=context_value, variable_values=variables)
-    assert resp.errors is None
+    resp = await execute_gql(schema, mutation, context_value=context_value, variables=variables)
     assert resp.data["result"]["__typename"] == "AdmissionApplicationGQLModelInsertError"
-    assert resp.data["result"]["code"] == "a3c2a8f9-3f19-4e88-a5a0-1a7a4f6f0f8d"
+    assert resp.data["result"]["code"] == codes.ERR_MISSING_REQUIRED

@@ -1,14 +1,8 @@
 import logging
-import uuid
 
 from .client import createGQLClient
 from src.DBFeeder import get_demodata
-
-
-def _uuid_to_str(val):
-    if isinstance(val, uuid.UUID):
-        return str(val)
-    return val
+from .shared import uuid_to_str
 
 
 def test_client_admission_process_by_id():
@@ -18,7 +12,7 @@ def test_client_admission_process_by_id():
     json = {
         "query": """query($id: UUID!){ result: admissionProcessById(id: $id) { id paymentId } }""",
         "variables": {
-            "id": _uuid_to_str(process["id"]),
+            "id": uuid_to_str(process["id"]),
         },
     }
     headers = {"Authorization": "Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003"}
@@ -29,7 +23,7 @@ def test_client_admission_process_by_id():
     assert response.get("errors", None) is None
     data = response.get("data", None)
     assert data is not None
-    assert data["result"]["id"] == _uuid_to_str(process["id"])
+    assert data["result"]["id"] == uuid_to_str(process["id"])
 
 
 def test_client_admission_application_by_id():
@@ -39,7 +33,7 @@ def test_client_admission_application_by_id():
     json = {
         "query": """query($id: UUID!){ result: admissionApplicationById(id: $id) { id applicantId } }""",
         "variables": {
-            "id": _uuid_to_str(application["id"]),
+            "id": uuid_to_str(application["id"]),
         },
     }
     headers = {"Authorization": "Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003"}
@@ -50,4 +44,4 @@ def test_client_admission_application_by_id():
     assert response.get("errors", None) is None
     data = response.get("data", None)
     assert data is not None
-    assert data["result"]["id"] == _uuid_to_str(application["id"])
+    assert data["result"]["id"] == uuid_to_str(application["id"])

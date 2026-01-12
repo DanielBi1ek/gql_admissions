@@ -2,6 +2,7 @@ import typing
 
 from sqlalchemy.exc import IntegrityError
 
+from . import error_codes as codes
 
 def _detail_from_exc(exc: Exception) -> str:
     detail = ""
@@ -31,7 +32,7 @@ def integrity_error_to_error(exc: Exception, error_cls, location: str, input_obj
         (
             ["uq_admission_offers_program_id", "UNIQUE constraint failed: admission_offers.program_id"],
             "Offer already exists for this study program",
-            "c6f27c8c-33d8-4cd0-a76a-5eb3f4a59262",
+            codes.ERR_OFFER_EXISTS,
         ),
         (
             [
@@ -39,12 +40,12 @@ def integrity_error_to_error(exc: Exception, error_cls, location: str, input_obj
                 "UNIQUE constraint failed: admission_applications.applicant_id, admission_applications.offer_id",
             ],
             "Application already exists for this offer",
-            "b8f0f1a1-2c3d-4e5f-8a9b-0c1d2e3f4a5b",
+            codes.ERR_APPLICATION_EXISTS,
         ),
         (
             ["UNIQUE constraint failed: admission_applicants.applicant_user_id"],
             "Applicant profile already exists for this user",
-            "e7f2f3c3-0e6d-4a9a-8c1a-5c7a621f8a1c",
+            codes.ERR_APPLICANT_EXISTS,
         ),
         (
             [
@@ -52,7 +53,7 @@ def integrity_error_to_error(exc: Exception, error_cls, location: str, input_obj
                 "UNIQUE constraint failed: admission_bank_accounts.account_prefix, admission_bank_accounts.account_number, admission_bank_accounts.bank_code",
             ],
             "Bank account already exists",
-            "f4b8a7c1-2d9b-4c1a-8a51-6d71b2f0c1e9",
+            codes.ERR_BANK_ACCOUNT_EXISTS,
         ),
         (
             [
@@ -60,7 +61,7 @@ def integrity_error_to_error(exc: Exception, error_cls, location: str, input_obj
                 "CHECK constraint failed: ck_admission_payment_infos_required_amount_gt0",
             ],
             "Required amount must be greater than 0",
-            "f2a1d19b-0e5f-4c2b-b2e9-9f40b81d3bd5",
+            codes.ERR_REQUIRED_POSITIVE,
         ),
         (
             [
@@ -68,17 +69,17 @@ def integrity_error_to_error(exc: Exception, error_cls, location: str, input_obj
                 "CHECK constraint failed: ck_admission_payments_required_amount_gt0",
             ],
             "Required amount must be greater than 0",
-            "f2a1d19b-0e5f-4c2b-b2e9-9f40b81d3bd5",
+            codes.ERR_REQUIRED_POSITIVE,
         ),
         (
             ["NOT NULL constraint failed", "null value in column"],
             "Missing required value",
-            "a3c2a8f9-3f19-4e88-a5a0-1a7a4f6f0f8d",
+            codes.ERR_MISSING_REQUIRED,
         ),
         (
             ["FOREIGN KEY constraint failed", "violates foreign key constraint"],
             "Referenced entity not found",
-            "d0c5b7a4-0f2a-45a8-8c31-6ab1ef3a7c9a",
+            codes.ERR_DB_REFERENCED_NOT_FOUND,
         ),
     ]
 
@@ -90,7 +91,7 @@ def integrity_error_to_error(exc: Exception, error_cls, location: str, input_obj
 
     return error_cls(
         msg="Database constraint violation",
-        code="c9f3a2e7-1d8a-4f66-9e64-3f5c1a2b4c6d",
+        code=codes.ERR_DB_CONSTRAINT_VIOLATION,
         location=location,
         _input=input_obj
     )

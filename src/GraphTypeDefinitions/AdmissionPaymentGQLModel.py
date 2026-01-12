@@ -2,11 +2,13 @@ import typing
 import datetime
 import strawberry
 
-from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2
+from uoishelpers.resolvers import getLoadersFromInfo, createInputs2
 from uoishelpers.gqlpermissions import OnlyForAuthentized
 
 from .BaseGQLModel import BaseGQLModel, IDType
 from .admission_permissions import AdmissionsAdminPermission
+from .pagination import resolve_page
+from .validation import resolve_unset, validate_numeric, validate_positive, validate_required
 
 
 @createInputs2
@@ -63,18 +65,16 @@ class AdmissionPaymentQuery:
         desc: typing.Optional[bool] = None,
         offset: typing.Optional[int] = None,
     ) -> typing.List[AdmissionPaymentGQLModel]:
-        if offset is not None:
-            skip = offset
-        loader = AdmissionPaymentGQLModel.getLoader(info=info)
-        wheredict = None if where is None else strawberry.asdict(where)
-        rows = await loader.page(
-            where=wheredict,
-            skip=skip or 0,
-            limit=limit,
-            orderby=orderby,
-            desc=desc,
+        return await resolve_page(
+            info,
+            AdmissionPaymentGQLModel,
+            where,
+            skip,
+            limit,
+            orderby,
+            desc,
+            offset,
         )
-        return [AdmissionPaymentGQLModel.from_dataclass(row) for row in rows]
 
 
 from uoishelpers.resolvers import InsertError, UpdateError, DeleteError
@@ -117,27 +117,30 @@ class AdmissionPaymentMutation:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Insert
 
-        if payment.required_amount is None:
-            return InsertError[AdmissionPaymentGQLModel](
-                msg="Missing required value",
-                code="a3c2a8f9-3f19-4e88-a5a0-1a7a4f6f0f8d",
-                location="admissionPaymentInsert",
-                _input=payment
-            )
-        if not isinstance(payment.required_amount, (int, float)):
-            return InsertError[AdmissionPaymentGQLModel](
-                msg="Required amount must be numeric",
-                code="7a62fb9b-3d7f-4e23-8a3b-44a7e9bce31f",
-                location="admissionPaymentInsert",
-                _input=payment
-            )
-        if payment.required_amount <= 0:
-            return InsertError[AdmissionPaymentGQLModel](
-                msg="Required amount must be greater than 0",
-                code="f2a1d19b-0e5f-4c2b-b2e9-9f40b81d3bd5",
-                location="admissionPaymentInsert",
-                _input=payment
-            )
+        error = validate_required(
+            payment.required_amount,
+            error_cls=InsertError[AdmissionPaymentGQLModel],
+            location="admissionPaymentInsert",
+            input_obj=payment,
+        )
+        if error is not None:
+            return error
+        error = validate_numeric(
+            payment.required_amount,
+            error_cls=InsertError[AdmissionPaymentGQLModel],
+            location="admissionPaymentInsert",
+            input_obj=payment,
+        )
+        if error is not None:
+            return error
+        error = validate_positive(
+            payment.required_amount,
+            error_cls=InsertError[AdmissionPaymentGQLModel],
+            location="admissionPaymentInsert",
+            input_obj=payment,
+        )
+        if error is not None:
+            return error
 
         try:
             return await Insert[AdmissionPaymentGQLModel].DoItSafeWay(info=info, entity=payment)
@@ -165,28 +168,31 @@ class AdmissionPaymentMutation:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Update
 
-        new_required = db_row.required_amount if payment.required_amount is strawberry.UNSET else payment.required_amount
-        if new_required is None:
-            return UpdateError[AdmissionPaymentGQLModel](
-                msg="Missing required value",
-                code="a3c2a8f9-3f19-4e88-a5a0-1a7a4f6f0f8d",
-                location="admissionPaymentUpdate",
-                _input=payment
-            )
-        if not isinstance(new_required, (int, float)):
-            return UpdateError[AdmissionPaymentGQLModel](
-                msg="Required amount must be numeric",
-                code="7a62fb9b-3d7f-4e23-8a3b-44a7e9bce31f",
-                location="admissionPaymentUpdate",
-                _input=payment
-            )
-        if new_required <= 0:
-            return UpdateError[AdmissionPaymentGQLModel](
-                msg="Required amount must be greater than 0",
-                code="f2a1d19b-0e5f-4c2b-b2e9-9f40b81d3bd5",
-                location="admissionPaymentUpdate",
-                _input=payment
-            )
+        new_required = resolve_unset(payment.required_amount, db_row.required_amount)
+        error = validate_required(
+            new_required,
+            error_cls=UpdateError[AdmissionPaymentGQLModel],
+            location="admissionPaymentUpdate",
+            input_obj=payment,
+        )
+        if error is not None:
+            return error
+        error = validate_numeric(
+            new_required,
+            error_cls=UpdateError[AdmissionPaymentGQLModel],
+            location="admissionPaymentUpdate",
+            input_obj=payment,
+        )
+        if error is not None:
+            return error
+        error = validate_positive(
+            new_required,
+            error_cls=UpdateError[AdmissionPaymentGQLModel],
+            location="admissionPaymentUpdate",
+            input_obj=payment,
+        )
+        if error is not None:
+            return error
 
         try:
             return await Update[AdmissionPaymentGQLModel].DoItSafeWay(info=info, entity=payment)

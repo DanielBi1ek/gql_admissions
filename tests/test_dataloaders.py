@@ -1,9 +1,9 @@
 import pytest
 import uuid
 
-from uoishelpers.resolvers import getLoadersFromInfo, getUserFromInfo
+from uoishelpers.resolvers import getUserFromInfo
 
-from .shared import createInfo, prepare_demodata, prepare_in_memory_sqllite, SessionMakerWrapper
+from .shared import createInfo, prepare_demodata, prepare_in_memory_sqllite
 from src.DBFeeder import get_demodata
 
 

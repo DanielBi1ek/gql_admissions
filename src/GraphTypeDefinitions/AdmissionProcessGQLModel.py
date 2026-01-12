@@ -2,11 +2,12 @@ import typing
 import datetime
 import strawberry
 
-from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, ScalarResolver
+from uoishelpers.resolvers import getLoadersFromInfo, createInputs2, ScalarResolver
 from uoishelpers.gqlpermissions import OnlyForAuthentized
 from uoishelpers.resolvers import getUserFromInfo
 
 from .BaseGQLModel import BaseGQLModel, IDType
+from .pagination import resolve_page
 
 AdmissionPaymentGQLModel = typing.Annotated["AdmissionPaymentGQLModel", strawberry.lazy(".AdmissionPaymentGQLModel")]
 AdmissionApplicationGQLModel = typing.Annotated["AdmissionApplicationGQLModel", strawberry.lazy(".AdmissionApplicationGQLModel")]
@@ -74,18 +75,16 @@ class AdmissionProcessQuery:
         desc: typing.Optional[bool] = None,
         offset: typing.Optional[int] = None,
     ) -> typing.List[AdmissionProcessGQLModel]:
-        if offset is not None:
-            skip = offset
-        loader = AdmissionProcessGQLModel.getLoader(info=info)
-        wheredict = None if where is None else strawberry.asdict(where)
-        rows = await loader.page(
-            where=wheredict,
-            skip=skip or 0,
-            limit=limit,
-            orderby=orderby,
-            desc=desc,
+        return await resolve_page(
+            info,
+            AdmissionProcessGQLModel,
+            where,
+            skip,
+            limit,
+            orderby,
+            desc,
+            offset,
         )
-        return [AdmissionProcessGQLModel.from_dataclass(row) for row in rows]
 
 
 from uoishelpers.resolvers import InsertError, UpdateError, DeleteError

@@ -10,7 +10,7 @@ import typing
 import strawberry
 
 from uoishelpers.resolvers import getUserFromInfo
-from .admission_permissions import AdmissionsAdminPermission
+from .admission_permissions import is_admissions_admin
 
 
 @strawberry.type(description="User role and permissions information")
@@ -68,16 +68,7 @@ class UserPermissionQuery:
         if not user:
             return None
         roles = user.get("roles", []) or []
-        is_admin = False
-        for role in roles:
-            group_id = (role.get("group") or {}).get("id")
-            roletype_id = (role.get("roletype") or {}).get("id")
-            if (
-                group_id == AdmissionsAdminPermission.GROUP_ID
-                and roletype_id == AdmissionsAdminPermission.ROLETYPE_ID
-            ):
-                is_admin = True
-                break
+        is_admin = is_admissions_admin(user)
 
         has_role = len(roles) > 0
         role_level = "admin" if is_admin else "none"

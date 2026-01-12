@@ -2,21 +2,18 @@ import typing
 import datetime
 import strawberry
 
-from uoishelpers.resolvers import getLoadersFromInfo, PageResolver, createInputs2, ScalarResolver
+from uoishelpers.resolvers import getLoadersFromInfo, createInputs2, ScalarResolver
 from uoishelpers.gqlpermissions import OnlyForAuthentized
 
 from .BaseGQLModel import BaseGQLModel, IDType
 from .admission_permissions import AdmissionsAdminPermission
 from .db_errors import integrity_error_to_error
+from .pagination import resolve_page
+from .validation import build_error, to_naive_datetime
+from . import error_codes as codes
 
 AdmissionPaymentInfoGQLModel = typing.Annotated["AdmissionPaymentInfoGQLModel", strawberry.lazy(".AdmissionPaymentInfoGQLModel")]
 StudyProgramGQLModel = typing.Annotated["StudyProgramGQLModel", strawberry.lazy(".StudyProgramGQLModel")]
-
-
-def _to_naive(value: datetime.datetime) -> datetime.datetime:
-    if value.tzinfo is not None and value.utcoffset() is not None:
-        return value.astimezone(datetime.timezone.utc).replace(tzinfo=None)
-    return value
 
 
 async def _validate_offer_data(
@@ -35,48 +32,53 @@ async def _validate_offer_data(
     from src.DBDefinitions import AdmissionOfferModel
 
     if program_id is None or payment_info_id is None or start_date is None or end_date is None:
-        return error_cls(
+        return build_error(
+            error_cls,
             msg="Missing required value",
-            code="a3c2a8f9-3f19-4e88-a5a0-1a7a4f6f0f8d",
+            code=codes.ERR_MISSING_REQUIRED,
             location=location,
-            _input=input_obj
+            input_obj=input_obj,
         )
 
-    start_date = _to_naive(start_date)
-    end_date = _to_naive(end_date)
+    start_date = to_naive_datetime(start_date)
+    end_date = to_naive_datetime(end_date)
     if end_date <= start_date:
-        return error_cls(
+        return build_error(
+            error_cls,
             msg="Application end date must be after start date",
-            code="b3c57cc6-4f34-4d0d-b7a8-5a47f4d58278",
+            code=codes.ERR_OFFER_END_BEFORE_START,
             location=location,
-            _input=input_obj
+            input_obj=input_obj,
         )
     if end_date.date() == start_date.date():
-        return error_cls(
+        return build_error(
+            error_cls,
             msg="Application start and end date must not be on the same day",
-            code="c9c2f2b5-7b8b-49cf-9c73-1264f2b5353f",
+            code=codes.ERR_OFFER_SAME_DAY,
             location=location,
-            _input=input_obj
+            input_obj=input_obj,
         )
 
     program_loader = getLoadersFromInfo(info).StudyProgramModel
     program = await program_loader.load(program_id)
     if program is None:
-        return error_cls(
+        return build_error(
+            error_cls,
             msg="Study program not found",
-            code="22a16a6a-0b62-4d0f-bb69-4efee7c2e1f9",
+            code=codes.ERR_STUDY_PROGRAM_NOT_FOUND,
             location=location,
-            _input=input_obj
+            input_obj=input_obj,
         )
 
     payment_info_loader = getLoadersFromInfo(info).AdmissionPaymentInfoModel
     payment_info = await payment_info_loader.load(payment_info_id)
     if payment_info is None:
-        return error_cls(
+        return build_error(
+            error_cls,
             msg="Payment info not found",
-            code="5e6d8de6-f74c-4e0a-9f20-2d4f25d5ac3b",
+            code=codes.ERR_PAYMENT_INFO_NOT_FOUND,
             location=location,
-            _input=input_obj
+            input_obj=input_obj,
         )
 
     offer_loader = getLoadersFromInfo(info).AdmissionOfferModel
@@ -87,11 +89,12 @@ async def _validate_offer_data(
         stmt = stmt.where(AdmissionOfferModel.id != existing_offer_id)
     result = await offer_loader.session.execute(stmt)
     if result.scalars().first() is not None:
-        return error_cls(
+        return build_error(
+            error_cls,
             msg="Offer already exists for this study program",
-            code="c6f27c8c-33d8-4cd0-a76a-5eb3f4a59262",
+            code=codes.ERR_OFFER_EXISTS,
             location=location,
-            _input=input_obj
+            input_obj=input_obj,
         )
 
     return None
@@ -168,18 +171,16 @@ class AdmissionOfferQuery:
         desc: typing.Optional[bool] = None,
         offset: typing.Optional[int] = None,
     ) -> typing.List[AdmissionOfferGQLModel]:
-        if offset is not None:
-            skip = offset
-        loader = AdmissionOfferGQLModel.getLoader(info=info)
-        wheredict = None if where is None else strawberry.asdict(where)
-        rows = await loader.page(
-            where=wheredict,
-            skip=skip or 0,
-            limit=limit,
-            orderby=orderby,
-            desc=desc,
+        return await resolve_page(
+            info,
+            AdmissionOfferGQLModel,
+            where,
+            skip,
+            limit,
+            orderby,
+            desc,
+            offset,
         )
-        return [AdmissionOfferGQLModel.from_dataclass(row) for row in rows]
 
 
 from uoishelpers.resolvers import InsertError, UpdateError, DeleteError
@@ -247,8 +248,8 @@ class AdmissionOfferMutation:
 
         entity = AdmissionOfferInsertGQLModel(
             program_id=admission_offer.program_id,
-            application_start_date=_to_naive(admission_offer.application_start_date),
-            application_end_date=_to_naive(admission_offer.application_end_date),
+            application_start_date=to_naive_datetime(admission_offer.application_start_date),
+            application_end_date=to_naive_datetime(admission_offer.application_end_date),
             payment_info_id=admission_offer.payment_info_id
         )
         try:
@@ -286,8 +287,8 @@ class AdmissionOfferMutation:
         if validation_error is not None:
             return validation_error
 
-        admission_offer.application_start_date = _to_naive(admission_offer.application_start_date)
-        admission_offer.application_end_date = _to_naive(admission_offer.application_end_date)
+        admission_offer.application_start_date = to_naive_datetime(admission_offer.application_start_date)
+        admission_offer.application_end_date = to_naive_datetime(admission_offer.application_end_date)
         try:
             return await Insert[AdmissionOfferGQLModel].DoItSafeWay(info=info, entity=admission_offer)
         except IntegrityError as exc:
@@ -332,9 +333,9 @@ class AdmissionOfferMutation:
             return validation_error
 
         if admission_offer.application_start_date is not strawberry.UNSET:
-            admission_offer.application_start_date = _to_naive(admission_offer.application_start_date)
+            admission_offer.application_start_date = to_naive_datetime(admission_offer.application_start_date)
         if admission_offer.application_end_date is not strawberry.UNSET:
-            admission_offer.application_end_date = _to_naive(admission_offer.application_end_date)
+            admission_offer.application_end_date = to_naive_datetime(admission_offer.application_end_date)
 
         try:
             return await Update[AdmissionOfferGQLModel].DoItSafeWay(info=info, entity=admission_offer)
