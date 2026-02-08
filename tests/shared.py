@@ -1,261 +1,143 @@
+import sqlalchemy
+import sys
+import asyncio
+import os
 import uuid
+import datetime
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+_SESSION_CLEANERS = []
+
+os.environ.setdefault("DEMO", "False")
+os.environ.setdefault("GQLUG_ENDPOINT_URL", "http://localhost:33001/api/ug")
+
+
+def _ensure_uuid(value):
+    if value is None or value is uuid.UUID:
+        return value
+    if isinstance(value, uuid.UUID):
+        return value
+    return uuid.UUID(str(value))
+
+
+def _coerce_uuid_fields(data_dict):
+    result = dict(data_dict)
+    for key, value in list(result.items()):
+        if value is None or isinstance(value, uuid.UUID):
+            continue
+        if not isinstance(value, str):
+            continue
+        key_lower = key.lower()
+        if key_lower == "id" or key_lower.endswith("_id"):
+            try:
+                result[key] = uuid.UUID(value)
+            except ValueError:
+                continue
+    return result
+
+
+# setting path
+sys.path.append("../")
+
+import pytest
 
 from src.DBDefinitions import (
     BaseModel,
     AdmissionProcessModel,
     AdmissionApplicationModel,
+    AdmissionApplicantModel,
     AdmissionPaymentModel,
     AdmissionPaymentInfoModel,
     AdmissionBankAccountModel,
     AdmissionOfferModel,
     StudyProgramModel,
     BankStatementModel,
-    AdmissionApplicantModel,
+    UserModel,
 )
-from src.DBFeeder import get_demodata
-from src.Dataloaders import createLoadersContext
+
+
+def register_session_cleanup(closer):
+    _SESSION_CLEANERS.append(closer)
+
+
+async def drain_session_cleanups():
+    while _SESSION_CLEANERS:
+        closer = _SESSION_CLEANERS.pop()
+        await closer()
 
 
 async def prepare_in_memory_sqllite():
-    async_engine = create_async_engine("sqlite+aiosqlite:///:memory:")
-    async with async_engine.begin() as conn:
+    from sqlalchemy.ext.asyncio import create_async_engine
+    from sqlalchemy.ext.asyncio import AsyncSession
+    from sqlalchemy.orm import sessionmaker
+
+    asyncEngine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with asyncEngine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
 
     async_session_maker = sessionmaker(
-        async_engine, expire_on_commit=False, class_=AsyncSession
+        asyncEngine, expire_on_commit=False, class_=AsyncSession
     )
+
     return async_session_maker
 
 
-def uuid_to_str(value):
-    if isinstance(value, uuid.UUID):
-        return str(value)
+def _parse_iso_datetime(value):
+    """Parse ISO format datetime string to Python datetime object."""
+    if value is None:
+        return None
+    if isinstance(value, datetime.datetime):
+        return value
+    if isinstance(value, str):
+        try:
+            # Handle ISO format with or without microseconds
+            return datetime.datetime.fromisoformat(value.replace('Z', '+00:00'))
+        except ValueError:
+            try:
+                return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f")
+            except ValueError:
+                try:
+                    return datetime.datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+                except ValueError:
+                    return value
     return value
 
 
-def assert_no_graphql_errors(response):
-    assert response.errors is None, f"GraphQL errors: {response.errors}"
+def _parse_datetime_fields(data_dict):
+    """Parse all datetime fields in a dictionary."""
+    datetime_fields = [
+        "created", "lastchange", "application_start_date", "application_end_date",
+        "applied_date", "accepted_at", "withdrawn_at", "paid_at"
+    ]
+    result = dict(data_dict)
+    for field in datetime_fields:
+        if field in result:
+            result[field] = _parse_iso_datetime(result[field])
+    return _coerce_uuid_fields(result)
 
 
-async def execute_gql(schema, query, *, context_value, variables=None):
-    response = await schema.execute(
-        query,
-        context_value=context_value,
-        variable_values=variables,
-    )
-    assert_no_graphql_errors(response)
-    return response
+def get_demodata():
+    from uoishelpers.dataloaders import readJsonFile
+    data = readJsonFile(jsonFileName="./systemdata.json")
 
+    # Parse datetime fields in all tables
+    for table_name in data:
+        if isinstance(data[table_name], list):
+            data[table_name] = [_parse_datetime_fields(row) for row in data[table_name]]
+        elif isinstance(data[table_name], dict):
+            data[table_name] = _parse_datetime_fields(data[table_name])
 
-class SessionMakerWrapper:
-    """Wrapper that makes a sessionmaker look like a session for loaders"""
-
-    def __init__(self, sessionmaker):
-        self._sessionmaker = sessionmaker
-        self._session = None
-
-    async def get_session(self):
-        """Get or create a session"""
-        if self._session is None:
-            self._session = self._sessionmaker()
-        return self._session
-
-    @property
-    def identity_map(self):
-        """Proxy to session's identity_map"""
-        # Return a dummy dict-like object for testing
-        class DummyIdentityMap(dict):
-            def get(self, key, default=None):
-                return default
-
-        return DummyIdentityMap()
-
-    async def execute(self, statement):
-        """Proxy to session's execute method"""
-        session = await self.get_session()
-        return await session.execute(statement)
-
-
-def createContext(asyncSessionMaker, withuser=True, user_role="administrátor", roles=None, user_id=None):
-    """
-    Create context for testing with admissions RBAC.
-
-    Args:
-        asyncSessionMaker: Async session maker for database access
-        withuser: Whether to include a user in the context
-        user_role: Legacy role hint ("administrátor" => admissions admin, other => no roles)
-        roles: Explicit roles list (overrides user_role)
-        user_id: Explicit user id for context
-    """
-    from src.GraphTypeDefinitions.admission_permissions import AdmissionsAdminPermission
-
-    loadersContext = createLoadersContext(asyncSessionMaker)
-
-    if roles is None:
-        if user_role in ["administrátor", "admin"]:
-            roles = [{
-                "group": {"id": AdmissionsAdminPermission.GROUP_ID},
-                "roletype": {"id": AdmissionsAdminPermission.ROLETYPE_ID},
-            }]
-        else:
-            roles = []
-
-    user_id = user_id or "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
-    user = {
-        "id": user_id,
-        "name": "John",
-        "surname": "Newbie",
-        "email": "john.newbie@world.com",
-        "roles": roles,
-    }
-
-    if withuser:
-        loadersContext["user"] = user
-    # Store the sessionmaker for later use by resolvers and extensions
-    loadersContext["asyncSessionMaker"] = asyncSessionMaker
-    # Also store it as the session for compatibility with extensions
-    loadersContext["session"] = asyncSessionMaker
-    return loadersContext
-
-
-def createInfo(asyncSessionMaker, withuser=True, user_role="administrátor", roles=None, user_id=None):
-    class Request:
-        def __init__(self, user_data=None):
-            self.scope = {
-                "type": "http",
-                "headers": [(b"authorization", b"Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003")],
-                "user": user_data,
-            }
-
-        @property
-        def headers(self):
-            return {"Authorization": "Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003"}
-
-    class Info:
-        def __init__(self, request_obj, context_dict):
-            self._request = request_obj
-            self._context = context_dict
-
-        @property
-        def context(self):
-            return self._context
-
-        @property
-        def request(self):
-            return self._request
-
-    context = createContext(
-        asyncSessionMaker,
-        withuser=withuser,
-        user_role=user_role,
-        roles=roles,
-        user_id=user_id
-    )
-    user_data = context.get("user") if withuser else None
-    request_obj = Request(user_data)
-    context["request"] = request_obj
-
-    return Info(request_obj, context)
+    return data
 
 
 async def prepare_demodata(async_session_maker):
     data = get_demodata()
-    import datetime as _dt
-
-    # Parse ISO format dates with microsecond precision
-    def _parse_iso(v):
-        if isinstance(v, str):
-            try:
-                return _dt.datetime.fromisoformat(v)
-            except (ValueError, TypeError):
-                try:
-                    v_clean = v.rstrip("Z")
-                    return _dt.datetime.strptime(v_clean, "%Y-%m-%dT%H:%M:%S.%f")
-                except (ValueError, TypeError):
-                    return v
-        return v
-
-    if isinstance(data, dict):
-        if "admission_offers" not in data and "exams" in data:
-            data["admission_offers"] = data.pop("exams")
-        if "bank_statements" not in data and "bank_statement_payments" in data:
-            data["bank_statements"] = data.pop("bank_statement_payments")
-
-    # Parse dates in admission offers
-    if isinstance(data, dict) and "admission_offers" in data:
-        for row in data.get("admission_offers", []):
-            if not isinstance(row, dict):
-                continue
-            for key in [
-                "application_start_date",
-                "application_end_date",
-                "created",
-                "lastchange",
-            ]:
-                if key in row:
-                    row[key] = _parse_iso(row.get(key))
-
-    # Parse dates in admission_applications
-    if isinstance(data, dict) and "admission_applications" in data:
-        for row in data.get("admission_applications", []):
-            if not isinstance(row, dict):
-                continue
-            for key in [
-                "applied_date",
-                "accepted_at",
-                "withdrawn_at",
-                "created",
-                "lastchange",
-            ]:
-                if key in row:
-                    row[key] = _parse_iso(row.get(key))
-
-    # Parse dates in admission_payments
-    if isinstance(data, dict) and "admission_payments" in data:
-        for row in data.get("admission_payments", []):
-            if not isinstance(row, dict):
-                continue
-            if "bank_payment_id" in row and "bank_statement_id" not in row:
-                row["bank_statement_id"] = row.pop("bank_payment_id")
-            for key in ["paid_at", "created", "lastchange"]:
-                if key in row:
-                    row[key] = _parse_iso(row.get(key))
-
-    # Parse dates in admission_payment_infos
-    if isinstance(data, dict) and "admission_payment_infos" in data:
-        for row in data.get("admission_payment_infos", []):
-            if not isinstance(row, dict):
-                continue
-            for key in ["created", "lastchange"]:
-                if key in row:
-                    row[key] = _parse_iso(row.get(key))
-
-    # Parse dates in admission_applicants
-    if isinstance(data, dict) and "admission_applicants" in data:
-        for row in data.get("admission_applicants", []):
-            if not isinstance(row, dict):
-                continue
-            for key in ["created", "lastchange"]:
-                if key in row:
-                    row[key] = _parse_iso(row.get(key))
-
-    # Parse dates in admission_bank_accounts
-    if isinstance(data, dict) and "admission_bank_accounts" in data:
-        for row in data.get("admission_bank_accounts", []):
-            if not isinstance(row, dict):
-                continue
-            for key in ["created", "lastchange"]:
-                if key in row:
-                    row[key] = _parse_iso(row.get(key))
 
     from uoishelpers.feeders import ImportModels
 
     await ImportModels(
         async_session_maker,
         [
+            UserModel,
             StudyProgramModel,
             AdmissionBankAccountModel,
             AdmissionPaymentInfoModel,
@@ -268,3 +150,200 @@ async def prepare_demodata(async_session_maker):
         ],
         data,
     )
+
+
+from src.Dataloaders import LoaderMap
+
+
+def assert_no_graphql_errors(response):
+    """Assert that there are no GraphQL errors in the response."""
+    assert response.errors is None, f"GraphQL errors: {response.errors}"
+
+
+async def execute_gql(schema, query, context_value, variables=None):
+    """Execute a GraphQL query and return the response."""
+    response = await schema.execute(
+        query,
+        context_value=context_value,
+        variable_values=variables or {}
+    )
+    session = context_value.get("_session")
+    if session is not None:
+        if response.errors:
+            await session.rollback()
+        elif context_value.get("_transaction_failed"):
+            await session.rollback()
+            context_value.pop("_transaction_failed", None)
+        else:
+            await session.commit()
+    return response
+
+
+# Admin user ID from environment or default
+ADMIN_GROUP_ID = os.environ.get("ADMISSIONS_ADMIN_GROUP_ID", "cd49e152-610c-11ed-9f17-001a7dda7110")
+ADMIN_ROLETYPE_ID = os.environ.get("ADMISSIONS_ADMIN_ROLETYPE_ID", "ced46aa4-3217-4fc1-b79d-f6be7d21c6b6")
+
+
+class ProfilingCounter:
+    """
+    Mock counter object that mimics the ProfilingExtension.counter interface.
+    The real counter is created by uoishelpers.schema.ProfilingExtension.
+    """
+    def __init__(self):
+        self._data = {"total": {"count": 0, "sum": 0, "values": []}}
+
+    def count(self, key, duration):
+        """Record a count and duration for a given key."""
+        if key not in self._data:
+            self._data[key] = {"count": 0, "sum": 0, "values": []}
+        self._data[key]["count"] += 1
+        self._data[key]["sum"] += duration
+        self._data[key]["values"].append(duration)
+
+    def result(self):
+        return self._data
+
+    def __getitem__(self, key):
+        return self._data.get(key)
+
+    def __setitem__(self, key, value):
+        self._data[key] = value
+
+
+def createLoadersContext(asyncSessionMaker):
+    """Create loaders context with an actual session (not session maker)."""
+    # Create a session from the session maker
+    session = asyncSessionMaker()
+    loaders = LoaderMap(session)
+    register_session_cleanup(session.close)
+    return {"loaders": loaders, "_session": session, "_skip_whoami": True}
+
+
+def createContext(asyncSessionMaker, withuser=True, user_role=None):
+    """
+    Create a context for GraphQL execution.
+
+    Args:
+        asyncSessionMaker: The async session maker
+        withuser: Whether to include a user in the context
+        user_role: Optional role type - "admin" or "administrátor" makes the user an admin
+    """
+    loadersContext = createLoadersContext(asyncSessionMaker)
+
+    # Add extension context keys required by uoishelpers extensions
+    # ProfilingExtension.counter needs to be an object with .result() method
+    loadersContext["ProfilingExtension.counter"] = ProfilingCounter()
+
+    # Default regular user
+    user = {
+        "id": str(_ensure_uuid("2d9dc5ca-a4a2-11ed-b9df-0242ac120003")),
+        "name": "John",
+        "surname": "Newbie",
+        "email": "john.newbie@world.com",
+        "roles": []
+    }
+
+    # If admin role requested, add appropriate roles
+    if user_role in ["admin", "administrátor", "administrator"]:
+        user["roles"] = [
+            {
+                "valid": True,
+                "group": {"id": str(_ensure_uuid(ADMIN_GROUP_ID)), "name": "Admission Admins"},
+                "roletype": {"id": str(_ensure_uuid(ADMIN_ROLETYPE_ID)), "name": "administrátor"}
+            }
+        ]
+
+    if withuser:
+        loadersContext["user"] = user
+    else:
+        loadersContext["user"] = None
+        loadersContext["_allow_anonymous"] = True
+
+    loadersContext["_skip_whoami"] = True
+    return loadersContext
+
+
+def createAdminContext(asyncSessionMaker):
+    """Create a context with an admin user."""
+    return createContext(asyncSessionMaker, withuser=True, user_role="admin")
+
+
+def createRegularUserContext(asyncSessionMaker, user_id=None, name=None, surname=None, email=None):
+    """Create a context with a regular (non-admin) user."""
+    loadersContext = createLoadersContext(asyncSessionMaker)
+
+    # Add extension context keys
+    loadersContext["ProfilingExtension.counter"] = ProfilingCounter()
+
+    user_id_value = user_id or "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
+    user = {
+        "id": str(_ensure_uuid(user_id_value)),
+        "name": name or "John",
+        "surname": surname or "Newbie",
+        "email": email or "john.newbie@world.com",
+        "roles": []
+    }
+
+    loadersContext["user"] = user
+    loadersContext["_skip_whoami"] = True
+    return loadersContext
+
+
+def createApplicantContext(asyncSessionMaker, applicant_user_id):
+    """Create a context with a specific applicant user."""
+    data = get_demodata()
+    applicants = data.get("admission_applicants", [])
+
+    # Find the applicant to get their details (compare as strings to handle UUID/string mismatch)
+    applicant = next(
+        (a for a in applicants if str(a.get("applicant_user_id")) == str(applicant_user_id)),
+        None
+    )
+
+    loadersContext = createLoadersContext(asyncSessionMaker)
+
+    # Add extension context keys
+    loadersContext["ProfilingExtension.counter"] = ProfilingCounter()
+
+    applicant_user_uuid = str(_ensure_uuid(applicant_user_id))
+    user = {
+        "id": applicant_user_uuid,
+        "name": applicant.get("firstname", "Test") if applicant else "Test",
+        "surname": applicant.get("lastname", "User") if applicant else "User",
+        "email": applicant.get("email", "test@example.com") if applicant else "test@example.com",
+        "roles": []
+    }
+
+    loadersContext["user"] = user
+    loadersContext["_skip_whoami"] = True
+    return loadersContext
+
+
+def createUnauthenticatedContext(asyncSessionMaker):
+    """Create a context without a user (unauthenticated)."""
+    return createContext(asyncSessionMaker, withuser=False)
+
+
+def createInfo(asyncSessionMaker, withuser=True, user_role=None):
+    class Request():
+        @property
+        def headers(self):
+            return {"Authorization": "Bearer 2d9dc5ca-a4a2-11ed-b9df-0242ac120003"}
+
+        @property
+        def scope(self):
+            return {"type": "http"}
+
+    class Info():
+        @property
+        def context(self):
+            context = createContext(asyncSessionMaker, withuser=withuser, user_role=user_role)
+            context["request"] = Request()
+            return context
+
+    return Info()
+
+
+def generate_uuid():
+    """Generate a new UUID string."""
+    return str(uuid.uuid4())

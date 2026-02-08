@@ -1,16 +1,10 @@
 import aiohttp
-import os
-
 
 
 def createGQLClient():
     from fastapi import FastAPI
     from fastapi.testclient import TestClient
     import src.DBDefinitions as DBDefinitions
-
-    # Set DEMO environment variable for tests
-    os.environ.setdefault("DEMO", "True")
-    os.environ.setdefault("GQLUG_ENDPOINT_URL", "http://localhost:33333")
 
     def ComposeCString():
         return "sqlite+aiosqlite:///:memory:"
@@ -55,12 +49,9 @@ def createFederationClient(
             token = await getToken(username, password)
 
         payload = {"query": query, "variables": variables}
-        # headers = {"Authorization": f"Bearer {token}"}
         cookies = {'authorization': token}
         async with aiohttp.ClientSession() as session:
-            # print(headers, cookies)
             async with session.post(gqlurl, json=payload, cookies=cookies) as resp:
-                # print(resp.status)
                 if resp.status != 200:
                     text = await resp.text()
                     print(text)
@@ -74,11 +65,7 @@ def createFederationClient(
 
 async def main():
     client = createFederationClient()
-    result = await client("""query MyQuery {
-  admissionApplicationPage {
-    applicantId
-  }
-}""", {})
+    result = await client("{ me { email id } }", {})
     print(result)
 
 

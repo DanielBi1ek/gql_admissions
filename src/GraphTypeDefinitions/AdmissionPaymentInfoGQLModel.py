@@ -3,10 +3,12 @@ import datetime
 import strawberry
 
 from uoishelpers.resolvers import getLoadersFromInfo, createInputs2, ScalarResolver
-from uoishelpers.gqlpermissions import OnlyForAuthentized
 
 from .BaseGQLModel import BaseGQLModel, IDType
-from .admission_permissions import AdmissionsAdminPermission
+from .admission_permissions import (
+    ADMISSION_READ_PERMISSION, ADMISSION_ADMIN_PERMISSION,
+    admission_field
+)
 from .db_errors import integrity_error_to_error
 from .pagination import resolve_page
 from .validation import (
@@ -36,20 +38,18 @@ class AdmissionPaymentInfoGQLModel(BaseGQLModel):
     def getLoader(cls, info: strawberry.types.Info):
         return getLoadersFromInfo(info).AdmissionPaymentInfoModel
 
-    required_amount: typing.Optional[float] = strawberry.field(
+    # Using centralized permission system - no more repetitive permission_classes!
+    required_amount: typing.Optional[float] = admission_field(
         default=None,
-        description="required amount",
-        permission_classes=[OnlyForAuthentized]
+        description="required amount"
     )
-    bank_account_id: typing.Optional[IDType] = strawberry.field(
+    bank_account_id: typing.Optional[IDType] = admission_field(
         default=None,
-        description="bank account reference",
-        permission_classes=[OnlyForAuthentized]
+        description="bank account reference"
     )
 
-    bank_account: typing.Optional["AdmissionBankAccountGQLModel"] = strawberry.field(
+    bank_account: typing.Optional["AdmissionBankAccountGQLModel"] = admission_field(
         description="bank account details",
-        permission_classes=[OnlyForAuthentized],
         resolver=ScalarResolver["AdmissionBankAccountGQLModel"](fkey_field_name="bank_account_id")
     )
 
@@ -58,13 +58,13 @@ class AdmissionPaymentInfoGQLModel(BaseGQLModel):
 class AdmissionPaymentInfoQuery:
     admission_payment_info_by_id: typing.Optional[AdmissionPaymentInfoGQLModel] = strawberry.field(
         description="get admission payment info by id",
-        permission_classes=[OnlyForAuthentized],
+        permission_classes=ADMISSION_READ_PERMISSION,
         resolver=AdmissionPaymentInfoGQLModel.load_with_loader
     )
 
     @strawberry.field(
         description="page of admission payment info",
-        permission_classes=[OnlyForAuthentized],
+        permission_classes=ADMISSION_READ_PERMISSION
     )
     async def admission_payment_info_page(
         self,
@@ -112,79 +112,33 @@ class AdmissionPaymentInfoDeleteGQLModel:
     lastchange: datetime.datetime
 
 
-@strawberry.input(description="Input model for creating admission payment info with validation")
-class AdmissionPaymentInfoCreateGQLModel:
-    required_amount: float
-    bank_account_id: IDType
+AdmissionPaymentInfoGQLModelInsertError = typing.Annotated[
+    InsertError[AdmissionPaymentInfoGQLModel], strawberry.lazy("uoishelpers.resolvers")
+]
+AdmissionPaymentInfoGQLModelUpdateError = typing.Annotated[
+    UpdateError[AdmissionPaymentInfoGQLModel], strawberry.lazy("uoishelpers.resolvers")
+]
+AdmissionPaymentInfoGQLModelDeleteError = typing.Annotated[
+    DeleteError[AdmissionPaymentInfoGQLModel], strawberry.lazy("uoishelpers.resolvers")
+]
+
+
+@strawberry.type(description="Result of admission payment info operations")
+class AdmissionPaymentInfoGQLModelResult(AdmissionPaymentInfoGQLModel):
+    pass
 
 
 @strawberry.type(description="Admission payment info mutations")
 class AdmissionPaymentInfoMutation:
-    @strawberry.mutation(
-        description="Create admission payment info with validation",
-        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission]
-    )
-    async def admission_payment_info_create(
-        self,
-        info: strawberry.Info,
-        payment_info: AdmissionPaymentInfoCreateGQLModel
-    ) -> typing.Union[AdmissionPaymentInfoGQLModel, InsertError[AdmissionPaymentInfoGQLModel]]:
-        from sqlalchemy.exc import IntegrityError
-        from uoishelpers.resolvers import Insert
-
-        error = validate_numeric(
-            payment_info.required_amount,
-            error_cls=InsertError[AdmissionPaymentInfoGQLModel],
-            location="admissionPaymentInfoCreate",
-            input_obj=payment_info,
-        )
-        if error is not None:
-            return error
-        error = validate_positive(
-            payment_info.required_amount,
-            error_cls=InsertError[AdmissionPaymentInfoGQLModel],
-            location="admissionPaymentInfoCreate",
-            input_obj=payment_info,
-        )
-        if error is not None:
-            return error
-
-        bank_account_loader = getLoadersFromInfo(info).AdmissionBankAccountModel
-        error = await validate_fk_exists(
-            bank_account_loader,
-            payment_info.bank_account_id,
-            error_cls=InsertError[AdmissionPaymentInfoGQLModel],
-            location="admissionPaymentInfoCreate",
-            input_obj=payment_info,
-            msg="Bank account not found",
-            code=codes.ERR_BANK_ACCOUNT_NOT_FOUND,
-        )
-        if error is not None:
-            return error
-
-        entity = AdmissionPaymentInfoInsertGQLModel(
-            required_amount=payment_info.required_amount,
-            bank_account_id=payment_info.bank_account_id
-        )
-        try:
-            return await Insert[AdmissionPaymentInfoGQLModel].DoItSafeWay(info=info, entity=entity)
-        except IntegrityError as exc:
-            return integrity_error_to_error(
-                exc,
-                InsertError[AdmissionPaymentInfoGQLModel],
-                "admissionPaymentInfoCreate",
-                payment_info
-            )
-
-    @strawberry.mutation(
+    @strawberry.field(
         description="Insert admission payment info",
-        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission]
+        permission_classes=ADMISSION_ADMIN_PERMISSION
     )
     async def admission_payment_info_insert(
         self,
         info: strawberry.Info,
-        payment_info: AdmissionPaymentInfoInsertGQLModel
-    ) -> typing.Union[AdmissionPaymentInfoGQLModel, InsertError[AdmissionPaymentInfoGQLModel]]:
+        payment_info: AdmissionPaymentInfoInsertGQLModel,
+    ) -> typing.Union[AdmissionPaymentInfoGQLModelResult, AdmissionPaymentInfoGQLModelInsertError]:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Insert
 
@@ -226,7 +180,9 @@ class AdmissionPaymentInfoMutation:
             return error
 
         try:
-            return await Insert[AdmissionPaymentInfoGQLModel].DoItSafeWay(info=info, entity=payment_info)
+            result = await Insert[AdmissionPaymentInfoGQLModel].DoItSafeWay(info=info, entity=payment_info)
+            # Convert the result to the proper result type
+            return AdmissionPaymentInfoGQLModelResult(**result.__dict__)
         except IntegrityError as exc:
             return integrity_error_to_error(
                 exc,
@@ -235,19 +191,29 @@ class AdmissionPaymentInfoMutation:
                 payment_info
             )
 
-    @strawberry.mutation(
+    @strawberry.field(
         description="Update admission payment info",
-        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission],
-        extensions=[LoadDataExtension[UpdateError, AdmissionPaymentInfoGQLModel]()]
+        permission_classes=ADMISSION_ADMIN_PERMISSION
     )
     async def admission_payment_info_update(
         self,
         info: strawberry.Info,
         payment_info: AdmissionPaymentInfoUpdateGQLModel,
-        db_row: typing.Any
-    ) -> typing.Union[AdmissionPaymentInfoGQLModel, UpdateError[AdmissionPaymentInfoGQLModel]]:
+    ) -> typing.Union[AdmissionPaymentInfoGQLModelResult, AdmissionPaymentInfoGQLModelUpdateError]:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Update
+
+        # Load existing data to validate against
+        loader = getLoadersFromInfo(info).AdmissionPaymentInfoModel
+        db_row = await loader.load(payment_info.id)
+        if db_row is None:
+            return build_error(
+                UpdateError[AdmissionPaymentInfoGQLModel],
+                msg="Payment info not found",
+                code=codes.ERR_NOT_FOUND,
+                location="admissionPaymentInfoUpdate",
+                input_obj=payment_info,
+            )
 
         new_required = resolve_unset(payment_info.required_amount, db_row.required_amount)
         error = validate_required(
@@ -290,7 +256,9 @@ class AdmissionPaymentInfoMutation:
                 return error
 
         try:
-            return await Update[AdmissionPaymentInfoGQLModel].DoItSafeWay(info=info, entity=payment_info)
+            result = await Update[AdmissionPaymentInfoGQLModel].DoItSafeWay(info=info, entity=payment_info)
+            # Convert the result to the proper result type
+            return AdmissionPaymentInfoGQLModelResult(**result.__dict__)
         except IntegrityError as exc:
             return integrity_error_to_error(
                 exc,
@@ -299,17 +267,44 @@ class AdmissionPaymentInfoMutation:
                 payment_info
             )
 
-    @strawberry.mutation(
+    @strawberry.field(
         description="Delete admission payment info",
-        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission],
-        extensions=[LoadDataExtension[DeleteError, AdmissionPaymentInfoGQLModel]()]
+        permission_classes=ADMISSION_ADMIN_PERMISSION
     )
     async def admission_payment_info_delete(
         self,
         info: strawberry.Info,
         payment_info: AdmissionPaymentInfoDeleteGQLModel,
-        db_row: typing.Any
-    ) -> typing.Optional[DeleteError[AdmissionPaymentInfoGQLModel]]:
+    ) -> typing.Union[AdmissionPaymentInfoGQLModelResult, AdmissionPaymentInfoGQLModelDeleteError]:
         from uoishelpers.resolvers import Delete
 
-        return await Delete[AdmissionPaymentInfoGQLModel].DoItSafeWay(info=info, entity=payment_info)
+        # Load the entity before deletion to get complete data for result
+        loader = getLoadersFromInfo(info).AdmissionPaymentInfoModel
+        db_row = await loader.load(payment_info.id)
+        if db_row is None:
+            return build_error(
+                DeleteError[AdmissionPaymentInfoGQLModel],
+                msg="Payment info not found",
+                code=codes.ERR_NOT_FOUND,
+                location="admissionPaymentInfoDelete",
+                input_obj=payment_info,
+            )
+
+        # Perform the deletion
+        result = await Delete[AdmissionPaymentInfoGQLModel].DoItSafeWay(info=info, entity=payment_info)
+
+        # Check if deletion failed
+        if isinstance(result, DeleteError):
+            return result
+
+        # Return the deleted entity data as result
+        return AdmissionPaymentInfoGQLModelResult(
+            id=db_row.id,
+            required_amount=db_row.required_amount,
+            bank_account_id=db_row.bank_account_id,
+            created=db_row.created,
+            lastchange=db_row.lastchange,
+            createdby_id=db_row.createdby_id,
+            changedby_id=db_row.changedby_id,
+            rbacobject_id=db_row.rbacobject_id
+        )

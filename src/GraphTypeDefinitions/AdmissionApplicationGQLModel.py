@@ -1,13 +1,17 @@
 import typing
 import datetime
 import strawberry
+import uuid as uuid_module
 
 from uoishelpers.resolvers import getLoadersFromInfo, createInputs2, ScalarResolver
-from uoishelpers.gqlpermissions import OnlyForAuthentized
 from uoishelpers.resolvers import getUserFromInfo
 
 from .BaseGQLModel import BaseGQLModel, IDType
-from .admission_permissions import AdmissionsAdminPermission, is_admissions_admin
+from .admission_permissions import (
+    ADMISSION_READ_PERMISSION, ADMISSION_ADMIN_PERMISSION, ADMISSION_USER_PERMISSION,
+    admission_field, get_admission_entity_by_id, get_admission_entities_page,
+    is_admissions_admin
+)
 from uoishelpers.resolvers import InsertError, UpdateError
 from .db_errors import integrity_error_to_error
 from .pagination import resolve_page
@@ -44,101 +48,82 @@ class AdmissionApplicationGQLModel(BaseGQLModel):
     def getLoader(cls, info: strawberry.types.Info):
         return getLoadersFromInfo(info).AdmissionApplicationModel
 
-    applicant_id: typing.Optional[IDType] = strawberry.field(
+    # All fields now use centralized permission system - no more repetitive permission_classes!
+    applicant_id: typing.Optional[IDType] = admission_field(
         default=None,
-        description="applicant reference",
-        permission_classes=[OnlyForAuthentized]
+        description="applicant reference"
     )
-    applied_date: typing.Optional[datetime.datetime] = strawberry.field(
+    applied_date: typing.Optional[datetime.datetime] = admission_field(
         default=None,
-        description="application date",
-        permission_classes=[OnlyForAuthentized]
+        description="application date"
     )
-    accepted: typing.Optional[bool] = strawberry.field(
+    accepted: typing.Optional[bool] = admission_field(
         default=None,
-        description="application accepted by study office",
-        permission_classes=[OnlyForAuthentized]
+        description="application accepted by study office"
     )
-    accepted_at: typing.Optional[datetime.datetime] = strawberry.field(
+    accepted_at: typing.Optional[datetime.datetime] = admission_field(
         default=None,
-        description="acceptance date",
-        permission_classes=[OnlyForAuthentized]
+        description="acceptance date"
     )
-    acceptedby_id: typing.Optional[IDType] = strawberry.field(
+    acceptedby_id: typing.Optional[IDType] = admission_field(
         default=None,
-        description="user who accepted application",
-        permission_classes=[OnlyForAuthentized]
+        description="user who accepted application"
     )
-    withdrawn: typing.Optional[bool] = strawberry.field(
+    withdrawn: typing.Optional[bool] = admission_field(
         default=None,
-        description="application withdrawn by applicant",
-        permission_classes=[OnlyForAuthentized]
+        description="application withdrawn by applicant"
     )
-    withdrawn_at: typing.Optional[datetime.datetime] = strawberry.field(
+    withdrawn_at: typing.Optional[datetime.datetime] = admission_field(
         default=None,
-        description="withdrawal date",
-        permission_classes=[OnlyForAuthentized]
+        description="withdrawal date"
     )
-    withdrawnby_id: typing.Optional[IDType] = strawberry.field(
+    withdrawnby_id: typing.Optional[IDType] = admission_field(
         default=None,
-        description="user who withdrew application",
-        permission_classes=[OnlyForAuthentized]
+        description="user who withdrew application"
     )
-    process_id: typing.Optional[IDType] = strawberry.field(
+    process_id: typing.Optional[IDType] = admission_field(
         default=None,
-        description="admission process reference",
-        permission_classes=[OnlyForAuthentized]
+        description="admission process reference"
     )
-    payment_id: typing.Optional[IDType] = strawberry.field(
+    payment_id: typing.Optional[IDType] = admission_field(
         default=None,
-        description="admission payment reference",
-        permission_classes=[OnlyForAuthentized]
+        description="admission payment reference"
     )
-    offer_id: typing.Optional[IDType] = strawberry.field(
+    offer_id: typing.Optional[IDType] = admission_field(
         default=None,
-        description="admission offer reference",
-        permission_classes=[OnlyForAuthentized]
+        description="admission offer reference"
     )
 
-    process: typing.Optional["AdmissionProcessGQLModel"] = strawberry.field(
+    process: typing.Optional["AdmissionProcessGQLModel"] = admission_field(
         description="related admission process",
-        permission_classes=[OnlyForAuthentized],
         resolver=ScalarResolver["AdmissionProcessGQLModel"](fkey_field_name="process_id")
     )
-    payment: typing.Optional["AdmissionPaymentGQLModel"] = strawberry.field(
+    payment: typing.Optional["AdmissionPaymentGQLModel"] = admission_field(
         description="related admission payment",
-        permission_classes=[OnlyForAuthentized],
         resolver=ScalarResolver["AdmissionPaymentGQLModel"](fkey_field_name="payment_id")
     )
-    offer: typing.Optional["AdmissionOfferGQLModel"] = strawberry.field(
+    offer: typing.Optional["AdmissionOfferGQLModel"] = admission_field(
         description="related admission offer",
-        permission_classes=[OnlyForAuthentized],
         resolver=ScalarResolver["AdmissionOfferGQLModel"](fkey_field_name="offer_id")
     )
-    @strawberry.field(
-        description="applicant details",
-        permission_classes=[OnlyForAuthentized]
-    )
-    async def applicant(self) -> typing.Optional["AdmissionApplicantGQLModel"]:
-        from .AdmissionApplicantGQLModel import AdmissionApplicantGQLModel
 
-        return None if self.applicant_id is None else AdmissionApplicantGQLModel(id=self.applicant_id)
+    applicant: typing.Optional["AdmissionApplicantGQLModel"] = admission_field(
+        description="applicant details",
+        resolver=ScalarResolver["AdmissionApplicantGQLModel"](fkey_field_name="applicant_id")
+    )
 
 
 @strawberry.type(description="Admission application queries")
 class AdmissionApplicationQuery:
     @strawberry.field(
         description="get admission application by id",
-        permission_classes=[OnlyForAuthentized],
+        permission_classes=ADMISSION_READ_PERMISSION
     )
     async def admission_application_by_id(
         self,
         info: strawberry.Info,
         id: IDType,
     ) -> typing.Optional[AdmissionApplicationGQLModel]:
-        from sqlalchemy import select
-        from src.DBDefinitions import AdmissionApplicantModel, AdmissionApplicationModel
-
         user = getUserFromInfo(info=info) or {}
         if is_admissions_admin(user):
             return await AdmissionApplicationGQLModel.load_with_loader(info=info, id=id)
@@ -147,28 +132,32 @@ class AdmissionApplicationQuery:
         if not user_id:
             return None
 
+        # Load the application using the loader directly
         loader = AdmissionApplicationGQLModel.getLoader(info=info)
-        stmt = (
-            select(AdmissionApplicationModel.id)
-            .join(
-                AdmissionApplicantModel,
-                AdmissionApplicantModel.id == AdmissionApplicationModel.applicant_id,
-            )
-            .where(
-                AdmissionApplicationModel.id == id,
-                AdmissionApplicantModel.applicant_user_id == user_id,
-            )
-        )
-        result = await loader.session.execute(stmt)
-        row_id = result.scalars().first()
-        if row_id is None:
+        _id = id if isinstance(id, IDType) else IDType(id)
+        db_row = await loader.load(_id)
+
+        if db_row is None:
             return None
-        db_row = await loader.load(row_id)
-        return None if db_row is None else AdmissionApplicationGQLModel.from_dataclass(db_row)
+
+        # Now check ownership through the applicant
+        applicant_loader = getLoadersFromInfo(info).AdmissionApplicantModel
+        applicant = await applicant_loader.load(db_row.applicant_id)
+        if applicant is None:
+            return None
+
+        # Compare as strings to handle any UUID type mismatches
+        db_applicant_user_id = str(applicant.applicant_user_id) if applicant.applicant_user_id else None
+        request_user_id = str(user_id)
+
+        if db_applicant_user_id != request_user_id:
+            return None
+
+        return AdmissionApplicationGQLModel.from_dataclass(db_row)
 
     @strawberry.field(
         description="page of admission applications",
-        permission_classes=[OnlyForAuthentized],
+        permission_classes=ADMISSION_READ_PERMISSION
     )
     async def admission_application_page(
         self,
@@ -205,8 +194,14 @@ class AdmissionApplicationQuery:
         if not user_id:
             return []
 
+        # Convert string user_id to UUID for proper comparison
+        try:
+            user_id_uuid = uuid_module.UUID(user_id) if isinstance(user_id, str) else user_id
+        except (ValueError, TypeError):
+            return []
+
         applicant_stmt = select(AdmissionApplicantModel.id).where(
-            AdmissionApplicantModel.applicant_user_id == user_id
+            AdmissionApplicantModel.applicant_user_id == user_id_uuid
         )
         result = await loader.session.execute(applicant_stmt)
         applicant_id = result.scalars().first()
@@ -263,6 +258,12 @@ class AdmissionApplicationSubmitGQLModel:
     offer_id: IDType
 
 
+@strawberry.input(description="Input model for deleting an admission application")
+class AdmissionApplicationDeleteGQLModel:
+    id: IDType
+    lastchange: datetime.datetime
+
+
 @strawberry.input(description="Input model for accepting an admission application")
 class AdmissionApplicationAcceptGQLModel:
     application_id: IDType
@@ -277,7 +278,7 @@ class AdmissionApplicationWithdrawGQLModel:
 class AdmissionApplicationMutation:
     @strawberry.field(
         description="Insert an admission application",
-        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission]
+        permission_classes=ADMISSION_USER_PERMISSION
     )
     async def admission_application_insert(
         self,
@@ -286,6 +287,92 @@ class AdmissionApplicationMutation:
     ) -> typing.Union[AdmissionApplicationGQLModel, InsertError[AdmissionApplicationGQLModel]]:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Insert
+
+        user = getUserFromInfo(info=info)
+        if not user:
+            return InsertError[AdmissionApplicationGQLModel](
+                msg="User not authenticated",
+                entity=application
+            )
+
+        # Auto-set the applicant_id to the current user if not provided
+        if application.applicant_id is None:
+            # Find or create applicant record for this user
+            loader = getLoadersFromInfo(info).AdmissionApplicantModel
+            from sqlalchemy import select
+            from src.DBDefinitions import AdmissionApplicantModel
+
+            applicant_stmt = select(AdmissionApplicantModel.id).where(
+                AdmissionApplicantModel.applicant_user_id == user["id"]
+            )
+            result = await loader.session.execute(applicant_stmt)
+            applicant_id = result.scalars().first()
+
+            if applicant_id is None:
+                # Get user info for auto-filling
+                firstname = user.get("name", "") or user.get("firstname", "")
+                lastname = user.get("surname", "") or user.get("lastname", "")
+                email = user.get("email", "")
+
+                # If missing critical info, try to fetch from gql_ug
+                if not firstname or not lastname or not email:
+                    from uoishelpers.resolvers import getUgClientFromInfo
+                    ug_client = getUgClientFromInfo(info)
+                    me_response = await ug_client(
+                        query="""
+                        query {
+                          me {
+                            id
+                            name
+                            surname
+                            email
+                          }
+                        }"""
+                    )
+                    me_data = (me_response or {}).get("data", {}).get("me", {}) or {}
+                    firstname = firstname or me_data.get("name", "")
+                    lastname = lastname or me_data.get("surname", "")
+                    email = email or me_data.get("email", "")
+
+                # Create new applicant record
+                from src.DBDefinitions import AdmissionApplicantModel
+                new_applicant = AdmissionApplicantModel(
+                    id=None,  # Will be auto-generated
+                    applicant_user_id=user["id"],
+                    firstname=firstname,
+                    lastname=lastname,
+                    email=email,
+                    street="",  # User can update this later
+                    house_number="",
+                    city="",
+                    phone_number="",
+                    databox_number="",
+                    createdby_id=user["id"],
+                    changedby_id=user["id"]
+                )
+                loader.session.add(new_applicant)
+                await loader.session.commit()
+                applicant_id = new_applicant.id
+
+            application.applicant_id = applicant_id
+        else:
+            # Verify user owns the specified applicant
+            if not is_admissions_admin(user):
+                loader = getLoadersFromInfo(info).AdmissionApplicantModel
+                from sqlalchemy import select
+                from src.DBDefinitions import AdmissionApplicantModel
+
+                applicant_stmt = select(AdmissionApplicantModel.applicant_user_id).where(
+                    AdmissionApplicantModel.id == application.applicant_id
+                )
+                result = await loader.session.execute(applicant_stmt)
+                applicant_user_id = result.scalars().first()
+
+                if applicant_user_id != user["id"]:
+                    return InsertError[AdmissionApplicationGQLModel](
+                        msg="You can only create applications for yourself",
+                        entity=application
+                    )
 
         normalize_datetime_field(application, "applied_date")
         try:
@@ -300,7 +387,7 @@ class AdmissionApplicationMutation:
 
     @strawberry.field(
         description="Update an admission application",
-        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission]
+        permission_classes=ADMISSION_USER_PERMISSION
     )
     async def admission_application_update(
         self,
@@ -309,6 +396,34 @@ class AdmissionApplicationMutation:
     ) -> typing.Union[AdmissionApplicationGQLModel, UpdateError[AdmissionApplicationGQLModel]]:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Update
+
+        user = getUserFromInfo(info=info)
+        if not user:
+            return UpdateError[AdmissionApplicationGQLModel](
+                msg="User not authenticated",
+                entity=application
+            )
+
+        # Check ownership unless user is admin
+        if not is_admissions_admin(user):
+            loader = getLoadersFromInfo(info).AdmissionApplicationModel
+            from sqlalchemy import select
+            from src.DBDefinitions import AdmissionApplicationModel, AdmissionApplicantModel
+
+            # Check if user owns the application through the applicant
+            ownership_stmt = select(AdmissionApplicantModel.applicant_user_id).join(
+                AdmissionApplicationModel,
+                AdmissionApplicationModel.applicant_id == AdmissionApplicantModel.id
+            ).where(AdmissionApplicationModel.id == application.id)
+
+            result = await loader.session.execute(ownership_stmt)
+            owner_user_id = result.scalars().first()
+
+            if owner_user_id != user["id"]:
+                return UpdateError[AdmissionApplicationGQLModel](
+                    msg="You can only update your own applications",
+                    entity=application
+                )
 
         normalize_datetime_field(application, "applied_date")
         try:
@@ -323,7 +438,7 @@ class AdmissionApplicationMutation:
 
     @strawberry.field(
         description="Submit admission application for an offer",
-        permission_classes=[OnlyForAuthentized]
+        permission_classes=ADMISSION_READ_PERMISSION
     )
     async def admission_application_submit(
         self,
@@ -334,7 +449,7 @@ class AdmissionApplicationMutation:
 
     @strawberry.field(
         description="Accept admission application by study office",
-        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission]
+        permission_classes=ADMISSION_ADMIN_PERMISSION
     )
     async def admission_application_accept(
         self,
@@ -345,7 +460,7 @@ class AdmissionApplicationMutation:
 
     @strawberry.field(
         description="Withdraw admission application by applicant",
-        permission_classes=[OnlyForAuthentized]
+        permission_classes=ADMISSION_READ_PERMISSION
     )
     async def admission_application_withdraw(
         self,
@@ -353,3 +468,38 @@ class AdmissionApplicationMutation:
         withdrawal: AdmissionApplicationWithdrawGQLModel
     ) -> typing.Union[AdmissionApplicationGQLModel, UpdateError[AdmissionApplicationGQLModel]]:
         return await withdraw_application(info, withdrawal)
+
+    @strawberry.field(
+        description="Delete admission application (admin only)",
+        permission_classes=ADMISSION_ADMIN_PERMISSION
+    )
+    async def admission_application_delete(
+        self,
+        info: strawberry.Info,
+        application: AdmissionApplicationDeleteGQLModel
+    ) -> typing.Union[AdmissionApplicationGQLModel, UpdateError[AdmissionApplicationGQLModel]]:
+        from uoishelpers.resolvers import Delete, DeleteError
+        from .validation import build_error
+        from . import error_codes as codes
+
+        # Load the entity before deletion to get complete data for result
+        loader = getLoadersFromInfo(info).AdmissionApplicationModel
+        db_row = await loader.load(application.id)
+        if db_row is None:
+            return build_error(
+                DeleteError[AdmissionApplicationGQLModel],
+                msg="Application not found",
+                code=codes.ERR_NOT_FOUND,
+                location="admissionApplicationDelete",
+                input_obj=application,
+            )
+
+        # Perform the deletion
+        result = await Delete[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
+
+        # Check if deletion failed
+        if isinstance(result, DeleteError):
+            return result
+
+        # Return the deleted entity data as result (convert from db_row)
+        return AdmissionApplicationGQLModel.from_dataclass(db_row)

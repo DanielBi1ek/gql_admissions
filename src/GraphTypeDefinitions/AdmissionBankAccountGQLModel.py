@@ -3,10 +3,12 @@ import datetime
 import strawberry
 
 from uoishelpers.resolvers import getLoadersFromInfo, createInputs2
-from uoishelpers.gqlpermissions import OnlyForAuthentized
 
 from .BaseGQLModel import BaseGQLModel, IDType
-from .admission_permissions import AdmissionsAdminPermission
+from .admission_permissions import (
+    ADMISSION_READ_PERMISSION, ADMISSION_ADMIN_PERMISSION,
+    admission_field
+)
 from .db_errors import integrity_error_to_error
 from .pagination import resolve_page
 from .validation import build_error, validate_digits
@@ -29,25 +31,22 @@ class AdmissionBankAccountGQLModel(BaseGQLModel):
     def getLoader(cls, info: strawberry.types.Info):
         return getLoadersFromInfo(info).AdmissionBankAccountModel
 
-    account_prefix: typing.Optional[str] = strawberry.field(
+    # Using centralized permission system
+    account_prefix: typing.Optional[str] = admission_field(
         default=None,
-        description="bank account prefix",
-        permission_classes=[OnlyForAuthentized]
+        description="bank account prefix"
     )
-    account_number: typing.Optional[str] = strawberry.field(
+    account_number: typing.Optional[str] = admission_field(
         default=None,
-        description="bank account number",
-        permission_classes=[OnlyForAuthentized]
+        description="bank account number"
     )
-    bank_code: typing.Optional[str] = strawberry.field(
+    bank_code: typing.Optional[str] = admission_field(
         default=None,
-        description="bank code",
-        permission_classes=[OnlyForAuthentized]
+        description="bank code"
     )
-    description: typing.Optional[str] = strawberry.field(
+    description: typing.Optional[str] = admission_field(
         default=None,
-        description="bank account description",
-        permission_classes=[OnlyForAuthentized]
+        description="bank account description"
     )
 
 
@@ -55,13 +54,13 @@ class AdmissionBankAccountGQLModel(BaseGQLModel):
 class AdmissionBankAccountQuery:
     admission_bank_account_by_id: typing.Optional[AdmissionBankAccountGQLModel] = strawberry.field(
         description="get admission bank account by id",
-        permission_classes=[OnlyForAuthentized],
+        permission_classes=ADMISSION_READ_PERMISSION,
         resolver=AdmissionBankAccountGQLModel.load_with_loader
     )
 
     @strawberry.field(
         description="page of admission bank accounts",
-        permission_classes=[OnlyForAuthentized],
+        permission_classes=ADMISSION_READ_PERMISSION
     )
     async def admission_bank_account_page(
         self,
@@ -113,205 +112,100 @@ class AdmissionBankAccountDeleteGQLModel:
     lastchange: datetime.datetime
 
 
-@strawberry.input(description="Input model for creating admission bank account with validation")
-class AdmissionBankAccountCreateGQLModel:
-    account_prefix: str
-    account_number: str
-    bank_code: str
-    description: typing.Optional[str] = None
-
-
 @strawberry.type(description="Admission bank account mutations")
 class AdmissionBankAccountMutation:
-    @strawberry.mutation(
-        description="Create admission bank account with validation",
-        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission]
-    )
-    async def admission_bank_account_create(
-        self,
-        info: strawberry.Info,
-        account: AdmissionBankAccountCreateGQLModel
-    ) -> typing.Union[AdmissionBankAccountGQLModel, InsertError[AdmissionBankAccountGQLModel]]:
-        from sqlalchemy.exc import IntegrityError
-        from uoishelpers.resolvers import Insert
-
-        error = validate_digits(
-            account.account_prefix,
-            error_cls=InsertError[AdmissionBankAccountGQLModel],
-            location="admissionBankAccountCreate",
-            input_obj=account,
-            msg="Account prefix must be numeric",
-            code=codes.ERR_ACCOUNT_PREFIX_NUMERIC,
-        )
-        if error is not None:
-            return error
-        error = validate_digits(
-            account.account_number,
-            error_cls=InsertError[AdmissionBankAccountGQLModel],
-            location="admissionBankAccountCreate",
-            input_obj=account,
-            msg="Account number must be numeric",
-            code=codes.ERR_ACCOUNT_NUMBER_NUMERIC,
-        )
-        if error is not None:
-            return error
-        error = validate_digits(
-            account.bank_code,
-            error_cls=InsertError[AdmissionBankAccountGQLModel],
-            location="admissionBankAccountCreate",
-            input_obj=account,
-            msg="Bank code must be numeric",
-            code=codes.ERR_BANK_CODE_NUMERIC,
-        )
-        if error is not None:
-            return error
-
-        entity = AdmissionBankAccountInsertGQLModel(
-            account_prefix=account.account_prefix,
-            account_number=account.account_number,
-            bank_code=account.bank_code,
-            description=account.description
-        )
-        try:
-            return await Insert[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=entity)
-        except IntegrityError as exc:
-            return integrity_error_to_error(
-                exc,
-                InsertError[AdmissionBankAccountGQLModel],
-                "admissionBankAccountCreate",
-                account
-            )
-
-    @strawberry.mutation(
+    @strawberry.field(
         description="Insert admission bank account",
-        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission]
+        permission_classes=ADMISSION_ADMIN_PERMISSION
     )
     async def admission_bank_account_insert(
         self,
         info: strawberry.Info,
-        account: AdmissionBankAccountInsertGQLModel
+        bank_account: AdmissionBankAccountInsertGQLModel,
     ) -> typing.Union[AdmissionBankAccountGQLModel, InsertError[AdmissionBankAccountGQLModel]]:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Insert
 
-        if account.account_prefix is None or account.account_number is None or account.bank_code is None:
+        # Validate required fields and format
+        if bank_account.account_number is None or bank_account.bank_code is None:
             return build_error(
                 InsertError[AdmissionBankAccountGQLModel],
-                msg="Missing required value",
+                msg="Account number and bank code are required",
                 code=codes.ERR_MISSING_REQUIRED,
                 location="admissionBankAccountInsert",
-                input_obj=account,
+                input_obj=bank_account,
             )
+
+        # Validate digits format
         error = validate_digits(
-            account.account_prefix,
+            bank_account.account_number,
             error_cls=InsertError[AdmissionBankAccountGQLModel],
             location="admissionBankAccountInsert",
-            input_obj=account,
-            msg="Account prefix must be numeric",
-            code=codes.ERR_ACCOUNT_PREFIX_NUMERIC,
-        )
-        if error is not None:
-            return error
-        error = validate_digits(
-            account.account_number,
-            error_cls=InsertError[AdmissionBankAccountGQLModel],
-            location="admissionBankAccountInsert",
-            input_obj=account,
-            msg="Account number must be numeric",
+            input_obj=bank_account,
+            msg="Account number must contain digits only",
             code=codes.ERR_ACCOUNT_NUMBER_NUMERIC,
         )
         if error is not None:
             return error
+
         error = validate_digits(
-            account.bank_code,
+            bank_account.bank_code,
             error_cls=InsertError[AdmissionBankAccountGQLModel],
             location="admissionBankAccountInsert",
-            input_obj=account,
-            msg="Bank code must be numeric",
+            input_obj=bank_account,
+            msg="Bank code must contain digits only",
             code=codes.ERR_BANK_CODE_NUMERIC,
         )
         if error is not None:
             return error
 
         try:
-            return await Insert[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=account)
+            return await Insert[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=bank_account)
         except IntegrityError as exc:
+            loader = getLoadersFromInfo(info).AdmissionBankAccountModel
+            await loader.session.rollback()
+            session = info.context.get("_session")
+            if session is not loader.session:
+                await session.rollback()
+            info.context["_transaction_failed"] = True
             return integrity_error_to_error(
                 exc,
                 InsertError[AdmissionBankAccountGQLModel],
                 "admissionBankAccountInsert",
-                account
+                bank_account
             )
 
-    @strawberry.mutation(
+    @strawberry.field(
         description="Update admission bank account",
-        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission],
-        extensions=[LoadDataExtension[UpdateError, AdmissionBankAccountGQLModel]()]
+        permission_classes=ADMISSION_ADMIN_PERMISSION
     )
     async def admission_bank_account_update(
         self,
         info: strawberry.Info,
-        account: AdmissionBankAccountUpdateGQLModel,
-        db_row: typing.Any
+        bank_account: AdmissionBankAccountUpdateGQLModel,
     ) -> typing.Union[AdmissionBankAccountGQLModel, UpdateError[AdmissionBankAccountGQLModel]]:
         from sqlalchemy.exc import IntegrityError
         from uoishelpers.resolvers import Update
 
-        if account.account_prefix is not strawberry.UNSET:
-            error = validate_digits(
-                account.account_prefix,
-                error_cls=UpdateError[AdmissionBankAccountGQLModel],
-                location="admissionBankAccountUpdate",
-                input_obj=account,
-                msg="Account prefix must be numeric",
-                code=codes.ERR_ACCOUNT_PREFIX_NUMERIC,
-            )
-            if error is not None:
-                return error
-        if account.account_number is not strawberry.UNSET:
-            error = validate_digits(
-                account.account_number,
-                error_cls=UpdateError[AdmissionBankAccountGQLModel],
-                location="admissionBankAccountUpdate",
-                input_obj=account,
-                msg="Account number must be numeric",
-                code=codes.ERR_ACCOUNT_NUMBER_NUMERIC,
-            )
-            if error is not None:
-                return error
-        if account.bank_code is not strawberry.UNSET:
-            error = validate_digits(
-                account.bank_code,
-                error_cls=UpdateError[AdmissionBankAccountGQLModel],
-                location="admissionBankAccountUpdate",
-                input_obj=account,
-                msg="Bank code must be numeric",
-                code=codes.ERR_BANK_CODE_NUMERIC,
-            )
-            if error is not None:
-                return error
-
         try:
-            return await Update[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=account)
+            return await Update[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=bank_account)
         except IntegrityError as exc:
             return integrity_error_to_error(
                 exc,
                 UpdateError[AdmissionBankAccountGQLModel],
                 "admissionBankAccountUpdate",
-                account
+                bank_account
             )
 
-    @strawberry.mutation(
+    @strawberry.field(
         description="Delete admission bank account",
-        permission_classes=[OnlyForAuthentized, AdmissionsAdminPermission],
-        extensions=[LoadDataExtension[DeleteError, AdmissionBankAccountGQLModel]()]
+        permission_classes=ADMISSION_ADMIN_PERMISSION
     )
     async def admission_bank_account_delete(
         self,
         info: strawberry.Info,
-        account: AdmissionBankAccountDeleteGQLModel,
-        db_row: typing.Any
-    ) -> typing.Optional[DeleteError[AdmissionBankAccountGQLModel]]:
+        bank_account: AdmissionBankAccountDeleteGQLModel,
+    ) -> typing.Union[AdmissionBankAccountGQLModel, DeleteError[AdmissionBankAccountGQLModel]]:
         from uoishelpers.resolvers import Delete
 
-        return await Delete[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=account)
+        return await Delete[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=bank_account)

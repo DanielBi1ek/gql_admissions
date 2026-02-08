@@ -101,6 +101,21 @@ async def RunOnceAndReturnSessionMaker():
 # endregion
 
 # region FastAPI setup
+class ProfilingCounter:
+    def __init__(self):
+        self._data = {"total": {"count": 0, "sum": 0, "values": []}}
+
+    def count(self, key, duration):
+        if key not in self._data:
+            self._data[key] = {"count": 0, "sum": 0, "values": []}
+        self._data[key]["count"] += 1
+        self._data[key]["sum"] += duration
+        self._data[key]["values"].append(duration)
+
+    def result(self):
+        return self._data
+
+
 async def get_context(request: Request):
     asyncSessionMaker = await RunOnceAndReturnSessionMaker()
 
@@ -109,6 +124,7 @@ async def get_context(request: Request):
 
     result = {**context}
     result["request"] = request
+    result["ProfilingExtension.counter"] = ProfilingCounter()
     return result
 
 

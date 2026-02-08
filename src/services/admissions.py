@@ -2,12 +2,18 @@ from __future__ import annotations
 
 import datetime
 import typing
+import uuid
 
 from uoishelpers.resolvers import Insert, InsertError, Update, UpdateError, getLoadersFromInfo, getUserFromInfo
 
 from src.GraphTypeDefinitions import error_codes as codes
 from src.GraphTypeDefinitions.db_errors import integrity_error_to_error
 from src.GraphTypeDefinitions.validation import build_error, normalize_datetime_field, to_naive_datetime
+from src.GraphTypeDefinitions.admission_permissions import ensure_rbac_object_id
+
+
+def _ensure_uuid(value):
+    return value if isinstance(value, uuid.UUID) else uuid.UUID(str(value))
 
 
 async def submit_application(
@@ -35,10 +41,11 @@ async def submit_application(
             location="admissionApplicationSubmit",
             input_obj=submission,
         )
+    user_uuid = _ensure_uuid(user_id)
 
     applicant_loader = getLoadersFromInfo(info).AdmissionApplicantModel
     stmt = select(AdmissionApplicantModel.id).where(
-        AdmissionApplicantModel.applicant_user_id == user_id
+        AdmissionApplicantModel.applicant_user_id == user_uuid
     )
     result = await applicant_loader.session.execute(stmt)
     applicant_id = result.scalars().first()
@@ -124,6 +131,9 @@ async def submit_application(
                 paid_at=None,
                 bank_statement_id=None
             )
+            # Ensure RBAC object ID is populated for proper ownership tracking
+            await ensure_rbac_object_id(payment, user_uuid)
+
             try:
                 payment_row = await Insert[AdmissionPaymentGQLModel].DoItSafeWay(info=info, entity=payment)
             except Exception as exc:
@@ -150,6 +160,10 @@ async def submit_application(
             application.withdrawn = False
             application.withdrawn_at = None
             application.withdrawnby_id = None
+
+            # Ensure RBAC object ID is populated for proper ownership tracking
+            await ensure_rbac_object_id(application, user_uuid)
+
             normalize_datetime_field(application, "applied_date")
             try:
                 app_row = await Insert[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=application)
@@ -194,6 +208,7 @@ async def accept_application(
             location="admissionApplicationAccept",
             input_obj=acceptance,
         )
+    user_uuid = _ensure_uuid(user_id)
 
     app_loader = getLoadersFromInfo(info).AdmissionApplicationModel
     stmt = select(AdmissionApplicationModel).where(AdmissionApplicationModel.id == acceptance.application_id)
@@ -237,6 +252,9 @@ async def accept_application(
             process_id = existing_process_id
             if process_id is None:
                 process = AdmissionProcessInsertGQLModel(payment_id=db_row.payment_id)
+                # Ensure RBAC object ID is populated for proper ownership tracking
+                await ensure_rbac_object_id(process, user_uuid)
+
                 process_row = await Insert[AdmissionProcessGQLModel].DoItSafeWay(info=info, entity=process)
                 if isinstance(process_row, InsertError):
                     raise _AbortTransaction(
@@ -255,7 +273,7 @@ async def accept_application(
                 process_id=process_id,
                 accepted=True,
                 accepted_at=datetime.datetime.utcnow(),
-                acceptedby_id=user_id,
+                acceptedby_id=user_uuid,
             )
             updated = await Update[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=update)
             if isinstance(updated, UpdateError):
@@ -286,6 +304,7 @@ async def withdraw_application(
             location="admissionApplicationWithdraw",
             input_obj=withdrawal,
         )
+    user_uuid = _ensure_uuid(user_id)
 
     app_loader = getLoadersFromInfo(info).AdmissionApplicationModel
     stmt = select(AdmissionApplicationModel).where(AdmissionApplicationModel.id == withdrawal.application_id)
@@ -303,7 +322,7 @@ async def withdraw_application(
     applicant_loader = getLoadersFromInfo(info).AdmissionApplicantModel
     stmt = select(AdmissionApplicantModel.id).where(
         AdmissionApplicantModel.id == db_row.applicant_id,
-        AdmissionApplicantModel.applicant_user_id == user_id
+        AdmissionApplicantModel.applicant_user_id == user_uuid
     )
     applicant = await applicant_loader.session.execute(stmt)
     if applicant.scalars().first() is None:
@@ -320,6 +339,6 @@ async def withdraw_application(
         lastchange=db_row.lastchange,
         withdrawn=True,
         withdrawn_at=datetime.datetime.utcnow(),
-        withdrawnby_id=user_id,
+        withdrawnby_id=user_uuid,
     )
     return await Update[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=update)

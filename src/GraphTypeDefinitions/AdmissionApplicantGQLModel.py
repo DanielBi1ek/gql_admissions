@@ -1,6 +1,14 @@
 import typing
 import datetime
 import strawberry
+import uuid as uuid_module
+
+
+def _ensure_uuid(value):
+    if value is None:
+        return None
+    return value if isinstance(value, uuid_module.UUID) else uuid_module.UUID(str(value))
+
 
 from uoishelpers.resolvers import getLoadersFromInfo, createInputs2, getUserFromInfo
 from uoishelpers.gqlpermissions import OnlyForAuthentized
@@ -91,8 +99,6 @@ class AdmissionApplicantQuery:
         info: strawberry.Info,
         id: IDType
     ) -> typing.Optional[AdmissionApplicantGQLModel]:
-        from sqlalchemy import select
-
         user = getUserFromInfo(info=info) or {}
         if is_admissions_admin(user):
             return await AdmissionApplicantGQLModel.load_with_loader(info=info, id=id)
@@ -101,17 +107,23 @@ class AdmissionApplicantQuery:
         if not user_id:
             return None
 
+        # Load the applicant using the loader directly to ensure we get all fields
         loader = AdmissionApplicantGQLModel.getLoader(info=info)
-        stmt = select(loader.dbModel.id).where(
-            loader.dbModel.id == id,
-            loader.dbModel.applicant_user_id == user_id
-        )
-        result = await loader.session.execute(stmt)
-        row_id = result.scalars().first()
-        if row_id is None:
+        _id = id if isinstance(id, IDType) else IDType(id)
+        db_row = await loader.load(_id)
+
+        if db_row is None:
             return None
-        db_row = await loader.load(row_id)
-        return None if db_row is None else AdmissionApplicantGQLModel.from_dataclass(db_row)
+
+        # Check if this applicant belongs to the requesting user
+        # Compare as strings to handle any UUID type mismatches
+        db_applicant_user_id = str(db_row.applicant_user_id) if db_row.applicant_user_id else None
+        request_user_id = str(user_id)
+
+        if db_applicant_user_id != request_user_id:
+            return None
+
+        return AdmissionApplicantGQLModel.from_dataclass(db_row)
 
     @strawberry.field(
         description="page of admission applicants",
@@ -148,8 +160,14 @@ class AdmissionApplicantQuery:
         if not user_id:
             return []
 
+        # Convert string user_id to UUID for proper comparison
+        try:
+            user_id_uuid = uuid_module.UUID(user_id) if isinstance(user_id, str) else user_id
+        except (ValueError, TypeError):
+            return []
+
         loader = AdmissionApplicantGQLModel.getLoader(info=info)
-        stmt = select(loader.dbModel).where(loader.dbModel.applicant_user_id == user_id)
+        stmt = select(loader.dbModel).where(loader.dbModel.applicant_user_id == user_id_uuid)
         result = await loader.session.execute(stmt)
         db_row = result.scalars().first()
         if db_row is None:
@@ -230,6 +248,7 @@ class AdmissionApplicantMutation:
         user_id = user.get("id")
         firstname = user.get("name") or user.get("firstname")
         lastname = user.get("surname") or user.get("lastname")
+        email = user.get("email")
         if not user_id:
             return build_error(
                 InsertError[AdmissionApplicantGQLModel],
@@ -238,7 +257,7 @@ class AdmissionApplicantMutation:
                 location="admissionApplicantInit",
                 input_obj=applicant,
             )
-        if not firstname or not lastname:
+        if not firstname or not lastname or not email:
             ug_client = getUgClientFromInfo(info)
             me_response = await ug_client(
                 query="""
@@ -247,12 +266,14 @@ class AdmissionApplicantMutation:
                     id
                     name
                     surname
+                    email
                   }
                 }"""
             )
             me_data = (me_response or {}).get("data", {}).get("me", {}) or {}
             firstname = firstname or me_data.get("name")
             lastname = lastname or me_data.get("surname")
+            email = email or me_data.get("email")
         if not firstname or not lastname:
             return build_error(
                 InsertError[AdmissionApplicantGQLModel],
@@ -262,9 +283,11 @@ class AdmissionApplicantMutation:
                 input_obj=applicant,
             )
 
+        user_uuid = _ensure_uuid(user_id)
+
         loader = AdmissionApplicantGQLModel.getLoader(info=info)
         stmt = select(AdmissionApplicantModel.id).where(
-            AdmissionApplicantModel.applicant_user_id == user_id
+            AdmissionApplicantModel.applicant_user_id == user_uuid
         )
         result = await loader.session.execute(stmt)
         existing_id = result.scalars().first()
@@ -278,16 +301,21 @@ class AdmissionApplicantMutation:
             )
 
         applicant_data = AdmissionApplicantInsertGQLModel(
-            applicant_user_id=user_id,
+            applicant_user_id=user_uuid,
             firstname=firstname,
             lastname=lastname,
             street=applicant.street,
             house_number=applicant.house_number,
             city=applicant.city,
             phone_number=applicant.phone_number,
-            email=applicant.email,
+            email=email or applicant.email,  # Use user's email if available, otherwise use provided email
             databox_number=applicant.databox_number,
         )
+
+        # Ensure RBAC object ID is populated for proper ownership tracking
+        from src.GraphTypeDefinitions.admission_permissions import ensure_rbac_object_id
+        await ensure_rbac_object_id(applicant_data, user_uuid)
+
         try:
             return await Insert[AdmissionApplicantGQLModel].DoItSafeWay(info=info, entity=applicant_data)
         except IntegrityError as exc:
@@ -338,6 +366,12 @@ class AdmissionApplicantMutation:
                 location="admissionApplicantInsert",
                 input_obj=applicant,
             )
+
+        # Ensure RBAC object ID is populated for proper ownership tracking
+        user = getUserFromInfo(info=info) or {}
+        user_id = user.get("id")
+        from src.GraphTypeDefinitions.admission_permissions import ensure_rbac_object_id
+        await ensure_rbac_object_id(applicant, user_id)
 
         try:
             return await Insert[AdmissionApplicantGQLModel].DoItSafeWay(info=info, entity=applicant)
