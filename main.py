@@ -4,7 +4,7 @@ import asyncio
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request, Response
+from fastapi import BackgroundTasks, FastAPI, Request, Response
 from fastapi.responses import JSONResponse, FileResponse
 from strawberry.fastapi import GraphQLRouter
 
@@ -116,15 +116,22 @@ class ProfilingCounter:
         return self._data
 
 
-async def get_context(request: Request):
+async def get_context(request: Request, background_tasks: BackgroundTasks):
     asyncSessionMaker = await RunOnceAndReturnSessionMaker()
+    session = asyncSessionMaker()
 
     from src.Dataloaders import createLoadersContext
-    context = createLoadersContext(asyncSessionMaker)
+    context = createLoadersContext(session)
 
-    result = {**context}
-    result["request"] = request
-    result["ProfilingExtension.counter"] = ProfilingCounter()
+    # Ensure session is always closed even when SessionCommitExtension is not active.
+    background_tasks.add_task(session.close)
+
+    result = {
+        **context,
+        "request": request,
+        "session": session,
+        "ProfilingExtension.counter": ProfilingCounter(),
+    }
     return result
 
 
@@ -154,17 +161,17 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-graphql_app = GraphQLRouter(
-    schema,
-    context_getter=get_context
-)
-
 from uoishelpers.schema import SessionCommitExtensionFactory
 from src.Dataloaders import createLoadersContext
 
 schema.extensions.append(
     SessionCommitExtensionFactory(session_maker_factory=RunOnceAndReturnSessionMaker,
                                   loaders_factory=createLoadersContext)
+)
+
+graphql_app = GraphQLRouter(
+    schema,
+    context_getter=get_context
 )
 
 app.include_router(graphql_app, prefix="/gql")

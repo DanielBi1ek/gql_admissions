@@ -159,14 +159,42 @@ class AdmissionBankAccountMutation:
         if error is not None:
             return error
 
+        # Validate uniqueness explicitly to avoid failing at transaction commit time.
+        loader = getLoadersFromInfo(info).AdmissionBankAccountModel
+        existing_rows = await loader.page(
+            skip=0,
+            limit=1,
+            extendedfilter={
+                "account_prefix": bank_account.account_prefix,
+                "account_number": bank_account.account_number,
+                "bank_code": bank_account.bank_code,
+            },
+        )
+        if existing_rows:
+            return build_error(
+                InsertError[AdmissionBankAccountGQLModel],
+                msg="Bank account already exists",
+                code=codes.ERR_BANK_ACCOUNT_EXISTS,
+                location="admissionBankAccountInsert",
+                input_obj=bank_account,
+            )
+
         try:
-            return await Insert[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=bank_account)
+            result = await Insert[AdmissionBankAccountGQLModel].DoItSafeWay(info=info, entity=bank_account)
+            if isinstance(result, InsertError):
+                message = (result.msg or "").lower()
+                if "integrityerror" in message or "constraint failed" in message:
+                    await loader.session.rollback()
+                    context_session = info.context.get("_session") or info.context.get("session")
+                    if context_session is not None and context_session is not loader.session:
+                        await context_session.rollback()
+                    info.context["_transaction_failed"] = True
+            return result
         except IntegrityError as exc:
-            loader = getLoadersFromInfo(info).AdmissionBankAccountModel
             await loader.session.rollback()
-            session = info.context.get("_session")
-            if session is not loader.session:
-                await session.rollback()
+            context_session = info.context.get("_session") or info.context.get("session")
+            if context_session is not None and context_session is not loader.session:
+                await context_session.rollback()
             info.context["_transaction_failed"] = True
             return integrity_error_to_error(
                 exc,
