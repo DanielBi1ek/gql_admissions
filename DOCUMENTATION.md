@@ -28,11 +28,16 @@ redirect unauthenticated requests to `/oauth/login2` or `/oauth/login3`.
 
 ## 3) Runtime Configuration
 
-Configuration is in `environment.txt` (used for local uvicorn):
+Environment is loaded from `environment.txt` when running `uvicorn main:app --env-file environment.txt --port 8001`. Key flags:
 - `DEMO` / `DEMODATA`: enable demo data loading.
 - `GQLUG_ENDPOINT_URL`: federation link to `gql_ug`.
 - `ADMISSIONS_ADMIN_GROUP_ID` and `ADMISSIONS_ADMIN_ROLETYPE_ID`: IDs that
   define admissions admin role.
+- `GQL_ENDPOINT_URL`/`GQLUG_ENDPOINT_URL`: URLs that tests hit when they import `main` or call live federation.
+
+Developer/tests context:
+- `tests/shared.py` provisions in-memory SQLite sessions and now automatically commits/rolls back around every `execute_gql` call. If a mutation raises an integrity error, the resolver sets `context["_transaction_failed"]` so the harness rolls the session back and keeps subsequent tests stable.
+- GraphQL tests expect the seeding helper `prepare_demodata` to run before each module. It feeds `systemdata.json` through `uoishelpers.feeders.ImportModels`, so keep that file aligned with the current DB schema.
 
 ## 4) Data Model (DBDefinitions)
 
@@ -108,8 +113,9 @@ Pagination notes:
 ### Bank accounts and payment templates (admin)
 - `admissionBankAccountCreate`
   - Validates numeric prefix/number/bank_code.
-- `admissionBankAccountInsert`, `admissionBankAccountUpdate`,
-  `admissionBankAccountDelete`
+- `admissionBankAccountInsert`/`admissionBankAccountUpdate`/`Delete`
+  - Numeric validation is enforced via `validate_digits`.
+  - Duplicate prefix/number/bank_code combinations now surface as `AdmissionBankAccountGQLModelInsertError` and leave the surrounding test session in a valid state (the mutation rolls back its loader session and flags the transaction for the harness).
 - `admissionPaymentInfoCreate`
   - Validates numeric required_amount and existing bank_account_id.
 - `admissionPaymentInfoInsert`, `admissionPaymentInfoUpdate`,
@@ -153,6 +159,20 @@ Rules:
   - `admissionApplicantUpdate` / `admissionApplicantDelete`
   - `admissionApplicationWithdraw`
   - application visibility in queries.
+
+**Permission classes implemented in** `src/GraphTypeDefinitions/admission_permissions.py`:
+- `ADMISSION_READ_PERMISSION = [OnlyForAuthentized]` protects every field/page query.
+- `ADMISSION_ADMIN_PERMISSION = [OnlyForAuthentized, AdmissionsAdminPermission]` is wired into admin mutations via `admission_admin_required` and `admission_field(permission_level="admin")`.
+- `ADMISSION_USER_PERMISSION = [OnlyForAuthentized, AdmissionsUserPermission]` gates applicant-facing mutations such as `admissionApplicantInit`.
+- `ADMISSION_OWNERSHIP_PERMISSION = [OnlyForAuthentized, AdmissionsOwnershipPermission]` is available for “owner or admin” flows when a resolver needs to double-check the current user ID.
+
+**Admin detection** is name-based: `AdmissionsAdminPermission` calls `is_admissions_admin`, which treats a role as administrative when its `roletype.name` (lowercased) is in `{ "admin", "administrator", "administrátor", "rektor", "prorektor", "admission_admin", "study_office", "admission_officer" }`. The previous `ADMISSIONS_ADMIN_GROUP_ID` / `ADMISSIONS_ADMIN_ROLETYPE_ID` environment variables are still available for other layers, but the actual GraphQL permission check uses the role-name whitelist above.
+
+**Declarative helpers**:
+- `admission_field()` places the right permission class on a Strawberry field based on `permission_level` so contributors don’t forget to restrict access.
+- Decorators (`admission_admin_required`, `admission_user_required`, etc.) wrap resolvers with the same centralized rules.
+
+This means RBAC is enforced consistently at the schema layer: every resolver/field either uses the helpers or manually specifies one of the permission lists defined here.
 
 ## 8) Admission Lifecycle (Functional Flow)
 
@@ -221,6 +241,10 @@ Metrics:
 
 ## 13) Notes
 
+- Tests currently **do not fully pass**. Known failures (2026‑02‑08):
+  - `tests/test_admission_business_logic.py::TestBankAccountValidation::test_bank_account_unique_constraint` still reports `PendingRollbackError` after the duplicate insert, meaning an additional rollback is needed in the test harness.
+  - Several `tests/test_gt_definitions.py::*Page` cases fail with "Page query returned empty" whenever seeded data isn’t visible to the test session. Until seeding/visibility is fixed, expect these to fail.
+  - Deprecation warnings from `datetime.utcnow()` and `strawberry.extensions.runner` are still outstanding.
 - Application delete is not supported; withdraw is the official action.
 - Some admin-only mutations return `null` on successful delete (by design).
 - Schema is created on startup (no migrations). For production, move to a
