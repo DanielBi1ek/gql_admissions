@@ -11,6 +11,10 @@ os.environ.setdefault("DEMO", "False")
 os.environ.setdefault("GQLUG_ENDPOINT_URL", "http://localhost:33001/api/ug")
 
 
+def is_federation_mode() -> bool:
+    return os.environ.get("TEST_TARGET", "").strip().lower() == "federation"
+
+
 def _ensure_uuid(value):
     if value is None or value is uuid.UUID:
         return value
@@ -66,11 +70,15 @@ async def drain_session_cleanups():
 
 
 async def prepare_in_memory_sqllite():
+    if is_federation_mode():
+        return None
+
     from sqlalchemy.ext.asyncio import create_async_engine
     from sqlalchemy.ext.asyncio import AsyncSession
     from sqlalchemy.orm import sessionmaker
 
     asyncEngine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    register_session_cleanup(asyncEngine.dispose)
     async with asyncEngine.begin() as conn:
         await conn.run_sync(BaseModel.metadata.create_all)
 
@@ -130,6 +138,9 @@ def get_demodata():
 
 
 async def prepare_demodata(async_session_maker):
+    if is_federation_mode():
+        return
+
     data = get_demodata()
 
     from uoishelpers.feeders import ImportModels
@@ -212,6 +223,9 @@ class ProfilingCounter:
 
 def createLoadersContext(asyncSessionMaker):
     """Create loaders context with an actual session (not session maker)."""
+    if is_federation_mode():
+        return {"_skip_whoami": True}
+
     # Create a session from the session maker
     session = asyncSessionMaker()
     loaders = LoaderMap(session)
@@ -229,6 +243,13 @@ def createContext(asyncSessionMaker, withuser=True, user_role=None):
         user_role: Optional role type - "admin" or "administrátor" makes the user an admin
     """
     loadersContext = createLoadersContext(asyncSessionMaker)
+    # Hint for federation-mode adapter which credentials to use.
+    if user_role in ["admin", "administrátor", "administrator"]:
+        loadersContext["_federation_user_kind"] = "admin"
+    elif not withuser:
+        loadersContext["_federation_user_kind"] = "anonymous"
+    else:
+        loadersContext["_federation_user_kind"] = "default"
 
     # Add extension context keys required by uoishelpers extensions
     # ProfilingExtension.counter needs to be an object with .result() method
@@ -276,6 +297,11 @@ def createRegularUserContext(asyncSessionMaker, user_id=None, name=None, surname
     loadersContext["ProfilingExtension.counter"] = ProfilingCounter()
 
     user_id_value = user_id or "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
+    loadersContext["_federation_user_kind"] = (
+        "default"
+        if str(user_id_value) == "2d9dc5ca-a4a2-11ed-b9df-0242ac120003"
+        else "other"
+    )
     user = {
         "id": str(_ensure_uuid(user_id_value)),
         "name": name or "John",
@@ -301,6 +327,7 @@ def createApplicantContext(asyncSessionMaker, applicant_user_id):
     )
 
     loadersContext = createLoadersContext(asyncSessionMaker)
+    loadersContext["_federation_user_kind"] = "default"
 
     # Add extension context keys
     loadersContext["ProfilingExtension.counter"] = ProfilingCounter()
@@ -321,7 +348,9 @@ def createApplicantContext(asyncSessionMaker, applicant_user_id):
 
 def createUnauthenticatedContext(asyncSessionMaker):
     """Create a context without a user (unauthenticated)."""
-    return createContext(asyncSessionMaker, withuser=False)
+    ctx = createContext(asyncSessionMaker, withuser=False)
+    ctx["_federation_user_kind"] = "anonymous"
+    return ctx
 
 
 def createInfo(asyncSessionMaker, withuser=True, user_role=None):

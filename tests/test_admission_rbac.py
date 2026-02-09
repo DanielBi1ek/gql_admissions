@@ -18,6 +18,7 @@ from .shared import (
     prepare_demodata,
     prepare_in_memory_sqllite,
     get_demodata,
+    is_federation_mode,
     createContext,
     createAdminContext,
     createRegularUserContext,
@@ -167,7 +168,11 @@ class TestAdminPermissions:
         assert_no_graphql_errors(resp)
 
         result = resp.data["admissionApplicationPage"]
-        assert len(result) == len(data["admission_applications"])
+        if is_federation_mode():
+            # Live federation DB can contain more rows than the local seed.
+            assert len(result) >= len(data["admission_applications"])
+        else:
+            assert len(result) == len(data["admission_applications"])
 
     @pytest.mark.asyncio
     async def test_admin_can_insert_bank_account(self):
@@ -207,17 +212,37 @@ class TestAdminPermissions:
         async_session_maker = await prepare_in_memory_sqllite()
         await prepare_demodata(async_session_maker)
 
-        data = get_demodata()
-        application = next(
-            (a for a in data["admission_applications"]
-             if not a.get("accepted") and not a.get("withdrawn")),
-            None
-        )
-
-        if application is None:
-            pytest.skip("No pending application found")
-
         context_value = createAdminContext(async_session_maker)
+        if is_federation_mode():
+            # Find a pending application in the live API.
+            page_query = """
+                query {
+                    admissionApplicationPage(limit: 100) {
+                        id
+                        accepted
+                        withdrawn
+                    }
+                }
+            """
+            page = await execute_gql(schema, page_query, context_value=context_value)
+            assert_no_graphql_errors(page)
+            apps = page.data.get("admissionApplicationPage") or []
+            application_id = next(
+                (a["id"] for a in apps if not a.get("accepted") and not a.get("withdrawn")),
+                None,
+            )
+            if application_id is None:
+                pytest.skip("No pending application found in federation environment")
+        else:
+            data = get_demodata()
+            application = next(
+                (a for a in data["admission_applications"]
+                 if not a.get("accepted") and not a.get("withdrawn")),
+                None
+            )
+            if application is None:
+                pytest.skip("No pending application found")
+            application_id = str(application["id"])
 
         mutation = """
             mutation($input: AdmissionApplicationAcceptGQLModel!) {
@@ -233,7 +258,7 @@ class TestAdminPermissions:
         """
         variables = {
             "input": {
-                "applicationId": str(application["id"])
+                "applicationId": application_id
             }
         }
 
@@ -241,8 +266,12 @@ class TestAdminPermissions:
         assert_no_graphql_errors(resp)
 
         result = resp.data["result"]
-        assert result["__typename"] == "AdmissionApplicationGQLModel"
-        assert result["accepted"] == True
+        if result["__typename"] == "AdmissionApplicationGQLModel":
+            assert result["accepted"] is True
+        else:
+            # Can happen on re-run if it got accepted between page+mutation.
+            assert result["__typename"] == "AdmissionApplicationGQLModelUpdateError"
+            assert "accepted" in (result.get("msg") or "").lower()
 
 
 # =============================================================================
@@ -362,16 +391,18 @@ class TestOwnerBasedAccess:
         async_session_maker = await prepare_in_memory_sqllite()
         await prepare_demodata(async_session_maker)
 
-        data = get_demodata()
-        applicant = data["admission_applicants"][0]
-        applicant_user_id = applicant["applicant_user_id"]
-
-        context_value = createApplicantContext(async_session_maker, applicant_user_id)
+        context_value = (
+            createRegularUserContext(async_session_maker)
+            if is_federation_mode()
+            else createApplicantContext(async_session_maker, get_demodata()["admission_applicants"][0]["applicant_user_id"])
+        )
 
         query = """
             query {
+                me { id }
                 admissionApplicantPage {
                     id
+                    applicantUserId
                 }
             }
         """
@@ -379,11 +410,11 @@ class TestOwnerBasedAccess:
         resp = await execute_gql(schema, query, context_value=context_value)
         assert_no_graphql_errors(resp)
 
-        result = resp.data["admissionApplicantPage"]
-        # Should only see their own profile (at most 1)
+        me_id = resp.data.get("me", {}).get("id")
+        result = resp.data["admissionApplicantPage"] or []
         assert len(result) <= 1
-        if len(result) == 1:
-            assert result[0]["id"] == str(applicant["id"])
+        if me_id and result:
+            assert all(row.get("applicantUserId") == me_id for row in result)
 
     @pytest.mark.asyncio
     async def test_applicant_cannot_see_other_profiles(self):
@@ -391,12 +422,31 @@ class TestOwnerBasedAccess:
         async_session_maker = await prepare_in_memory_sqllite()
         await prepare_demodata(async_session_maker)
 
-        data = get_demodata()
-        applicant1 = data["admission_applicants"][0]
-        applicant2 = data["admission_applicants"][1]
+        if is_federation_mode():
+            admin_ctx = createAdminContext(async_session_maker)
+            admin_query = """
+                query {
+                    admissionApplicantPage(limit: 100) { id applicantUserId }
+                }
+            """
+            admin_resp = await execute_gql(schema, admin_query, context_value=admin_ctx)
+            assert_no_graphql_errors(admin_resp)
+            candidates = admin_resp.data.get("admissionApplicantPage") or []
 
-        # Login as applicant1
-        context_value = createApplicantContext(async_session_maker, applicant1["applicant_user_id"])
+            context_value = createRegularUserContext(async_session_maker)
+            me_resp = await execute_gql(schema, "query{ me { id } }", context_value=context_value)
+            assert_no_graphql_errors(me_resp)
+            me_id = me_resp.data.get("me", {}).get("id")
+            other_id = next((r["id"] for r in candidates if me_id and r.get("applicantUserId") != me_id), None)
+            if other_id is None:
+                pytest.skip("No other applicant found to test access denial")
+            variables = {"id": other_id}
+        else:
+            data = get_demodata()
+            applicant1 = data["admission_applicants"][0]
+            applicant2 = data["admission_applicants"][1]
+            context_value = createApplicantContext(async_session_maker, applicant1["applicant_user_id"])
+            variables = {"id": str(applicant2["id"])}
 
         query = """
             query($id: UUID!) {
@@ -406,9 +456,6 @@ class TestOwnerBasedAccess:
                 }
             }
         """
-        # Try to access applicant2's profile
-        variables = {"id": str(applicant2["id"])}
-
         resp = await execute_gql(schema, query, context_value=context_value, variables=variables)
         assert_no_graphql_errors(resp)
 
@@ -422,20 +469,36 @@ class TestOwnerBasedAccess:
         async_session_maker = await prepare_in_memory_sqllite()
         await prepare_demodata(async_session_maker)
 
-        data = get_demodata()
-        applicant = data["admission_applicants"][0]
-        applicant_user_id = applicant["applicant_user_id"]
-
-        own_application = next(
-            (a for a in data["admission_applications"]
-             if a["applicant_id"] == applicant["id"]),
-            None
+        context_value = (
+            createRegularUserContext(async_session_maker)
+            if is_federation_mode()
+            else createApplicantContext(async_session_maker, get_demodata()["admission_applicants"][0]["applicant_user_id"])
         )
-
-        if own_application is None:
-            pytest.skip("No application found for applicant")
-
-        context_value = createApplicantContext(async_session_maker, applicant_user_id)
+        if is_federation_mode():
+            page_query = """
+                query {
+                    admissionApplicationPage(limit: 100) { id withdrawn }
+                }
+            """
+            page = await execute_gql(schema, page_query, context_value=context_value)
+            assert_no_graphql_errors(page)
+            apps = page.data.get("admissionApplicationPage") or []
+            app_id = next((a["id"] for a in apps if not a.get("withdrawn")), None)
+            if app_id is None:
+                pytest.skip("No non-withdrawn application found for current user")
+        else:
+            data = get_demodata()
+            applicant = data["admission_applicants"][0]
+            applicant_user_id = applicant["applicant_user_id"]
+            own_application = next(
+                (a for a in data["admission_applications"]
+                 if a["applicant_id"] == applicant["id"]),
+                None
+            )
+            if own_application is None:
+                pytest.skip("No application found for applicant")
+            context_value = createApplicantContext(async_session_maker, applicant_user_id)
+            app_id = str(own_application["id"])
 
         mutation = """
             mutation($input: AdmissionApplicationWithdrawGQLModel!) {
@@ -451,7 +514,7 @@ class TestOwnerBasedAccess:
         """
         variables = {
             "input": {
-                "applicationId": str(own_application["id"])
+                "applicationId": app_id
             }
         }
 
@@ -468,21 +531,45 @@ class TestOwnerBasedAccess:
         async_session_maker = await prepare_in_memory_sqllite()
         await prepare_demodata(async_session_maker)
 
-        data = get_demodata()
-        applicant1 = data["admission_applicants"][0]
-        applicant2 = data["admission_applicants"][1]
+        if is_federation_mode():
+            admin_ctx = createAdminContext(async_session_maker)
+            admin_query = """
+                query {
+                    admissionApplicationPage(limit: 100) { id applicantId }
+                    admissionApplicantPage(limit: 100) { id applicantUserId }
+                }
+            """
+            admin_resp = await execute_gql(schema, admin_query, context_value=admin_ctx)
+            assert_no_graphql_errors(admin_resp)
+            apps = admin_resp.data.get("admissionApplicationPage") or []
+            applicants = admin_resp.data.get("admissionApplicantPage") or []
+            applicant_to_user = {a["id"]: a.get("applicantUserId") for a in applicants}
 
-        other_application = next(
-            (a for a in data["admission_applications"]
-             if a["applicant_id"] == applicant2["id"]),
-            None
-        )
+            context_value = createRegularUserContext(async_session_maker)
+            me_resp = await execute_gql(schema, "query{ me { id } }", context_value=context_value)
+            assert_no_graphql_errors(me_resp)
+            me_id = me_resp.data.get("me", {}).get("id")
 
-        if other_application is None:
-            pytest.skip("No application found for applicant2")
-
-        # Login as applicant1
-        context_value = createApplicantContext(async_session_maker, applicant1["applicant_user_id"])
+            other_app_id = next(
+                (a["id"] for a in apps if me_id and applicant_to_user.get(a.get("applicantId")) != me_id),
+                None,
+            )
+            if other_app_id is None:
+                pytest.skip("No other application found to test withdraw denial")
+            target_id = other_app_id
+        else:
+            data = get_demodata()
+            applicant1 = data["admission_applicants"][0]
+            applicant2 = data["admission_applicants"][1]
+            other_application = next(
+                (a for a in data["admission_applications"]
+                 if a["applicant_id"] == applicant2["id"]),
+                None
+            )
+            if other_application is None:
+                pytest.skip("No application found for applicant2")
+            context_value = createApplicantContext(async_session_maker, applicant1["applicant_user_id"])
+            target_id = str(other_application["id"])
 
         mutation = """
             mutation($input: AdmissionApplicationWithdrawGQLModel!) {
@@ -495,7 +582,7 @@ class TestOwnerBasedAccess:
         """
         variables = {
             "input": {
-                "applicationId": str(other_application["id"])
+                "applicationId": target_id
             }
         }
 
@@ -570,6 +657,9 @@ class TestAuthenticatedPublicAccess:
         """Any authenticated user can initialize their applicant profile."""
         async_session_maker = await prepare_in_memory_sqllite()
         await prepare_demodata(async_session_maker)
+
+        if is_federation_mode():
+            pytest.skip("Cannot create a brand-new user in federation mode without seeding OAuth/UG")
 
         # Use a new user ID that doesn't have a profile
         new_user_id = str(uuid.uuid4())

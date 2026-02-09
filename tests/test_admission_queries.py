@@ -15,6 +15,7 @@ from .shared import (
     prepare_demodata,
     prepare_in_memory_sqllite,
     get_demodata,
+    is_federation_mode,
     createContext,
     createAdminContext,
     createRegularUserContext,
@@ -155,11 +156,27 @@ async def test_admission_applicant_by_id_owner():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
-    data = get_demodata()
-    applicant = data["admission_applicants"][0]
-    applicant_user_id = applicant["applicant_user_id"]
-
-    context_value = createApplicantContext(async_session_maker, str(applicant_user_id))
+    if is_federation_mode():
+        # In federation mode, the authenticated user comes from the token;
+        # don't try to manufacture an applicant UUID.
+        context_value = createRegularUserContext(async_session_maker)
+        # In federation mode, pick the current user's applicant from the live API.
+        page_query = """
+            query {
+                admissionApplicantPage(limit: 1) { id }
+            }
+        """
+        page = await execute_gql(schema, page_query, context_value=context_value)
+        assert_no_graphql_errors(page)
+        applicants = page.data.get("admissionApplicantPage") or []
+        if not applicants:
+            pytest.skip("No applicant profile for current user in federation environment")
+        applicant_id = applicants[0]["id"]
+    else:
+        data = get_demodata()
+        applicant = data["admission_applicants"][0]
+        context_value = createApplicantContext(async_session_maker, str(applicant["applicant_user_id"]))
+        applicant_id = str(applicant["id"])
 
     query = """
         query($id: UUID!) {
@@ -170,7 +187,7 @@ async def test_admission_applicant_by_id_owner():
             }
         }
     """
-    variables = {"id": str(applicant["id"])}
+    variables = {"id": applicant_id}
 
     resp = await execute_gql(schema, query, context_value=context_value, variables=variables)
     assert_no_graphql_errors(resp)
@@ -178,7 +195,7 @@ async def test_admission_applicant_by_id_owner():
     result = resp.data["admissionApplicantById"]
     # Owner should be able to see their own profile
     assert result is not None
-    assert result["id"] == str(applicant["id"])
+    assert result["id"] == applicant_id
 
 
 @pytest.mark.asyncio
@@ -310,18 +327,24 @@ async def test_admission_application_by_id_owner():
     async_session_maker = await prepare_in_memory_sqllite()
     await prepare_demodata(async_session_maker)
 
-    data = get_demodata()
-    application = data["admission_applications"][0]
-    applicant_id = str(application["applicant_id"])
-
-    # Find the applicant to get user_id (compare as strings)
-    applicant = next(
-        (a for a in data["admission_applicants"] if str(a["id"]) == applicant_id),
-        None
-    )
-    assert applicant is not None
-
-    context_value = createApplicantContext(async_session_maker, str(applicant["applicant_user_id"]))
+    if is_federation_mode():
+        context_value = createRegularUserContext(async_session_maker)
+        page_query = """
+            query {
+                admissionApplicationPage(limit: 1) { id }
+            }
+        """
+        page = await execute_gql(schema, page_query, context_value=context_value)
+        assert_no_graphql_errors(page)
+        apps = page.data.get("admissionApplicationPage") or []
+        if not apps:
+            pytest.skip("No applications for current user in federation environment")
+        application_id = apps[0]["id"]
+    else:
+        data = get_demodata()
+        application = data["admission_applications"][0]
+        context_value = createApplicantContext(async_session_maker, str(data["admission_applicants"][0]["applicant_user_id"]))
+        application_id = str(application["id"])
 
     query = """
         query($id: UUID!) {
@@ -330,7 +353,7 @@ async def test_admission_application_by_id_owner():
             }
         }
     """
-    variables = {"id": str(application["id"])}
+    variables = {"id": application_id}
 
     resp = await execute_gql(schema, query, context_value=context_value, variables=variables)
     assert_no_graphql_errors(resp)

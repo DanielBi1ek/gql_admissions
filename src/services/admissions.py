@@ -16,6 +16,11 @@ def _ensure_uuid(value):
     return value if isinstance(value, uuid.UUID) else uuid.UUID(str(value))
 
 
+def _utcnow_naive() -> datetime.datetime:
+    """Return UTC timestamp as naive datetime for consistency with DB fields."""
+    return datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None)
+
+
 async def submit_application(
     info: typing.Any,
     submission: typing.Any,
@@ -69,7 +74,7 @@ async def submit_application(
             input_obj=submission,
         )
 
-    now = datetime.datetime.utcnow()
+    now = _utcnow_naive()
     start_date = to_naive_datetime(getattr(offer, "application_start_date", None))
     end_date = to_naive_datetime(getattr(offer, "application_end_date", None))
     if start_date and now < start_date:
@@ -272,7 +277,7 @@ async def accept_application(
                 lastchange=db_row.lastchange,
                 process_id=process_id,
                 accepted=True,
-                accepted_at=datetime.datetime.utcnow(),
+                accepted_at=_utcnow_naive(),
                 acceptedby_id=user_uuid,
             )
             updated = await Update[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=update)
@@ -338,7 +343,7 @@ async def withdraw_application(
         id=db_row.id,
         lastchange=db_row.lastchange,
         withdrawn=True,
-        withdrawn_at=datetime.datetime.utcnow(),
+        withdrawn_at=_utcnow_naive(),
         withdrawnby_id=user_uuid,
     )
     return await Update[AdmissionApplicationGQLModel].DoItSafeWay(info=info, entity=update)
